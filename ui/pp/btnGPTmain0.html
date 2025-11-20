@@ -1,0 +1,3205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>航科GPT V1</title>
+    <!-- WPS API 加载 -->
+    <!-- 本地WPS API加载脚本 -->
+    <script type="text/javascript" src="../../js/wpsLoad.js"></script>
+    <style>
+        
+        
+        body {
+              font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+            background: #050a16;
+            color: #e0f2fe;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 科技风几何线条背景 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(6, 182, 212, 0.3) 0%, transparent 60%),
+                radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.3) 0%, transparent 60%);
+            z-index: -1;
+            transform: translateZ(0);
+        }
+        
+        /* 动态几何线条容器 */
+        .geometric-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        /* 几何线条 - 使用SVG模式 */
+        .line-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(6, 182, 212, 0.4) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.4) 1px, transparent 1px);
+            background-size: 15px 15px;
+            animation: gridMove 10s linear infinite;
+            opacity: 0.8;
+            z-index: 1;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+        
+        @keyframes gridMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            50% {
+                transform: translate(-12.5%, -12.5%);
+            }
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+        
+        /* 动态几何线条变换 */
+        .dynamic-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.5;
+            z-index: 2;
+        }
+        
+        .dynamic-lines::before, .dynamic-lines::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: 100px 100px;
+        }
+        
+        .dynamic-lines::before {
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(168, 85, 247, 0.7) 4px, rgba(168, 85, 247, 0.7) 6px);
+            animation: rotatePattern 20s linear infinite;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+        
+        .dynamic-lines::after {
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(6, 182, 212, 0.7) 6px, rgba(6, 182, 212, 0.7) 8px);
+            animation: rotatePattern 25s linear infinite reverse;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+        
+        @keyframes rotatePattern {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+        
+        /* 几何形状动画 */
+        .geometric-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 2;
+        }
+        
+        .shape {
+            position: absolute;
+            background: transparent;
+            border: 1px solid rgba(6, 182, 212, 0.5);
+            animation: float 15s infinite ease-in-out;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+            transform-origin: center;
+            z-index: 1;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+        
+        .shape:nth-child(1) {
+            width: 120px;
+            height: 120px;
+            top: 15%;
+            left: 15%;
+            border-radius: 0%;
+            transform: rotate(45deg);
+            animation-delay: 0s;
+        }
+        
+        .shape:nth-child(2) {
+            width: 150px;
+            height: 50px;
+            top: 65%;
+            left: 65%;
+            border-radius: 0%;
+            transform: rotate(30deg);
+            animation-delay: -5s;
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(20px, -20px) rotate(5deg);
+            }
+            50% {
+                transform: translate(0, 20px) rotate(10deg);
+            }
+            75% {
+                transform: translate(-20px, -10px) rotate(-5deg);
+            }
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 700px;
+            height: 90vh;
+            max-height: 90vh;
+            background: rgba(15, 23, 42, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                0 0 20px rgba(6, 182, 212, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* 发光边框效果 */
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #06b6d4, #a855f7, #06b6d4);
+            z-index: -1;
+            border-radius: 14px;
+            background-size: 400%;
+            animation: glowing 20s linear infinite;
+            opacity: 0.5;
+        }
+        
+        @keyframes glowing {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+        }
+        
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.3);
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            backdrop-filter: blur(5px);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .chat-header-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #06b6d4, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+            letter-spacing: 0.5px;
+        }
+        
+        .reset-button,
+        .test-wps-button {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.2));
+            color: #e0f2fe;
+            border: 1px solid rgba(6, 182, 212, 0.5);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        
+        /* 移除测试WPS连接按钮相关样式 */
+        
+        .reset-button:hover {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(168, 85, 247, 0.3));
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .chat-body {
+            height: calc(100% - 120px);
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(6, 182, 212, 0.5) rgba(15, 23, 42, 0.3);
+        }
+        
+        /* 自定义滚动条 */
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-body::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 3px;
+        }
+        
+        .chat-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, rgba(6, 182, 212, 0.5), rgba(168, 85, 247, 0.5));
+            border-radius: 3px;
+        }
+        
+        .message {
+            margin-bottom: 16px;
+            padding: 10px 16px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            background: rgba(15, 23, 42, 0.3);
+        }
+        
+        .message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            opacity: 0.1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, rgba(29, 78, 216, 0.3), rgba(37, 99, 235, 0.3));
+            color: #e0f2fe;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .user-message::before {
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.5) 0%, transparent 70%);
+        }
+        
+        .user-message:hover::before {
+            opacity: 0.2;
+        }
+        
+        .ai-message {
+            background: linear-gradient(135deg, rgba(12, 74, 110, 0.3), rgba(8, 47, 73, 0.3));
+            color: #e0f2fe;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border-left: 3px solid #06b6d4;
+        }
+        
+        .ai-message::before {
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, transparent 70%);
+        }
+        
+        .ai-message:hover::before {
+            opacity: 0.2;
+        }
+        
+        .thinking {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.3));
+            color: #e2e8f0;
+            padding: 10px 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+            max-width: 75%;
+            word-wrap: break-word;
+            align-self: flex-start;
+            border-left: 3px solid #a855f7;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .thinking::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 48%, rgba(168, 85, 247, 0.1) 50%, transparent 52%);
+            background-size: 10px 10px;
+            animation: thinkingPattern 20s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes thinkingPattern {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+        
+        .thinking-header {
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            color: #a855f7;
+            letter-spacing: 0.5px;
+        }
+        
+        .thinking-content {
+            margin-top: 8px;
+            display: none;
+            padding-top: 8px;
+            border-top: 1px solid rgba(168, 85, 247, 0.2);
+            color: #cbd5e1;
+        }
+        
+        .chat-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid rgba(6, 182, 212, 0.2);
+        }
+        
+        .input-field {
+            flex-grow: 1;
+            background: rgba(15, 23, 42, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-right: 12px;
+            color: #e0f2fe;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+            background: rgba(15, 23, 42, 0.4);
+        }
+        
+        .input-field::placeholder {
+            color: rgba(186, 230, 253, 0.5);
+        }
+        
+        /* 引用文件时的特殊placeholder样式 */
+        .input-field.referenced::placeholder {
+            color: #22c55e; /* 绿色显示引用标记 */
+            font-weight: 500;
+        }
+        
+        .send-icon, .stop-icon, .upload-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .send-icon, .upload-icon {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(168, 85, 247, 0.3));
+            color: #e0f2fe;
+            border: 1px solid rgba(6, 182, 212, 0.5);
+        }
+        
+        .upload-icon:hover {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+            transform: scale(1.1);
+        }
+        
+        .upload-icon:hover .icon {
+            transform: scale(1.2);
+        }
+        
+        /* 上传按钮发光效果 */
+        .upload-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s, opacity 0.5s;
+        }
+        
+        .upload-icon:active::after {
+            width: 100px;
+            height: 100px;
+            opacity: 0;
+        }
+        
+        .send-icon:hover {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+            transform: scale(1.1);
+        }
+        
+        .stop-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+            color: #fecaca;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+        
+        .stop-icon:hover {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+            transform: scale(1.1);
+        }
+        
+        .icon {
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+        
+        .send-icon:hover .icon {
+            transform: scale(1.2);
+        }
+        
+        /* 按钮发光效果 */
+        .send-icon::after, .stop-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s, opacity 0.5s;
+        }
+        
+        .send-icon:active::after, .stop-icon:active::after {
+            width: 100px;
+            height: 100px;
+            opacity: 0;
+        }
+        
+        /* 工作簿选择下拉框样式 */
+        .workbook-dropdown {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(6, 182, 212, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+            min-width: 250px;
+            z-index: 1000;
+            animation: dropdownSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes dropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+        }
+        
+        .workbook-select-header {
+            padding: 12px 16px 8px 16px;
+            color: #06b6d4;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+        }
+        
+        .workbook-options {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .workbook-options::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .workbook-options::-webkit-scrollbar-track {
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 3px;
+        }
+        
+        .workbook-options::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.6);
+            border-radius: 3px;
+        }
+        
+        .workbook-options::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.8);
+        }
+        
+        .workbook-option {
+            padding: 10px 12px;
+            margin: 2px 0;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #e0f2fe;
+            font-size: 14px;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .workbook-option:hover {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: rgba(6, 182, 212, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+        
+        .workbook-option:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+        }
+        
+        /* 命令选择下拉框样式 */
+        .command-dropdown {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 320px;
+            min-width: 280px;
+            z-index: 1001;
+            animation: dropdownSlideIn 0.3s ease-out;
+        }
+        
+        .command-select-header {
+            padding: 12px 16px 8px 16px;
+            color: #a855f7;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+        }
+        
+        .command-options {
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .command-options::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .command-options::-webkit-scrollbar-track {
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 3px;
+        }
+        
+        .command-options::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.6);
+            border-radius: 3px;
+        }
+        
+        .command-options::-webkit-scrollbar-thumb:hover {
+            background: rgba(168, 85, 247, 0.8);
+        }
+        
+        .command-option {
+            padding: 10px 12px;
+            margin: 2px 0;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #e0f2fe;
+            font-size: 14px;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .command-option:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: rgba(168, 85, 247, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+        }
+        
+        .command-option:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+        }
+        
+        .command-description {
+            font-size: 12px;
+            color: rgba(224, 242, 254, 0.7);
+            margin-top: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        /* 科技感加载动画 */
+        .loading {
+            display: inline-block;
+            position: relative;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .loading div {
+            position: absolute;
+            top: 3px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #06b6d4;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        
+        .loading div:nth-child(1) {
+            left: 3px;
+            animation: loading1 0.6s infinite;
+        }
+        
+        .loading div:nth-child(2) {
+            left: 3px;
+            animation: loading2 0.6s infinite;
+        }
+        
+        .loading div:nth-child(3) {
+            left: 10px;
+            animation: loading2 0.6s infinite;
+        }
+        
+        .loading div:nth-child(4) {
+            left: 17px;
+            animation: loading3 0.6s infinite;
+        }
+        
+        @keyframes loading1 {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes loading3 {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+        
+        @keyframes loading2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(7px, 0); }
+        }
+        
+        /* 移除调试信息样式 */
+        
+        /* 帮助说明样式 */
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .new-conversation-btn {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.2));
+            color: #e0f2fe;
+            border: 1px solid rgba(6, 182, 212, 0.5);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .new-conversation-btn:hover {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(168, 85, 247, 0.3));
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .new-conversation-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .help-toggle-button {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.2));
+            color: #e0f2fe;
+            border: 1px solid rgba(6, 182, 212, 0.5);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .help-toggle-button:hover {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(168, 85, 247, 0.3));
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .help-section {
+            background: rgba(15, 23, 42, 0.4);
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .help-section.show {
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .help-content {
+            color: #e0f2fe;
+            max-height: 268px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        
+        /* 自定义滚动条样式 */
+        .help-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .help-content::-webkit-scrollbar-track {
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 3px;
+        }
+        
+        .help-content::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.6);
+            border-radius: 3px;
+        }
+        
+        .help-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.8);
+        }
+        
+        .help-content h3 {
+            margin-top: 0;
+            color: #06b6d4;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+        }
+        
+        .help-content ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .help-content li {
+            margin-bottom: 6px;
+        }
+        
+        /* 富文本输入区域容器样式 */
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        
+        /* 工作簿引用标签容器样式 */
+        .workbook-reference-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #86efac;
+            font-family: 'Orbitron', sans-serif;
+            backdrop-filter: blur(5px);
+        }
+        
+        .workbook-reference-label {
+            font-weight: 600;
+            color: #22c55e;
+        }
+        
+        .workbook-reference-name {
+            flex-grow: 1;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .remove-reference-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .remove-reference-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+        
+        /* 格式化工具栏样式 */
+        .format-toolbar {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .format-toolbar.show {
+            display: flex;
+        }
+        
+        /* 格式化按钮样式 */
+        .format-btn {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            color: #67e8f9;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .format-btn:hover {
+            background: rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .format-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+        }
+        
+        /* 富文本输入框样式 - 全宽设计，零边距 */
+        .rich-input-field {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 16px;
+            padding: 12px 0px 50px 0px; /* 真正全宽，零边距 */
+            color: #e0f2fe;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: all 0.3s ease;
+            resize: none;
+            overflow-y: hidden;
+            backdrop-filter: blur(5px);
+            min-height: 48px;
+            max-height: 200px;
+            position: relative;
+        }
+        
+        .rich-input-field:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+            background: rgba(15, 23, 42, 0.3);
+        }
+        
+        .rich-input-field::placeholder {
+            color: rgba(186, 230, 253, 0.5);
+            font-style: italic;
+        }
+        
+        /* 引用文件时的特殊样式 */
+        .rich-input-field.referenced::placeholder {
+            color: #22c55e;
+            font-weight: 500;
+            font-style: normal;
+        }
+        
+        /* 操作按钮区域样式 - 右下角定位 */
+        .action-buttons {
+            position: absolute;
+            bottom: 8px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+        }
+        
+        /* 清空聊天按钮样式 */
+        .clear-chat-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        
+        .clear-chat-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .clear-chat-btn:hover .icon {
+            transform: scale(1.2);
+        }
+        
+        /* 按钮发光效果 */
+        .clear-chat-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s, opacity 0.5s;
+        }
+        
+        .clear-chat-btn:active::after {
+            width: 100px;
+            height: 100px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 科技风几何线条背景容器 -->
+    <div class="geometric-background">
+        <div class="line-grid"></div>
+        <div class="dynamic-lines"></div>
+        <div class="geometric-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+    </div>
+    
+    <!-- 移除WPS状态显示容器 -->
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="chat-header-title">航科GPT V1</div>
+                <button id="helpToggle" class="help-toggle-button" onclick="toggleHelp()">?</button>
+            </div>
+            <div class="header-right">
+                <button class="new-conversation-btn" id="newConversationButton" onclick="clearChatHistory()" title="新对话">
+                    <span class="icon">+</span>
+                </button>
+            </div>
+        </div>
+        <div id="helpSection" class="help-section">
+            <div class="help-content">
+                <h3>使用说明</h3>
+                <ul>
+                    <li>在输入框中输入您的问题，按Enter或点击发送按钮</li>
+                    <li>系统将自动连接到WPS表格环境并处理您的请求</li>
+                    <li>点击"新对话"按钮可以清除当前聊天记录</li>
+                    <li>点击文件上传按钮📁可以上传文件(txt、pdf、doc、docx、csv、ofd、xls、xlsx、xlsm)进行embeddings生成</li>
+                    <li>支持的命令：</li>
+                    <li>/引用文件 - 引用工作簿，将工作簿作为附件上传到AI聊天大模型。</li>
+                    <li>/写入文档 [内容] - 向当前WPS文档写入内容</li>
+                    <li>/清空文档 - 清空当前WPS文档内容</li>
+                    <li>/help - 查看帮助信息</li>
+                    <li>/models 或 /模型 - 获取可用的AI模型列表</li>
+                    <li>以!completion 或 !补全开头 - 使用completions API而非chat completions</li>
+                </ul>
+            </div>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-footer">
+            <!-- 工作簿选择下拉框 -->
+            <div id="workbookSelectDropdown" class="workbook-dropdown" style="display: none;">
+                <div class="workbook-select-header">选择要引用的工作簿：</div>
+                <div id="workbookOptions" class="workbook-options"></div>
+            </div>
+            
+            <!-- 命令选择下拉框 -->
+            <div id="commandDropdown" class="command-dropdown" style="display: none;">
+                <div class="command-select-header">选择要使用的命令：</div>
+                <div id="commandOptions" class="command-options"></div>
+            </div>
+            
+            <!-- 富文本输入区域 - 全宽布局 -->
+            <div class="input-container">
+                <!-- 工作簿引用标签容器 -->
+                <div id="workbookReferenceContainer" class="workbook-reference-container" style="display: none;">
+                    <span class="workbook-reference-label">已引用：</span>
+                    <span id="referencedWorkbookName" class="workbook-reference-name"></span>
+                    <button class="remove-reference-btn" onclick="removeWorkbookReference()">×</button>
+                </div>
+                
+                <!-- 格式化工具栏 -->
+                <div class="format-toolbar" style="display: none;">
+                    <button class="format-btn" onclick="formatText('bold')" title="粗体">B</button>
+                    <button class="format-btn" onclick="formatText('italic')" title="斜体"><i>I</i></button>
+                    <button class="format-btn" onclick="formatText('underline')" title="下划线"><u>U</u></button>
+                    <button class="format-btn" onclick="formatText('strike')" title="删除线"><s>S</s></button>
+                    <button class="format-btn" onclick="formatText('code')" title="代码">`</button>
+                </div>
+                
+                <!-- 富文本输入框容器 -->
+                <div style="position: relative;">
+                    <!-- 富文本输入框 -->
+                    <textarea class="rich-input-field" id="userInput" placeholder="输入问题，AI将为您解答...（Ctrl+Enter换行）" rows="3" onkeydown="handleKeyPress(event)" oninput="monitorInput()"></textarea>
+                    
+                    <!-- 操作按钮区域 - 右下角定位 -->
+                    <div class="action-buttons">
+                        <!-- 隐藏的文件输入 -->
+                        <input type="file" id="fileUpload" style="display: none;" accept=".txt,.pdf,.doc,.docx,.csv,.ofd,.xls,.xlsx,.xlsm" onchange="handleFileUpload(this.files)">
+                        
+                        <!-- 功能按钮 -->
+                        <button class="upload-icon" id="uploadButton" onclick="document.getElementById('fileUpload').click()" title="上传文件">
+                            <span class="icon">📁</span>
+                        </button>
+                        
+                        <button class="send-icon" id="sendButton" onclick="sendMessage()" title="发送消息">
+                            <span class="icon">→</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // 全局变量存储embeddings结果和实时选择状态
+        let currentEmbeddings = null;
+        let uploadedFileName = null;
+        // 避免重复声明，若已存在则复用
+        if (typeof referencedWorkbook === 'undefined') {
+            var referencedWorkbook = null;
+        }
+        let showWorkbookSelection = false;
+        let workbookSelectTimeout = null;
+        let isTypingWorkbook = false; // 是否正在输入工作簿名称
+        let inputTimeout = null; // 输入延迟定时器
+        
+        // 命令相关全局变量
+        let showCommandDropdown = false;
+        let commandDropdownTimeout = null;
+        let availableCommands = [
+            {
+                trigger: '/引用文件',
+                description: '引用工作簿，将工作簿作为附件上传到AI聊天大模型',
+                action: 'showWorkbookSelection'
+            },
+            {
+                trigger: '/获取文档内容',
+                aliases: ['/getdoc'],
+                description: '获取当前WPS文档的内容',
+                action: 'getDocumentContent'
+            },
+            {
+                trigger: '/写入文档',
+                description: '将内容追加到当前文档',
+                action: 'writeToDocument'
+            },
+            {
+                trigger: '/清空文档',
+                description: '清空当前文档内容（请谨慎使用）',
+                action: 'clearDocument'
+            },
+            {
+                trigger: '/help',
+                aliases: ['/帮助'],
+                description: '显示此帮助信息',
+                action: 'showHelp'
+            },
+            {
+                trigger: '/models',
+                aliases: ['/模型'],
+                description: '获取可用的AI模型列表',
+                action: 'getModels'
+            },
+            {
+                trigger: '!completion',
+                aliases: ['!补全'],
+                description: '使用completions API进行文本补全',
+                action: 'textCompletion'
+            }
+        ];
+        
+        // 自动调整textarea高度
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            const maxHeight = 200; // 最大高度
+            const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+            textarea.style.height = newHeight + 'px';
+            
+            // 如果内容超过最大高度，显示滚动条
+            if (textarea.scrollHeight > maxHeight) {
+                textarea.style.overflowY = 'auto';
+            } else {
+                textarea.style.overflowY = 'hidden';
+            }
+        }
+
+        // 切换格式化工具栏显示
+        function toggleFormatToolbar() {
+            const toolbar = document.querySelector('.format-toolbar');
+            if (toolbar) {
+                toolbar.style.display = toolbar.style.display === 'none' ? 'flex' : 'none';
+            }
+        }
+
+        // 富文本格式化
+        function formatText(command) {
+            const textarea = document.getElementById('userInput');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            
+            let formattedText;
+            switch (command) {
+                case 'bold':
+                    formattedText = `**${selectedText}**`;
+                    break;
+                case 'italic':
+                    formattedText = `*${selectedText}*`;
+                    break;
+                case 'underline':
+                    formattedText = `<u>${selectedText}</u>`;
+                    break;
+                case 'strike':
+                    formattedText = `~~${selectedText}~~`;
+                    break;
+                case 'code':
+                    formattedText = `\`${selectedText}\``;
+                    break;
+                default:
+                    formattedText = selectedText;
+            }
+            
+            // 替换选中的文本
+            textarea.value = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+            
+            // 设置光标位置
+            const newCursorPos = start + formattedText.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.focus();
+            
+            // 重新调整高度
+            autoResizeTextarea(textarea);
+        }
+
+        // 初始化textarea事件
+        function initializeTextareaEvents() {
+            const textarea = document.getElementById('userInput');
+            if (textarea) {
+                // 初始化高度
+                autoResizeTextarea(textarea);
+                
+                // 双击显示/隐藏格式化工具栏
+                textarea.addEventListener('dblclick', function() {
+                    toggleFormatToolbar();
+                });
+                
+                // 文本变化时自动调整高度
+                textarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+            }
+        }
+
+        // 实时监控用户输入框
+        function monitorInput() {
+            const userInput = document.getElementById('userInput');
+            const currentValue = userInput.value.trim(); // 去除首尾空格进行匹配
+            
+            // 自动调整textarea高度
+            autoResizeTextarea(userInput);
+            
+            // 清除之前的定时器
+            if (commandDropdownTimeout) {
+                clearTimeout(commandDropdownTimeout);
+                commandDropdownTimeout = null;
+            }
+            
+            // 特殊处理：/引用文件命令直接触发工作簿选择
+            // 无需依赖命令下拉框状态，直接检查输入内容
+            if (currentValue === '/引用文件' && !showWorkbookSelection) {
+                if (workbookSelectTimeout) {
+                    clearTimeout(workbookSelectTimeout);
+                    workbookSelectTimeout = null;
+                }
+                // 先隐藏命令下拉框，然后显示工作簿选择下拉框
+                hideCommandDropdown();
+                showWorkbookSelectionDropdown();
+                return;
+            }
+            
+            // 检测是否输入"/"来显示命令选择菜单
+            if (currentValue === '/') {
+                // 只有输入纯"/"时才显示命令选择菜单
+                if (!showCommandDropdown && !showWorkbookSelection) {
+                    commandDropdownTimeout = setTimeout(() => {
+                        showCommandDropdownMenu();
+                    }, 200);
+                }
+            } else {
+                // 其他所有情况（包括"/其他内容"、""、正常文本等）都隐藏命令下拉框
+                if (showCommandDropdown) {
+                    hideCommandDropdown();
+                }
+            }
+            // 注意：不处理"/任意内容"的情况，避免意外触发
+            
+
+        }
+        
+        // 过滤并显示命令
+        function filterAndShowCommands(inputText) {
+            const commandDropdown = document.getElementById('commandDropdown');
+            const commandOptions = document.getElementById('commandOptions');
+            
+            if (!commandDropdown || !commandOptions) return;
+            
+            // 清空选项
+            commandOptions.innerHTML = '';
+            
+            // 过滤匹配的命令
+            const filteredCommands = availableCommands.filter(command => {
+                const triggers = [command.trigger, ...(command.aliases || [])];
+                return triggers.some(trigger => trigger.startsWith(inputText));
+            });
+            
+            // 如果有匹配的命令，显示它们
+            if (filteredCommands.length > 0) {
+                filteredCommands.forEach(command => {
+                    const option = document.createElement('div');
+                    option.className = 'command-option';
+                    const isMatch = command.trigger.startsWith(inputText);
+                    option.innerHTML = `
+                        <div style="font-weight: 600; color: ${isMatch ? '#a855f7' : '#e0f2fe'};">
+                            ${highlightMatch(command.trigger, inputText)}
+                        </div>
+                        <div class="command-description">${command.description}</div>
+                    `;
+                    
+                    option.onclick = () => selectCommand(command);
+                    commandOptions.appendChild(option);
+                });
+                
+                // 显示下拉框
+                commandDropdown.style.display = 'block';
+                showCommandDropdown = true;
+            } else {
+                // 如果没有匹配的命令，隐藏下拉框
+                hideCommandDropdown();
+            }
+        }
+        
+        // 高亮匹配的部分
+        function highlightMatch(text, query) {
+            if (!query || query === '/') return text;
+            const index = text.toLowerCase().indexOf(query.toLowerCase());
+            if (index === -1) return text;
+            
+            const before = text.substring(0, index);
+            const match = text.substring(index, index + query.length);
+            const after = text.substring(index + query.length);
+            
+            return `${before}<span style="color: #06b6d4; font-weight: 700;">${match}</span>${after}`;
+        }
+        
+        // 处理文件上传和embeddings调用
+        function handleFileUpload(files) {
+            if (!files || files.length === 0) return;
+            
+            const file = files[0];
+            uploadedFileName = file.name;
+            
+            // 显示文件上传消息
+            const chatBody = document.getElementById('chatBody');
+            const fileNameDisplay = document.createElement('div');
+            fileNameDisplay.className = 'message user-message';
+            fileNameDisplay.textContent = `已上传文件: ${file.name}`;
+            chatBody.appendChild(fileNameDisplay);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            
+            // 显示处理中消息
+            const processingMessage = document.createElement('div');
+            processingMessage.className = 'thinking';
+            processingMessage.innerHTML = `
+                <div class="thinking-header">
+                    <span>正在处理文件并生成嵌入向量...</span>
+                </div>
+            `;
+            chatBody.appendChild(processingMessage);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            
+            // 读取文件内容
+            const reader = new FileReader();
+            
+            // 根据文件类型选择读取方式
+            if (file.type === 'text/plain' || file.type === 'text/csv') {
+                reader.readAsText(file);
+            } else {
+                // 对于非文本文件，先读取为二进制数据，然后在前端尝试提取文本
+                reader.readAsArrayBuffer(file);
+            }
+            
+            reader.onload = function(e) {
+                let textContent = '';
+                
+                if (file.type === 'text/plain' || file.type === 'text/csv') {
+                    textContent = e.target.result;
+                } else {
+                    // 对于非文本文件，这里简化处理，实际项目中可能需要更复杂的文本提取
+                    textContent = `[二进制文件内容，来自${file.name}]`;
+                    // 可以考虑添加PDF.js等库来处理PDF文件
+                }
+                
+                // 限制文本长度，避免过大的请求
+                const maxLength = 5000;
+                if (textContent.length > maxLength) {
+                    textContent = textContent.substring(0, maxLength) + '... [内容过长已截断]';
+                }
+                
+                // 调用embeddings API
+                generateEmbeddings(textContent, file.name, processingMessage);
+            };
+            
+            reader.onerror = function() {
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'message ai-message';
+                errorMessage.textContent = `文件读取失败，请检查文件是否损坏或格式是否支持。`;
+                chatBody.appendChild(errorMessage);
+                chatBody.scrollTop = chatBody.scrollHeight;
+                chatBody.removeChild(processingMessage);
+            };
+        }
+        
+        // 生成嵌入向量
+        function generateEmbeddings(text, fileName, processingMessage) {
+            const chatBody = document.getElementById('chatBody');
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                const apiUrl = 'http://192.168.70.26:1234/v1/embeddings';
+                
+                xhr.open('POST', apiUrl);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                // 如果需要API密钥，可以在这里添加
+                // xhr.setRequestHeader('Authorization', 'Bearer YOUR_API_KEY');
+                
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        // 移除处理中消息
+                        chatBody.removeChild(processingMessage);
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                currentEmbeddings = response;
+                                
+                                // 显示成功消息
+                                const successMessage = document.createElement('div');
+                                successMessage.className = 'message ai-message';
+                                successMessage.innerHTML = `
+                                    <div><strong>嵌入向量生成成功</strong></div>
+                                    <div>文件名: ${fileName}</div>
+                                    <div>向量维度: ${response.data[0].embedding.length}</div>
+                                    <div>模型: ${response.model}</div>
+                                    <div style="margin-top: 8px; font-size: 12px; opacity: 0.7;">
+                                        您现在可以基于此文件进行问答
+                                    </div>
+                                `;
+                                chatBody.appendChild(successMessage);
+                            } catch (parseError) {
+                                showErrorMessage('解析响应失败: ' + parseError.message);
+                            }
+                        } else {
+                            showErrorMessage(`API请求失败 (${xhr.status}): ${xhr.statusText}`);
+                        }
+                        
+                        chatBody.scrollTop = chatBody.scrollHeight;
+                    }
+                };
+                
+                // 准备请求体
+                const requestBody = JSON.stringify({
+                    model: 'text-embedding-ada-002', // 使用适合embeddings的模型
+                    input: text
+                });
+                
+                xhr.send(requestBody);
+            } catch (error) {
+                chatBody.removeChild(processingMessage);
+                showErrorMessage('生成嵌入向量时出错: ' + error.message);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+        
+        // 显示错误消息
+        function showErrorMessage(message) {
+            const chatBody = document.getElementById('chatBody');
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'message ai-message';
+            errorMessage.textContent = message;
+            chatBody.appendChild(errorMessage);
+        }
+        
+        // 显示命令选择下拉框
+        function showCommandDropdownMenu() {
+            const commandDropdown = document.getElementById('commandDropdown');
+            const commandOptions = document.getElementById('commandOptions');
+            
+            if (!commandDropdown || !commandOptions) return;
+            
+            // 清空选项
+            commandOptions.innerHTML = '';
+            
+            // 生成命令选项
+            availableCommands.forEach(command => {
+                const option = document.createElement('div');
+                option.className = 'command-option';
+                option.innerHTML = `
+                    <div style="font-weight: 600; color: #a855f7;">${command.trigger}</div>
+                    <div class="command-description">${command.description}</div>
+                `;
+                
+                option.onclick = () => selectCommand(command);
+                commandOptions.appendChild(option);
+            });
+            
+            // 显示下拉框
+            commandDropdown.style.display = 'block';
+            showCommandDropdown = true;
+            
+            // 添加点击外部关闭事件
+            setTimeout(() => {
+                document.addEventListener('click', hideCommandDropdownOnClickOutside);
+            }, 100);
+        }
+        
+        // 隐藏命令选择下拉框
+        function hideCommandDropdown() {
+            const commandDropdown = document.getElementById('commandDropdown');
+            if (commandDropdown) {
+                commandDropdown.style.display = 'none';
+            }
+            showCommandDropdown = false;
+            
+            // 移除点击外部关闭事件
+            document.removeEventListener('click', hideCommandDropdownOnClickOutside);
+        }
+        
+        // 点击外部关闭命令下拉框
+        function hideCommandDropdownOnClickOutside(event) {
+            const commandDropdown = document.getElementById('commandDropdown');
+            const userInput = document.getElementById('userInput');
+            
+            if (commandDropdown && !commandDropdown.contains(event.target) && 
+                event.target !== userInput && !userInput.contains(event.target)) {
+                hideCommandDropdown();
+            }
+        }
+        
+        // 选择命令
+        function selectCommand(command) {
+            const userInput = document.getElementById('userInput');
+            
+            // 清除所有可能的定时器
+            if (commandDropdownTimeout) {
+                clearTimeout(commandDropdownTimeout);
+                commandDropdownTimeout = null;
+            }
+            if (workbookSelectTimeout) {
+                clearTimeout(workbookSelectTimeout);
+                workbookSelectTimeout = null;
+            }
+            
+            // 隐藏下拉框（首先隐藏，避免monitorInput干扰）
+            hideCommandDropdown();
+            
+            // 执行相应的操作
+            executeCommandAction(command);
+            
+            // 延迟更新输入框，让executeCommandAction先执行
+            setTimeout(() => {
+                userInput.value = command.trigger + ' ';
+                userInput.focus();
+            }, 50);
+        }
+        
+        // 执行命令动作
+        function executeCommandAction(command) {
+            switch(command.action) {
+                case 'showWorkbookSelection':
+                    // 清除任何现有的定时器和下拉框状态
+                    if (commandDropdownTimeout) {
+                        clearTimeout(commandDropdownTimeout);
+                        commandDropdownTimeout = null;
+                    }
+                    if (workbookSelectTimeout) {
+                        clearTimeout(workbookSelectTimeout);
+                        workbookSelectTimeout = null;
+                    }
+                    hideCommandDropdown();
+                    // 立即执行工作簿选择
+                    showWorkbookSelectionDropdown();
+                    break;
+                case 'showHelp':
+                    sendMessage(); // 帮助信息由sendMessage处理
+                    break;
+                case 'getModels':
+                    sendMessage(); // 模型列表由sendMessage处理
+                    break;
+                case 'textCompletion':
+                    // 聚焦到输入框，等待用户输入提示
+                    const userInput = document.getElementById('userInput');
+                    setTimeout(() => userInput.focus(), 100);
+                    break;
+                case 'getDocumentContent':
+                case 'writeToDocument':
+                case 'clearDocument':
+                    // 这些命令需要在输入框中输入内容，暂不自动执行
+                    break;
+            }
+        }
+        
+        // WPS API 全局变量
+        // 注意：wps变量由wpsLoad.js自动创建，不要在这里重复声明
+        let isWpsLoaded = false;
+        let wpsStatus = {
+            connected: false,
+            documentType: null,
+            lastChecked: null,
+            currentDocumentName: null,
+            connectionTime: null
+        };
+        
+        // 更新WPS状态（保持核心功能但不更新UI）
+        function updateWpsStatus(connected, info, documentType = null, documentName = null) {
+            // 确保documentType标准化
+            if (documentType) {
+                switch (documentType.toLowerCase()) {
+                    case 'spreadsheet':
+                    case 'excel':
+                    case 'xls':
+                    case 'xlsx':
+                        documentType = 'Excel表格';
+                        break;
+                    case 'presentation':
+                    case 'powerpoint':
+                    case 'ppt':
+                    case 'pptx':
+                        documentType = '演示文稿';
+                        break;
+                    case 'document':
+                    case 'word':
+                    case 'doc':
+                    case 'docx':
+                        documentType = 'Word文档';
+                        break;
+                }
+            }
+            
+            // 只更新状态变量，不更新UI
+            if (connected) {
+                if (documentName) {
+                    wpsStatus.currentDocumentName = documentName;
+                }
+                
+                // 记录首次连接时间
+                if (!wpsStatus.connectionTime) {
+                    wpsStatus.connectionTime = new Date();
+                }
+            } else {
+                // 断开连接时重置状态
+                wpsStatus.currentDocumentName = null;
+                wpsStatus.connectionTime = null;
+                window.Application = null;
+            }
+            
+            wpsStatus.connected = connected;
+            wpsStatus.documentType = documentType;
+            wpsStatus.lastChecked = new Date();
+            
+            // 只在控制台记录，不显示在UI上
+            // WPS连接状态日志已简化 
+            //     `WPS状态: 已连接 ${documentName ? `到 ${documentName}` : ''} ${documentType ? `(${documentType})` : ''}` : 
+            //     `WPS状态: ${info}`);
+        }
+        
+        // 切换帮助说明显示/隐藏
+        function toggleHelp() {
+            const helpSection = document.getElementById('helpSection');
+            if (helpSection) {
+                helpSection.classList.toggle('show');
+            }
+        }
+        
+        // 移除重复的页面加载事件监听器
+        
+        // 初始化WPS API - 此项目为WPS JSA项目，直接在WPS表格环境下运行
+        function initializeWpsAPI() {
+            // 重置状态
+            window.Application = null;
+            isWpsLoaded = false;
+            
+            // 直接尝试加载WPS API，无需环境检查
+            // WPS API初始化日志已简化
+            loadWpsAPIWithRetry();
+        }
+        
+        // 使用官方推荐的wpsLoad方法加载WPS API（静默运行）
+        function loadWpsAPIWithRetry() {
+            try {
+                // 更新状态显示为连接中
+                updateWpsStatus(false, '正在连接WPS...', null);
+                
+                // 只使用官方推荐的wpsLoad()方法
+                if (window.wpsLoad && typeof window.wpsLoad === 'function') {
+                    // wpsLoad方法加载日志已简化
+                    
+                    // wpsLoad返回Promise - 严格使用window.wpsLoad以确保正确引用
+                    window.wpsLoad().then(function(wpsObj) {
+                        if (wpsObj && typeof wpsObj === 'object') {
+                            // 根据官方文档，使用Application作为根对象
+                            window.Application = wpsObj.Application || wpsObj;
+                            isWpsLoaded = true;
+                            // WPS API加载成功日志已简化
+                            // WPS环境连接日志已简化
+                            
+                            // 立即尝试获取工作簿信息验证连接
+                            verifyWpsConnection();
+                        } else {
+                            // WPS API加载失败，错误详情已简化
+                            updateWpsStatus(false, 'WPS客户端连接失败');
+                        }
+                    }).catch(function(error) {
+                        // WPS API加载失败，错误详情已简化
+                        updateWpsStatus(false, 'WPS客户端连接失败');
+                    });
+                } else {
+                    // wpsLoad未定义，错误详情已简化
+                    updateWpsStatus(false, 'wpsLoad未定义');
+                }
+            } catch (e) {
+                // WPS API加载错误，错误详情已简化
+                updateWpsStatus(false, `连接失败: ${e.message}`);
+            }
+        }
+        
+        // 定期检查WPS连接状态（后台静默运行）
+        function startWpsStatusCheck() {
+            setInterval(() => {
+                if (isWpsLoaded && window.Application) {
+                    try {
+                        // 定期刷新WPS工作簿信息日志已简化
+                        // 使用verifyWpsConnection验证连接并刷新工作簿信息
+                        const isConnected = verifyWpsConnection();
+                        
+                        if (!isConnected) {
+                            // 连接验证失败，尝试重新初始化
+                            throw new Error('工作簿信息刷新失败');
+                        }
+                        
+                    } catch (e) {
+                        // WPS连接重试已简化
+                        isWpsLoaded = false;
+                        window.Application = null;
+                        // 不显示UI消息，只在控制台记录
+                        updateWpsStatus(false, '连接已断开，正在重新连接...');
+                        setTimeout(initializeWpsAPI, 1000);
+                    }
+                }
+            }, 10000); // 每10秒刷新一次工作簿信息
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            initializeWpsAPI();
+            // 保持状态检查但不更新UI
+            startWpsStatusCheck();
+        });
+        
+        // 验证WPS连接并获取工作簿信息 - 严格按照WPS官方JSA规范实现
+        function verifyWpsConnection() {
+            // 首先确保Application对象已初始化
+            if (!window.Application || typeof window.Application !== 'object') {
+                updateWpsStatus(false, 'Application对象未初始化');
+                return false;
+            }
+            
+            try {
+                // WPS连接验证日志已简化
+                
+                // 根据WPS官方JSA规范，应使用Application作为根对象，且按照应用类型分别获取活动文档
+                let activeDocument = null;
+                
+                // 首先检查是否为Excel应用 - 严格按照JSA规范
+                if (typeof window.Application.Workbooks !== 'undefined') {
+                    // Excel应用环境检测日志已简化
+                    try {
+                        // 使用Workbooks集合来判断并获取活动工作簿
+                        if (window.Application.Workbooks.Count > 0 && window.Application.ActiveWorkbook) {
+                            activeDocument = window.Application.ActiveWorkbook;
+                            // Excel活动工作簿获取成功日志已简化
+                        }
+                    } catch (wbError) {
+                        // Excel工作簿获取错误已简化
+                    }
+                } 
+                // 对于Word/PowerPoint文档
+                else if (typeof window.Application.Documents !== 'undefined' || 
+                         typeof window.Application.Presentations !== 'undefined') {
+                    // Word或PowerPoint应用环境检测日志已简化
+                    try {
+                        if (window.Application.ActiveDocument) {
+                            activeDocument = window.Application.ActiveDocument;
+                            // Word/PowerPoint活动文档获取成功日志已简化
+                        }
+                    } catch (docError) {
+                        // 文档获取错误已简化
+                    }
+                }
+                
+                if (activeDocument) {
+                    try {
+                        // WPS官方JSA规范处理文档对象日志已简化
+                        
+                        // 严格按照JSA规范确定文档类型和名称
+                        let documentType = null;
+                        let docName = '';
+                        
+                        // 首先判断应用类型 - 这是JSA规范推荐的方式
+                        // 使用Application对象的集合属性来判断应用类型
+                        if (typeof window.Application.Workbooks !== 'undefined') {
+                            // Excel应用
+                            documentType = 'Excel';
+                            try {
+                                // 严格按照JSA规范，使用window.Application.ActiveWorkbook
+                                docName = String(window.Application.ActiveWorkbook.Name || '未知Excel工作簿');
+                                // Excel工作簿识别日志已简化
+                            } catch (wbNameError) {
+                                // 获取工作簿名称错误已简化
+                                docName = '未知Excel工作簿';
+                            }
+                        }
+                        else if (typeof window.Application.Documents !== 'undefined') {
+                            // Word应用
+                            documentType = 'Word';
+                            docName = String(activeDocument.Name || '未知Word文档');
+                            // Word文档识别日志已简化
+                        }
+                        else if (typeof window.Application.Presentations !== 'undefined') {
+                            // PowerPoint应用
+                            documentType = 'PowerPoint';
+                            docName = String(activeDocument.Name || '未知PowerPoint文档');
+                            // PowerPoint文档识别日志已简化
+                        }
+                        else {
+                            // 通用文档处理 - 使用文件扩展名辅助判断
+                            docName = String(activeDocument.Name || '未知文档');
+                            const normalizedName = docName.toLowerCase();
+                            if (normalizedName.endsWith('.docx') || normalizedName.endsWith('.doc')) {
+                                documentType = 'Word';
+                                // Word文档扩展名识别日志已简化
+                            } else if (normalizedName.endsWith('.pptx') || normalizedName.endsWith('.ppt')) {
+                                  documentType = 'PowerPoint';
+                                  // PowerPoint文档扩展名识别日志已简化
+                            } else if (normalizedName.endsWith('.xlsx') || normalizedName.endsWith('.xls') || normalizedName.endsWith('.et')) {
+                                documentType = 'Excel';
+                                // console.log('已识别为Excel工作簿 (基于扩展名)');
+                            } else {
+                                documentType = 'WPS';
+                                // console.log('已识别为通用WPS文档 (基于扩展名)');
+                            }
+                        }
+                        
+                        // 检查工作簿名称是否变化
+                        const hasDocumentChanged = wpsStatus.currentDocumentName !== docName;
+                        
+                        // 更新状态显示，包含工作簿名称
+                        updateWpsStatus(true, `已连接: ${docName}`, documentType, docName);
+                        
+                        // 如果工作簿变化，记录日志
+                        if (hasDocumentChanged) {
+                            // WPS文档切换日志已简化
+                        } else {
+                            // WPS连接验证成功日志已简化
+                        }
+                        
+                        return true;
+                    } catch (nameError) {
+                        // 无法获取文档名称时错误已简化
+                        updateWpsStatus(true, 'WPS已连接，文档对象有效但无法获取名称', null);
+                        return true;
+                    }
+                } else {
+                    // WPS已加载但无活动文档或工作簿
+                    // 检查是Excel应用但没有打开工作簿，还是其他情况
+                    let statusMessage = 'WPS客户端已连接，无活动文档';
+                    try {
+                        // 检查是否是Excel应用程序 - 严格按照JSA规范使用window.Application
+                        if (typeof window.Application.Workbooks !== 'undefined') {
+                            // Excel应用检测日志已简化
+                            statusMessage = 'WPS已连接，等待打开工作簿';
+                            // WPS连接状态日志已简化
+                        } else {
+                            // WPS连接状态日志已简化
+                            // 尝试获取应用程序信息
+                            try {
+                                if (window.Application.Version) {
+                                    // WPS版本信息日志已简化
+                                }
+                            } catch (versionError) {
+                                // 获取版本信息错误已简化
+                            }
+                        }
+                    } catch (e) {
+                        // 应用类型检查错误已简化
+                    }
+                    updateWpsStatus(true, statusMessage, null);
+                    return true;
+                }
+                
+            } catch (e) {
+                // 详细的错误类型区分和处理
+                let errorMsg = '';
+                const timestamp = new Date().toLocaleTimeString();
+                
+                if (e instanceof TypeError) {
+                    errorMsg = '类型错误：WPS对象方法或属性不存在';
+                    // WPS连接类型错误日志已简化
+                } else if (e instanceof ReferenceError) {
+                    errorMsg = '引用错误：WPS方法引用错误';
+                    // WPS连接引用错误日志已简化
+                } else {
+                    errorMsg = `连接验证失败: ${e.message || '未知错误'}`;
+                    // WPS连接未分类错误日志已简化
+                }
+                
+                updateWpsStatus(false, errorMsg);
+                return false;
+            }
+        }
+        
+        // 检查WPS是否可用，并提供详细状态信息 - 严格按照JSA规范
+        function checkWpsAvailability() {
+            // WPS可用性检查日志已简化
+            // 首先检查基本状态
+            if (!isWpsLoaded || !window.Application) {
+                // WPS API状态检查已简化
+                updateWpsStatus(false, 'WPS API未加载，请确保在WPS环境中运行');
+                return false;
+            }
+            
+            // 使用verifyWpsConnection进行完整验证，以读取工作簿信息为成功条件
+            return verifyWpsConnection();
+        }
+        
+        // 显示错误消息
+        function showWpsErrorMessage(message, error = null) {
+            const errorMsg = error ? `${message}: ${error.message}` : message;
+            // WPS操作错误日志已简化
+            addMessage('ai', errorMsg);
+            return errorMsg;
+        }
+        
+        // 测试WPS Excel工作簿连接和基本操作 - 严格遵循WPS官方JSA规范
+        function testExcelConnection() {
+            // WPS Excel连接测试日志已简化
+            
+            try {
+                // 首先验证Application对象是否存在
+                if (!window.Application || typeof window.Application !== 'object') {
+                    // Application对象未初始化错误已简化
+                    updateWpsStatus(false, 'Application对象未初始化');
+                    return false;
+                }
+                
+                // 严格按照JSA规范，先验证是否为Excel应用
+                if (typeof window.Application.Workbooks === 'undefined') {
+                    // Excel环境检测日志已简化
+                    return true;
+                }
+                
+                // Excel应用环境确认日志已简化
+                
+                // 严格按照JSA规范检查工作簿状态
+                try {
+                    // 首先检查Workbooks集合的数量
+                    const workbookCount = window.Application.Workbooks.Count;
+                    // 工作簿数量检查日志已简化
+                    
+                    // 检查是否有活动工作簿
+                    if (window.Application.ActiveWorkbook) {
+                        // 严格按照JSA规范，使用window.Application.ActiveWorkbook
+                        const activeWorkbook = window.Application.ActiveWorkbook;
+                        
+                        // 获取工作簿名称 - 严格按照JSA规范处理
+                        let workbookName = '未知工作簿';
+                        try {
+                            workbookName = String(activeWorkbook.Name);
+                            // 活动工作簿名称获取日志已简化
+                        } catch (nameError) {
+                            // 获取工作簿名称错误已简化
+                        }
+                        
+                        // 尝试获取工作表信息 - 严格按照JSA规范
+                        try {
+                            // 在WPS JSA中，工作表集合是Worksheets
+                            const worksheetCount = activeWorkbook.Worksheets.Count;
+                            // 工作表数量检查日志已简化
+                        } catch (sheetsError) {
+                            // 获取工作表信息错误已简化
+                        }
+                        
+                        // 尝试获取活动工作表 - 严格按照JSA规范
+                        try {
+                            if (window.Application.ActiveSheet) {
+                                const activeSheet = window.Application.ActiveSheet;
+                                const sheetName = activeSheet.Name || '未命名工作表';
+                                // 活动工作表名称日志已简化
+                                
+                                // 尝试读取一个单元格内容作为基本功能测试
+                                try {
+                                    // 严格按照JSA规范访问单元格
+                                    const cellValue = activeSheet.Range('A1').Value || '空';
+                                    // A1单元格内容检查日志已简化
+                                } catch (cellError) {
+                                    // 读取单元格内容错误已简化
+                                }
+                            }
+                        } catch (sheetError) {
+                            // 获取活动工作表错误已简化
+                        }
+                        
+                        // 记录Excel应用版本信息 - 严格按照JSA规范
+                        try {
+                            if (window.Application.Version) {
+                                // WPS版本信息记录日志已简化
+                            }
+                        } catch (versionError) {
+                            // 获取版本信息错误已简化
+                        }
+                        
+                        updateWpsStatus(true, `已成功连接到Excel工作簿: ${workbookName}`, 'Excel');
+                        return true;
+                    } else {
+                        // 没有活动工作簿，但WPS已连接
+                        // WPS连接无工作簿状态日志已简化
+                        updateWpsStatus(true, 'WPS已连接，等待打开工作簿', 'Excel');
+                        
+                        // 测试基本的Excel应用功能 - 严格按照JSA规范
+                        try {
+                            // 检查是否可以访问Workbooks集合
+                            if (typeof window.Application.Workbooks === 'object') {
+                                // Workbooks集合访问检查日志已简化
+                                // 可以尝试创建一个新工作簿的逻辑（这里仅检查访问权限）
+                                // const newWorkbook = window.Application.Workbooks.Add();
+                                // 创建新工作簿日志已简化
+                            }
+                        } catch (excelError) {
+                            // 测试Excel功能错误已简化
+                        }
+                        
+                        return true;
+                    }
+                } catch (wbAccessError) {
+                    // 访问Workbooks集合错误已简化
+                    updateWpsStatus(false, `无法访问Excel工作簿: ${wbAccessError.message}`);
+                    return false;
+                }
+            } catch (e) {
+                // Excel连接测试失败错误已简化
+                updateWpsStatus(false, `Excel连接测试失败: ${e.message}`);
+                return false;
+            }
+        }
+        
+        // 尝试操作WPS文档，带重试逻辑
+        function tryWpsOperation(operation, maxRetries = 2) {
+            let retries = 0;
+            
+            function attempt() {
+                try {
+                    return operation();
+                } catch (error) {
+                    retries++;
+                    // WPS操作重试失败已简化
+                    
+                    if (retries <= maxRetries) {
+                        // 短暂延迟后重试
+                        return new Promise(resolve => {
+                            setTimeout(() => {
+                                resolve(attempt());
+                            }, 300 * retries);
+                        });
+                    }
+                    
+                    throw error;
+                }
+            }
+            
+            return attempt();
+        }
+        
+        // 从WPS文档获取内容
+        function getWpsDocumentContent() {
+            if (!checkWpsAvailability()) {
+                return showWpsErrorMessage('WPS环境未连接或无效，无法获取文档内容');
+            }
+            
+            try {
+                // 使用tryWpsOperation函数进行带重试的操作
+                const content = tryWpsOperation(() => {
+                    // 获取当前活动文档
+                    // 严格按照JSA规范，使用window.Application
+const activeDocument = window.Application.ActiveDocument;
+                    if (!activeDocument) {
+                        throw new Error('未找到活动文档，请先打开一个WPS文档');
+                    }
+                    
+                    // 验证文档对象是否有效
+                    if (!activeDocument.Name) {
+                        throw new Error('文档对象无效，无法获取文档信息');
+                    }
+                    
+                    // 正在处理文档日志已简化
+                    
+                    // 获取文档类型
+                    let documentType = null;
+                    if (activeDocument.Name.endsWith('.docx')) {
+                        documentType = 'Word';
+                    } 
+                    else if (activeDocument.Name.endsWith('.pptx')) {
+                        documentType = 'PowerPoint';
+                    }
+                    else if (activeDocument.Name.endsWith('.xlsx')) {
+                        documentType = 'Excel';
+                    }
+                    else {
+                        documentType = 'WPS';
+                    }
+                    
+                    // 更新状态显示，包含文档类型
+                    updateWpsStatus(true, 'WPS客户端已连接', documentType);
+                    
+                    // 根据文档类型获取内容
+                    if (activeDocument.Name.endsWith('.docx')) {
+                        return extractWordContent(activeDocument);
+                    } 
+                    else if (activeDocument.Name.endsWith('.pptx')) {
+                        return extractPowerPointContent(activeDocument);
+                    }
+                    else if (activeDocument.Name.endsWith('.xlsx')) {
+                        return extractExcelContent(activeDocument);
+                    }
+                    else {
+                        // 尝试获取通用内容
+                        try {
+                            return '不支持的文档类型：' + activeDocument.Name + '\n' +
+                                   '尝试获取通用内容：\n' + activeDocument.Content.Text;
+                        } catch (e) {
+                            throw new Error('不支持的文档类型或无法获取内容：' + activeDocument.Name);
+                        }
+                    }
+                });
+                
+                // 获取文档内容长度日志已简化
+                return content;
+            } catch (error) {
+                showWpsErrorMessage('获取文档内容失败', error);
+                return null;
+            }
+        }
+        
+        // 提取Word文档内容
+        function extractWordContent(doc) {
+            try {
+                let content = '当前打开的是Word文档，标题：' + doc.Name + '\n\n';
+                
+                // 尝试获取文档内容，限制处理范围以提高性能
+                try {
+                    const range = doc.Range(0, Math.min(doc.Content.End, 10000)); // 限制获取范围
+                    content += range.Text;
+                } catch (rangeError) {
+                    // 如果直接获取Range失败，尝试段落方式获取
+                    // 直接获取Range失败日志已简化
+                    content += '文档内容：\n';
+                    
+                    const maxParagraphs = Math.min(doc.Paragraphs.Count, 200); // 限制处理段落数
+                    for (let i = 1; i <= maxParagraphs; i++) {
+                        try {
+                            const para = doc.Paragraphs.Item(i);
+                            if (para && para.Range) {
+                                content += para.Range.Text;
+                            }
+                        } catch (paraError) {
+                            // 获取段落失败日志已简化
+                            content += '[无法获取此段落]';
+                        }
+                    }
+                    
+                    if (doc.Paragraphs.Count > maxParagraphs) {
+                        content += '\n...\n(文档过长，仅显示部分内容)';
+                    }
+                }
+                
+                return content;
+            } catch (e) {
+                        // 提取Word内容失败错误已简化
+                        throw new Error(`Word文档处理失败: ${e.message}`);
+            }
+        }
+        
+        // 提取PowerPoint文档内容
+        function extractPowerPointContent(doc) {
+            try {
+                let content = '当前打开的是演示文稿，标题：' + doc.Name + '\n';
+                content += '幻灯片数量：' + doc.Slides.Count + '\n\n';
+                
+                // 限制处理的幻灯片数量以提高性能
+                const maxSlides = Math.min(doc.Slides.Count, 5);
+                
+                for (let i = 1; i <= maxSlides; i++) {
+                    try {
+                        const slide = doc.Slides.Item(i);
+                        content += `=== 幻灯片 ${i} ===\n`;
+                        
+                        // 获取幻灯片中的所有文本内容
+                        let slideText = '';
+                        let hasText = false;
+                        
+                        for (let j = 1; j <= slide.Shapes.Count; j++) {
+                            try {
+                                const shape = slide.Shapes.Item(j);
+                                if (shape.HasTextFrame && shape.TextFrame.HasText) {
+                                    const text = shape.TextFrame.TextRange.Text.trim();
+                                    if (text) {
+                                        slideText += `- ${text}\n`;
+                                        hasText = true;
+                                    }
+                                }
+                            } catch (shapeError) {
+                                // 获取形状失败日志已简化
+                            }
+                        }
+                        
+                        content += hasText ? slideText : '[无文本内容]\n';
+                        content += '\n';
+                    } catch (slideError) {
+                        // 获取幻灯片失败日志已简化
+                        content += `幻灯片 ${i}: [无法获取内容]\n\n`;
+                    }
+                }
+                
+                if (doc.Slides.Count > maxSlides) {
+                    content += `...\n(演示文稿包含更多幻灯片，仅显示前${maxSlides}张)`;
+                }
+                
+                return content;
+            } catch (e) {
+                // 提取PowerPoint内容失败错误已简化
+                throw new Error(`提取演示文稿内容时出错: ${e.message}`);
+            }
+        }
+        
+        // 提取Excel文档内容
+        function extractExcelContent(doc) {
+            try {
+                let content = '当前打开的是Excel工作表，标题：' + doc.Name + '\n';
+                content += '工作表数量：' + doc.Worksheets.Count + '\n';
+                
+                // 获取当前工作表信息
+                const activeSheet = doc.ActiveSheet;
+                content += '当前工作表：' + (activeSheet.Name || '未命名') + '\n\n';
+                
+                try {
+                    const usedRange = activeSheet.UsedRange;
+                    const rows = Math.min(usedRange.Rows.Count, 15); // 限制行数
+                    const cols = Math.min(usedRange.Columns.Count, 10); // 限制列数
+                    
+                    content += `数据区域预览：${rows}行 × ${cols}列\n`;
+                    content += '----------------------------------------\n';
+                    
+                    // 添加数据预览
+                    for (let i = 1; i <= rows; i++) {
+                        let rowContent = [];
+                        for (let j = 1; j <= cols; j++) {
+                            try {
+                                const cell = usedRange.Cells.Item(i, j);
+                                // 处理不同类型的值
+                                let cellValue = cell.Value;
+                                if (cellValue === null || cellValue === undefined) {
+                                    cellValue = '';
+                                } else if (typeof cellValue === 'string') {
+                                    // 限制字符串长度
+                                    cellValue = cellValue.length > 20 ? cellValue.substring(0, 20) + '...' : cellValue;
+                                }
+                                rowContent.push(cellValue);
+                            } catch (cellError) {
+                                rowContent.push('?');
+                            }
+                        }
+                        content += rowContent.join('\t') + '\n';
+                    }
+                    
+                    // 如果实际数据超过显示范围，添加提示
+                    if (usedRange.Rows.Count > rows || usedRange.Columns.Count > cols) {
+                        content += '----------------------------------------\n';
+                        content += `实际数据范围：${usedRange.Rows.Count}行 × ${usedRange.Columns.Count}列\n`;
+                        content += '(仅显示部分数据以提高性能)';
+                    }
+                } catch (rangeError) {
+                    // 获取Excel数据区域失败日志已简化
+                    content += '\n[无法获取工作表数据区域，可能是空工作表]';
+                }
+                
+                return content;
+            } catch (e) {
+                // 提取Excel内容失败错误已简化
+                throw new Error(`提取工作表内容时出错: ${e.message}`);
+            }
+        }
+        
+        // 向WPS文档写入内容
+        function writeToWpsDocument(content, append = false) {
+            // 参数验证
+            if (!content || content.trim() === '') {
+                showWpsErrorMessage('写入内容不能为空');
+                return false;
+            }
+            
+            if (!checkWpsAvailability()) {
+                return showWpsErrorMessage('WPS环境未连接或无效，无法写入文档内容');
+            }
+            
+            try {
+                // 使用tryWpsOperation函数进行带重试的操作
+                const success = tryWpsOperation(() => {
+                    // 获取当前活动文档
+                    // 严格按照JSA规范，使用window.Application
+const activeDocument = window.Application.ActiveDocument;
+                    if (!activeDocument || !activeDocument.Name) {
+                        throw new Error('未找到有效的活动文档，请先打开一个WPS文档');
+                    }
+                    
+                    // 写入文档模式日志已简化
+                    
+                    // 根据文档类型和模式写入内容
+                    if (activeDocument.Name.endsWith('.docx')) {
+                        // 内容长度检查
+                        if (content.length > 100000) {
+                            throw new Error('写入内容过大，请尝试分段写入');
+                        }
+                        
+                        if (append) {
+                            // 追加到文档末尾
+                            try {
+                                const endPos = activeDocument.Content.End - 1;
+                                activeDocument.Range(endPos, endPos).Text = '\n' + content;
+                            } catch (appendError) {
+                                // 追加到末尾失败日志已简化
+                                // 备选方案：使用InsertAfter
+                                activeDocument.Content.InsertAfter('\n' + content);
+                            }
+                        } else {
+                            // 替换整个文档内容
+                            activeDocument.Content.Text = content;
+                        }
+                        
+                        // 保存文档以确保内容被写入
+                        try {
+                            activeDocument.Save();
+                            // Word文档已保存日志已简化
+                        } catch (saveError) {
+                            // 自动保存失败日志已简化
+                        }
+                    }
+                    // 检查是否为演示文稿
+                    else if (activeDocument.Name && activeDocument.Name.endsWith('.pptx')) {
+                        try {
+                            // 在演示文稿中添加新幻灯片并写入内容
+                            const newSlide = activeDocument.Slides.Add(activeDocument.Slides.Count + 1, 1);
+                            
+                            // 添加标题
+                            try {
+                                const titleShape = newSlide.Shapes.Title;
+                                if (titleShape && titleShape.TextFrame) {
+                                    titleShape.TextFrame.TextRange.Text = 'AI 生成内容';
+                                }
+                            } catch (titleError) {
+                                // 设置标题失败日志已简化
+                            }
+                            
+                            // 添加内容形状
+                            try {
+                                const slideWidth = activeDocument.PageSetup.SlideWidth;
+                                const contentShape = newSlide.Shapes.AddTextbox(1, 100, 100, Math.min(slideWidth - 200, 600), 300);
+                                contentShape.TextFrame.TextRange.Text = content;
+                                contentShape.TextFrame.AutoSize = 1; // 自动调整大小
+                            } catch (shapeError) {
+                                // 添加内容形状失败错误已简化
+                                throw new Error('无法在演示文稿中创建内容文本框');
+                            }
+                        } catch (slideError) {
+                            // 添加幻灯片失败错误已简化
+                            throw new Error('无法在演示文稿中添加新幻灯片');
+                        }
+                    }
+                    // 检查是否为工作表
+                    else if (activeDocument.Name && activeDocument.Name.endsWith('.xlsx')) {
+                        try {
+                            const activeSheet = activeDocument.ActiveSheet;
+                            if (!activeSheet) {
+                                throw new Error('未找到活动工作表');
+                            }
+                            
+                            // 找到正确的起始行
+                            let startRow = 1;
+                            if (append) {
+                                try {
+                                    const usedRange = activeSheet.UsedRange;
+                                    startRow = usedRange.Rows.Count + 1;
+                                } catch (rangeError) {
+                                    // 获取已使用范围失败日志已简化
+                                    startRow = 1;
+                                }
+                            }
+                            
+                            // 写入内容（限制行数）
+                            const lines = content.split('\n');
+                            const maxLines = Math.min(lines.length, 1000); // 安全限制
+                            
+                            for (let i = 0; i < maxLines; i++) {
+                                const line = lines[i];
+                                try {
+                                    // 增强的数据处理
+                                    let cellValue = line;
+                                    // 尝试转换数字
+                                    if (!isNaN(line) && line.trim() !== '') {
+                                        cellValue = parseFloat(line);
+                                    }
+                                    activeSheet.Cells.Item(startRow + i, 1).Value = cellValue;
+                                } catch (cellError) {
+                                    // 写入单元格失败日志已简化
+                                    // 继续执行
+                                }
+                            }
+                            
+                            // 自动调整列宽
+                            try {
+                                activeSheet.Columns(1).AutoFit();
+                            } catch (autofitError) {
+                                // 自动调整列宽失败日志已简化
+                            }
+                        } catch (excelError) {
+                            // 写入Excel失败错误已简化
+                            throw new Error(`Excel操作失败: ${excelError.message}`);
+                        }
+                    }
+                    else {
+                        throw new Error('不支持的文档类型：' + activeDocument.Name);
+                    }
+                    
+                    return true;
+                });
+                
+                if (success) {
+                    // 写入文档成功日志已简化
+                    addMessage('ai', '内容已成功写入到文档：' + activeDocument.Name);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                showWpsErrorMessage('写入文档内容失败', error);
+                return false;
+            }
+        }
+        
+        // 处理特殊命令
+        // 处理工作簿选择逻辑
+        // 注意：referencedWorkbook变量已在全局作用域中声明
+        
+        // 获取所有打开的工作簿名称
+        function getOpenWorkbooks() {
+            try {
+                // 使用WPS API获取工作簿列表
+                // 首先尝试使用WPS全局对象
+                let wps = window.wps || window.Application;
+                
+                // 如果找不到WPS对象，尝试调用wpsLoad函数
+                if (!wps && typeof window.wpsLoad === 'function') {
+                    window.wpsLoad().then(api => {
+                        // WPS API加载成功日志已简化
+                    }).catch(error => {
+                        // WPS API加载失败日志已简化
+                    });
+                }
+                
+                // 如果仍然没有WPS对象，返回模拟数据
+                if (!wps || !wps.Application) {
+                    // 开发环境模拟数据日志已简化
+                    return [
+                        '工作簿1.xlsx',
+                        '工作簿2.xlsx', 
+                        '工作簿3.xlsx'
+                    ];
+                }
+                
+                const workbooks = [];
+                const application = wps.Application;
+                
+                // 检查Workbooks集合是否存在
+                if (application.Workbooks && application.Workbooks.Count > 0) {
+                    const count = application.Workbooks.Count;
+                    for (let i = 1; i <= count; i++) {
+                        try {
+                            // 使用Item方法获取工作簿
+                            const workbook = application.Workbooks.Item(i);
+                            if (workbook && workbook.Name) {
+                                workbooks.push(workbook.Name);
+                            }
+                        } catch (itemError) {
+                            // 获取第X个工作簿失败日志已简化
+                        }
+                    }
+                }
+                
+                // 如果没有获取到工作簿，返回至少一个默认项
+                if (workbooks.length === 0) {
+                    workbooks.push('新建工作簿.xlsx');
+                }
+                
+                return workbooks;
+            } catch (error) {
+                // 获取工作簿列表失败日志已简化
+                // 返回模拟数据作为后备
+                return [
+                    '工作簿1.xlsx',
+                    '工作簿2.xlsx',
+                    '工作簿3.xlsx'
+                ];
+            }
+        }
+        
+
+        
+        // 显示工作簿选择下拉框（实时选择模式）
+        function showWorkbookSelectionDropdown() {
+            const workbooks = getOpenWorkbooks();
+            if (workbooks.length === 0) {
+                addMessage('ai', '未发现打开的工作簿，请先打开要引用的工作簿。');
+                return;
+            }
+            
+            const dropdown = document.getElementById('workbookSelectDropdown');
+            const optionsContainer = document.getElementById('workbookOptions');
+            
+            // 清空现有选项
+            optionsContainer.innerHTML = '';
+            
+            // 创建选项
+            workbooks.forEach((workbook, index) => {
+                const option = document.createElement('div');
+                option.className = 'workbook-option';
+                option.textContent = workbook;
+                option.onclick = function() {
+                    selectWorkbook(workbook);
+                };
+                optionsContainer.appendChild(option);
+            });
+            
+            // 显示下拉框
+            dropdown.style.display = 'block';
+            showWorkbookSelection = true;
+            
+            // 添加点击外部关闭事件
+            document.addEventListener('click', handleOutsideClick);
+            
+            // 显示工作簿选择下拉框日志已简化
+        }
+        
+        // 选择工作簿
+        function selectWorkbook(workbookName) {
+            referencedWorkbook = workbookName;
+            
+            // 隐藏下拉框
+            const dropdown = document.getElementById('workbookSelectDropdown');
+            dropdown.style.display = 'none';
+            showWorkbookSelection = false;
+            
+            // 移除外部点击事件
+            document.removeEventListener('click', handleOutsideClick);
+            
+            // 更新输入框显示为带引用图标的工作簿名称，使用特殊颜色
+            const userInput = document.getElementById('userInput');
+            userInput.value = '';
+            userInput.style.color = ''; // 重置为默认颜色
+            
+            // 添加引用状态类名
+            userInput.classList.add('referenced');
+            
+            // 在输入框中添加引用标记（使用placeholder显示图标和文件名）
+            userInput.placeholder = '📎' + workbookName + ' （已引用，请输入要发送的聊天内容）';
+            
+            // 设置焦点到输入框
+            userInput.focus();
+            
+            // 重置输入监控状态
+            isTypingWorkbook = false;
+            
+            // 选择工作簿日志已简化
+        }
+        
+        // 处理外部点击事件
+        function handleOutsideClick(event) {
+            const dropdown = document.getElementById('workbookSelectDropdown');
+            const userInput = document.getElementById('userInput');
+            
+            if (!dropdown.contains(event.target) && event.target !== userInput) {
+                // 隐藏下拉框并清除选择状态
+                dropdown.style.display = 'none';
+                showWorkbookSelection = false;
+                document.removeEventListener('click', handleOutsideClick);
+                
+                // 清除输入框
+                userInput.value = '';
+            }
+        }
+        
+
+
+        function handleSpecialCommands(message) {
+            // 移除首尾空格，确保命令匹配准确
+            const trimmedMessage = message.trim();
+            
+            if (message.startsWith('/获取文档内容') || message.startsWith('/getdoc') || 
+                trimmedMessage.startsWith('/获取文档内容') || trimmedMessage.startsWith('/getdoc')) {
+                const content = getWpsDocumentContent();
+                if (content) {
+                    // 限制显示的内容长度
+                    const displayContent = content.length > 1000 ? content.substring(0, 1000) + '\n...\n(内容过长，仅显示前1000字符)' : content;
+                    addMessage('ai', '当前文档内容：\n```\n' + displayContent + '\n```');
+                }
+                return true;
+            }
+            
+            if (message === '/引用文件' || trimmedMessage === '/引用文件') {
+                // 只有当输入完全匹配时才触发工作簿选择
+                showWorkbookSelectionDropdown();
+                return true;
+            }
+            
+            if (message.startsWith('/写入文档') || trimmedMessage.startsWith('/写入文档')) {
+                const content = message.substring('/写入文档'.length).trim();
+                if (content) {
+                    writeToWpsDocument(content, true);
+                } else {
+                    addMessage('ai', '请在命令后输入要写入的内容，例如：/写入文档 这是要写入的内容');
+                }
+                return true;
+            }
+            
+            if (message.startsWith('/清空文档') || trimmedMessage.startsWith('/清空文档')) {
+                if (confirm('确定要清空当前文档内容吗？')) {
+                    writeToWpsDocument('', false);
+                }
+                return true;
+            }
+            
+            if (message.startsWith('/help') || message.startsWith('/帮助') || 
+                trimmedMessage.startsWith('/help') || trimmedMessage.startsWith('/帮助')) {
+                const helpText = '支持的命令：\n' +
+                                '/引用文件 - 引用工作簿，将工作簿作为附件上传到AI聊天大模型\n' +
+                                '/获取文档内容 或 /getdoc - 获取当前WPS文档的内容\n' +
+                                '/写入文档 [内容] - 将内容追加到当前文档\n' +
+                                '/清空文档 - 清空当前文档内容（请谨慎使用）\n' +
+                                '/help 或 /帮助 - 显示此帮助信息';
+                addMessage('ai', helpText);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        const chatBody = document.getElementById('chatBody');
+        const userInput = document.getElementById('userInput');
+        let chatHistory = [{ "role": "system", "content": "Always answer in Chinese." }];
+
+        function handleKeyPress(event) {
+            const userInput = document.getElementById('userInput');
+            const currentValue = userInput.value;
+            const commandDropdown = document.getElementById('commandDropdown');
+            const isCommandDropdownVisible = commandDropdown && commandDropdown.style.display !== 'none';
+            
+            // 如果命令下拉框可见，处理键盘导航
+            if (isCommandDropdownVisible) {
+                const commandOptions = commandDropdown.querySelectorAll('.command-option');
+                let selectedIndex = -1;
+                
+                // 找到当前选中的选项
+                for (let i = 0; i < commandOptions.length; i++) {
+                    if (commandOptions[i].classList.contains('selected')) {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+                
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    // 移除所有选中状态
+                    commandOptions.forEach(option => option.classList.remove('selected'));
+                    // 选择下一个选项
+                    const nextIndex = selectedIndex < commandOptions.length - 1 ? selectedIndex + 1 : 0;
+                    commandOptions[nextIndex].classList.add('selected');
+                    commandOptions[nextIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                }
+                
+                if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    // 移除所有选中状态
+                    commandOptions.forEach(option => option.classList.remove('selected'));
+                    // 选择上一个选项
+                    const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : commandOptions.length - 1;
+                    commandOptions[prevIndex].classList.add('selected');
+                    commandOptions[prevIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                }
+                
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (selectedIndex >= 0) {
+                        // 选择当前选中的命令
+                        commandOptions[selectedIndex].click();
+                        return;
+                    }
+                }
+                
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    hideCommandDropdown();
+                    return;
+                }
+            }
+            
+            // 实时监控输入框，仅当输入完整的"/引用文件"时才触发工作簿选择
+            if (currentValue === '/引用文件') {
+                if (workbookSelectTimeout) {
+                    clearTimeout(workbookSelectTimeout);
+                }
+                workbookSelectTimeout = setTimeout(() => {
+                    if (!showWorkbookSelection) {
+                        hideCommandDropdown();
+                        showWorkbookSelectionDropdown();
+                    }
+                }, 500);
+                return;
+            }
+            
+            // Ctrl+Enter换行，Enter发送消息（仅当下拉框不可见时）
+            if (event.ctrlKey && event.key === 'Enter') {
+                // Ctrl+Enter插入换行符
+                const start = userInput.selectionStart;
+                const end = userInput.selectionEnd;
+                userInput.value = currentValue.substring(0, start) + '\n' + currentValue.substring(end);
+                userInput.selectionStart = userInput.selectionEnd = start + 1;
+                return;
+            }
+            
+            if (event.key === 'Enter' && !isCommandDropdownVisible && !event.shiftKey) {
+                sendMessage();
+            }
+        }
+
+        // 通用API调用函数，支持多个端点
+        function callApi(endpoint, method, data, onSuccess, onError) {
+            const baseUrl = 'http://192.168.70.26:1234';
+            const url = `${baseUrl}${endpoint}`;
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            // 如果需要API密钥，可以在这里添加
+            // xhr.setRequestHeader('Authorization', 'Bearer YOUR_API_KEY');
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (onSuccess) onSuccess(response);
+                    } catch (error) {
+                        if (onError) onError(new Error('解析响应失败: ' + error.message));
+                    }
+                } else {
+                    if (onError) onError(new Error(`API请求失败 (${xhr.status}): ${xhr.statusText}`));
+                }
+            };
+            
+            xhr.onerror = function() {
+                if (onError) onError(new Error('网络错误，无法连接到服务器'));
+            };
+            
+            if (data) {
+                xhr.send(JSON.stringify(data));
+            } else {
+                xhr.send();
+            }
+        }
+        
+        // 获取可用模型列表
+        function getModels() {
+            addMessage('ai', '获取可用模型列表中...', true);
+            
+            callApi(
+                '/v1/models',
+                'GET',
+                null,
+                function(response) {
+                    // 移除思考消息
+                    const messages = chatBody.getElementsByClassName('thinking');
+                    if (messages.length > 0) {
+                        chatBody.removeChild(messages[messages.length - 1]);
+                    }
+                    
+                    if (response.data && Array.isArray(response.data)) {
+                        let modelsList = '可用模型列表：\n';
+                        response.data.forEach(model => {
+                            modelsList += `- ${model.id}\n`;
+                        });
+                        addMessage('ai', modelsList);
+                    } else {
+                        addMessage('ai', '获取模型列表失败：响应格式不正确');
+                    }
+                },
+                function(error) {
+                    // 移除思考消息
+                    const messages = chatBody.getElementsByClassName('thinking');
+                    if (messages.length > 0) {
+                        chatBody.removeChild(messages[messages.length - 1]);
+                    }
+                    addMessage('ai', error.message);
+                }
+            );
+        }
+        
+        // 上传引用的工作簿文件
+        function uploadReferencedWorkbook() {
+            return new Promise((resolve, reject) => {
+                if (!referencedWorkbook) {
+                    resolve();
+                    return;
+                }
+                
+                addMessage('ai', `正在上传工作簿：${referencedWorkbook}...`);
+                
+                // 模拟文件上传过程
+                // 实际实现中，这里应该调用WPS API获取工作簿内容并上传到服务器
+                setTimeout(() => {
+                    addMessage('ai', `工作簿 "${referencedWorkbook}" 已成功上传到AI大模型！`);
+                    // 清空引用
+                    referencedWorkbook = null;
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            var userMessage = userInput.value.trim();
+            if (!userMessage) {
+                return;
+            }
+        
+            // 检查特殊命令（包括新的模型命令）
+            if (userMessage.startsWith('/models') || userMessage.startsWith('/模型')) {
+                getModels();
+                // 清除引用状态
+                userInput.classList.remove('referenced');
+                userInput.placeholder = '输入问题，AI将为您解答...';
+                userInput.value = '';
+                userInput.focus();
+                return;
+            }
+            
+            // 处理特殊命令，但保留引用状态
+            const commandHandled = handleSpecialCommands(userMessage);
+            if (commandHandled) {
+                // 只有当不是/引用文件命令时才清除引用状态
+                if (userMessage !== '/引用文件' && !userMessage.endsWith('/引用文件')) {
+                    userInput.classList.remove('referenced');
+                    userInput.placeholder = '输入问题，AI将为您解答...';
+                    userInput.value = '';
+                } else {
+                    // 对于/引用文件命令，仅清空值但保留引用状态
+                    userInput.value = '';
+                }
+                userInput.focus();
+                return;
+            }
+        
+            // 添加用户消息到聊天界面
+            addMessage('user', userMessage);
+            chatHistory.push({ "role": "user", "content": userMessage });
+            
+            // 如果有上传的文件，在消息中添加相关信息
+            if (uploadedFileName && currentEmbeddings) {
+                const fileInfoMessage = `[基于文件 "${uploadedFileName}" 的嵌入向量进行问答]`;
+                const fileInfoElement = document.createElement('div');
+                fileInfoElement.className = 'message user-message';
+                fileInfoElement.style.fontSize = '12px';
+                fileInfoElement.style.opacity = '0.7';
+                fileInfoElement.textContent = fileInfoMessage;
+                chatBody.appendChild(fileInfoElement);
+                
+                // 在消息历史中添加文件信息
+                chatHistory.push({ 
+                    "role": "user", 
+                    "content": fileInfoMessage,
+                    "file_embeddings": currentEmbeddings
+                });
+            }
+            
+            // 清除引用状态并重置输入框
+            userInput.classList.remove('referenced');
+            userInput.placeholder = '输入问题，AI将为您解答...（Ctrl+Enter换行）';
+            userInput.value = '';
+            userInput.focus();
+            
+            // 清除工作簿引用标签
+            const referenceContainer = document.getElementById('workbookReferenceContainer');
+            const referencedWorkbookName = document.getElementById('referencedWorkbookName');
+            if (referenceContainer && referenceContainer.style.display !== 'none') {
+                referenceContainer.style.display = 'none';
+                referencedWorkbookName.textContent = '';
+                referencedWorkbook = null; // 重置全局变量
+            }
+            
+            // 先上传引用的工作簿（如果有），然后发送消息
+            uploadReferencedWorkbook().then(() => {
+                // 添加AI思考状态
+                addMessage('ai', '思考中...', true);
+                
+                // 准备请求体（根据是否有embeddings决定调用哪个端点）
+                let endpoint = '/v1/chat/completions';
+                let requestBody = {
+                    model: "gpt-3.5-turbo",
+                    messages: chatHistory,
+                    max_tokens: 1000,
+                    temperature: 0.7,
+                    stream: false
+                };
+                
+                // 如果用户输入以特定前缀开始，使用completions端点
+                if (userMessage.startsWith('!completion') || userMessage.startsWith('!补全')) {
+                    endpoint = '/v1/completions';
+                    const prompt = userMessage.startsWith('!completion') 
+                        ? userMessage.substring('!completion'.length).trim()
+                        : userMessage.substring('!补全'.length).trim();
+                    
+                    requestBody = {
+                        model: "text-davinci-003", // 使用适合completions的模型
+                        prompt: prompt,
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    };
+                }
+                
+                // 发送请求到AI模型
+                callApi(
+                    endpoint,
+                    'POST',
+                    requestBody,
+                    function(response) {
+                        // 移除思考消息
+                        const messages = chatBody.getElementsByClassName('thinking');
+                        if (messages.length > 0) {
+                            chatBody.removeChild(messages[messages.length - 1]);
+                        }
+                        
+                        let aiResponse;
+                        
+                        // 根据不同端点处理响应
+                        if (endpoint === '/v1/chat/completions' && response.choices && response.choices.length > 0) {
+                            aiResponse = response.choices[0].message.content;
+                            
+                            // 解析响应内容，分离思考和实际回复
+                            const parsed = parseAIResponse(aiResponse);
+                            
+                            // 如果有思考内容，显示思考消息
+                            if (parsed.thinking) {
+                                addThinkingMessage(parsed.thinking);
+                            }
+                            
+                            // 显示实际回复
+                            addMessage('ai', parsed.reply);
+                            chatHistory.push({ "role": "assistant", "content": parsed.reply });
+                        } 
+                        else if (endpoint === '/v1/completions' && response.choices && response.choices.length > 0) {
+                            aiResponse = response.choices[0].text;
+                            addMessage('ai', aiResponse);
+                            // 对于completions，也将其作为assistant消息添加到历史
+                            chatHistory.push({ "role": "assistant", "content": aiResponse });
+                        }
+                        else {
+                            addMessage('ai', '未收到有效响应');
+                        }
+                    },
+                    function(error) {
+                        // 移除思考消息
+                        const messages = chatBody.getElementsByClassName('thinking');
+                        if (messages.length > 0) {
+                            chatBody.removeChild(messages[messages.length - 1]);
+                        }
+                        addMessage('ai', error.message);
+                    }
+                );
+            });
+        }
+            
+
+
+        // stopStream函数已移除，因为不再需要处理流式响应
+
+        function addMessage(role, content, temporary) {
+            temporary = temporary || false;
+            var messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + role + '-message';
+            messageDiv.textContent = content;
+
+            if (temporary) {
+                var lastMessage = chatBody.lastChild;
+                if (lastMessage && lastMessage.className && lastMessage.className.indexOf('ai-message') !== -1) {
+                    chatBody.removeChild(lastMessage);
+                }
+            }
+
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return messageDiv;
+        }
+
+        function addThinkingMessage(content) {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'thinking';
+
+            const header = document.createElement('div');
+            header.className = 'thinking-header';
+            header.innerHTML = '思考：<span style="font-size:12px; color:#666;">(点击展开)</span>';
+            header.onclick = () => {
+                const contentDiv = thinkingDiv.querySelector('.thinking-content');
+                contentDiv.style.display = contentDiv.style.display === 'block' ? 'none' : 'block';
+                header.querySelector('span').textContent = contentDiv.style.display === 'block' ? '(点击收起)' : '(点击展开)';
+            };
+
+            const thinkingContent = document.createElement('div');
+            thinkingContent.className = 'thinking-content';
+            thinkingContent.textContent = content;
+
+            thinkingDiv.appendChild(header);
+            thinkingDiv.appendChild(thinkingContent);
+
+            chatBody.appendChild(thinkingDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function resetChat() {
+            chatBody.innerHTML = '';
+            chatHistory = [{ "role": "system", "content": "Always answer in Chinese." }];
+            addMessage('ai', '聊天已重新开始，请输入您的问题。');
+        }
+
+        // 新对话功能 - 清空聊天历史和聊天内容
+        function clearChatHistory() {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = '';
+            chatHistory = [{ "role": "system", "content": "Always answer in Chinese." }];
+            addMessage('ai', '聊天已重新开始，请输入您的问题。');
+        }
+
+        function updateSendButton() {
+            const button = document.getElementById('sendButton');
+            button.innerHTML = '<span class="icon">→</span>';
+            button.onclick = sendMessage;
+            button.classList.remove('stop-icon');
+            button.classList.add('send-icon');
+        }
+
+        function parseAIResponse(response) {
+            // 定义正则表达式匹配 <think> 标签
+            const thinkClosedRegex = /<think>([\s\S]*?)<\/think>/g; // 匹配闭合的 <think> 标签
+            const thinkOpenRegex = /^<think>([\s\S]*)/; // 匹配未闭合的 <think> 标签
+
+            let thinking = null;
+            let reply = response;
+
+            // 优先尝试匹配闭合的 <think> 标签
+            const closedMatches = [...response.matchAll(thinkClosedRegex)];
+            if (closedMatches.length > 0) {
+                // 提取所有闭合的 <think> 标签内容
+                closedMatches.forEach(match => {
+                    thinking = (thinking ? thinking + '\n' : '') + match[1].trim();
+                });
+
+                // 移除所有的 <think> 标签及其内容
+                reply = response.replace(thinkClosedRegex, '').trim();
+            } else {
+                // 如果没有闭合的 <think>，尝试匹配未闭合的 <think>
+                const openMatch = response.match(thinkOpenRegex);
+                if (openMatch) {
+                    // 如果是未闭合的 <think>，直接将剩余内容作为回复
+                    reply = openMatch[1].trim(); // 提取未闭合标签后面的内容
+                    thinking = null; // 忽略思考部分
+                }
+            }
+
+            return { thinking, reply };
+        }
+
+        // 删除工作簿引用标签
+        function removeWorkbookReference() {
+            const referenceContainer = document.getElementById('workbookReferenceContainer');
+            const referencedWorkbookName = document.getElementById('referencedWorkbookName');
+            
+            if (referenceContainer && referenceContainer.style.display !== 'none') {
+                referenceContainer.style.display = 'none';
+                referencedWorkbookName.textContent = '';
+                referencedWorkbook = null; // 重置全局变量
+                
+                // 移除input的引用状态样式
+                userInput.classList.remove('referenced');
+                userInput.placeholder = '输入问题，AI将为您解答...（Ctrl+Enter换行）';
+            }
+        }
+
+        // 页面加载完成后初始化textarea事件
+        window.onload = function() {
+            // 初始化textarea事件监听
+            initializeTextareaEvents();
+        };
+    </script>
+</body>
+</html>

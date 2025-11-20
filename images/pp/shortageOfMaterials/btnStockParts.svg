@@ -1,0 +1,17 @@
+<svg width="24.000000" height="24.000000" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<desc>
+			Created with Pixso.
+	</desc>
+	<defs>
+		<clipPath id="clip1_3967">
+			<rect id="pyramid" width="24.000000" height="24.000000" fill="white" fill-opacity="0"/>
+		</clipPath>
+	</defs>
+	<rect id="pyramid" width="24.000000" height="24.000000" fill="#FFFFFF" fill-opacity="0"/>
+	<g clip-path="url(#clip1_3967)">
+		<path id="Vector" d="M7.96 8.75L6.21 12.25L17.78 12.25L16.03 8.75L7.96 8.75Z" fill="#000000" fill-opacity="1.000000" fill-rule="nonzero"/>
+		<path id="Vector" d="M3.71 17.25L5.46 13.75L18.53 13.75L20.28 17.25L3.71 17.25Z" fill="#000000" fill-opacity="1.000000" fill-rule="nonzero"/>
+		<path id="Vector" d="M2.96 18.75L2.11 20.45C1.75 21.16 2.27 22 3.06 22L20.93 22C21.72 22 22.24 21.16 21.88 20.45L21.03 18.75L2.96 18.75Z" fill="#000000" fill-opacity="1.000000" fill-rule="nonzero"/>
+		<path id="Vector" d="M8.71 7.25L15.28 7.25L12.95 2.58C12.56 1.8 11.43 1.8 11.04 2.58L8.71 7.25Z" fill="#000000" fill-opacity="1.000000" fill-rule="nonzero"/>
+	</g>
+</svg>

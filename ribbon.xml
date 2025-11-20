@@ -1,0 +1,68 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OnAddinLoad">
+    <ribbon startFromScratch="false">
+        <tabs>
+            <tab id="wpsAddinTab" label="WPS工具">
+				<!-- <group id="btnDemoGroup" label="系统自带测试">
+                    <button id="btnShowMsg" label="弹出消息框" onAction="OnAction" getEnabled="OnGetEnabled"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnShowDialog" label="弹对话框网页" onAction="OnAction" getEnabled="OnGetEnabled"  getImage="GetImage" getVisible="OnGetVisible" size="small"/>
+                    <button id="btnShowTaskPane" label="弹任务窗格网页" onAction="OnAction" getEnabled="OnGetEnabled"  getImage="GetImage" getVisible="OnGetVisible" size="small"/>
+                    <button id="btnApiEvent" getLabel="OnGetLabel" onAction="OnAction" getEnabled="OnGetEnabled"  getImage="GetImage" getVisible="OnGetVisible" size="small"/>
+                    <button id="btnWebNotify" label="给业务系统发通知" onAction="OnAction" enabled="true"  getImage="GetImage" getVisible="OnGetVisible" size="small"/>
+                    <button id="btnIsEnbable" getLabel="OnGetLabel" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnTest" label="李文玉测试0001" onAction="OnAction" getEnabled="OnGetEnabled"  getImage="GetImage" getVisible="OnGetVisible" size="large"/>
+				</group> -->
+                <group id="openSystem" label="文档工具">
+                    <!-- <button id="btnCheckVisitors" label="查看访问者" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
+                    <button id="btnDeleteSheet" label="删除当前工作表" onAction="OnAction" enabled="true" getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnSelectFilter" label="筛选选中列" onAction="OnAction" enabled="true" getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnSelectFilterInit" label="初始化筛选" onAction="OnAction" enabled="true" getImage="GetImage" visible="true" size="small"/>
+                </group>
+
+                <group id="fastColor" label="颜色填充">
+                    <button id="btnRedFill" label="红色填充" getImage="GetImage" onAction="OnAction" style="background-color: #FF0000;"/>
+                    <button id="btnYellowFill" label="黄色填充" getImage="GetImage" onAction="OnAction" style="background-color: #FFFF00;"/>
+                    <button id="btnGreenFill" label="绿色填充" getImage="GetImage" onAction="OnAction" style="background-color: #00FF00;"/>
+                    <button id="btnSkyBlueFill" label="深蓝填充" getImage="GetImage" onAction="OnAction" style="background-color: #4032FA;"/>
+                    <button id="btnLightBlueFill" label="浅蓝填充" getImage="GetImage" onAction="OnAction" style="background-color: #7CD0EC;"/>
+                    <button id="btnNoFill" label="无背景色" getImage="GetImage" onAction="OnAction" style="background-color: #FFFFFF;"/>
+                </group>
+                <group id="openSystem" label="系统入口">
+                    <button id="btnOpenHKExcel" label="打开航科EXCEL1.0" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <!-- <button id="btnOpenPlanOld" label="打开计划系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
+                    <button id="btnOpenPlan" label="打开辅助系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <!-- <button id="btnOpenERPceshi" label="打开ERP测试系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
+                    <!-- <button id="btnOpenERP" label="打开ERP系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
+                    <button id="btnServer" label="接口服务器" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnOpenLog" label="查看日志" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+
+                </group>
+                <group id="hkGPT" label="航科GPT">
+                    <button id="btnGPTmain1" label="hkGPTv1" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnGPTmain2" label="hkGPTv2" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                </group>
+                 <group id="hkAI" label="航科智能办公V3">
+                    <button id="btnAIFormulaGen" label="AI公式生成" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                </group>
+            </tab>
+            <tab id="pp" label="生产计划管理">
+                <group id="shareWork" label="计划协同工作">
+                    <button id="btnPTPlan" label="配套计划汇总" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnCPInStock" label="产品入库记录" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnCreateSOMSheet" label="缺件管理" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                </group>
+                <group id="planOld" label="计划系统报表">
+                    <button id="btnCreateInBatch" label="计划系统入库记录" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnCreateInBatchHaveStock" label="计划系统批次货位库存" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <button id="btnStockParts" label="计划系统图号汇总实时库存" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                </group>
+                <group id="mbom" label="BOM管理">
+                    <button id="btnERPMBOM" label="MBOM数据管理" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                </group>
+            </tab>            
+        </tabs>
+
+    </ribbon>
+</customUI>
+
+
+<!-- import * as wps from 'wps-jsapi'; -->

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打开系统浏览器</title>
+    <script>
+        // 添加调试信息显示函数
+        function log(message) {
+            var logElement = document.getElementById('debugLog');
+            if (logElement) {
+                logElement.innerHTML += message + '<br/>';
+            }
+            // 浏览器打开操作日志已简化
+        }
+
+        // 使用JavaScript调用系统浏览器打开URL
+        function openInSystemBrowser() {
+            var url = "http://192.168.70.26:8002/";
+            var success = false;
+            
+            try {
+                log('开始尝试打开系统浏览器...');
+                
+                // 方法1：尝试使用window.open打开URL（替代已移除的WPS API）
+                if (typeof window.open === 'function') {
+                    log('尝试方法1: window.open');
+                    try {
+                        log('尝试打开新窗口，可能会触发浏览器弹窗阻止器');
+                        var newWindow = window.open(url, '_blank', 'noopener,noreferrer,width=800,height=600');
+                        if (newWindow) {
+                            success = true;
+                            log('window.open调用成功');
+                        } else {
+                            log('window.open被阻止 - 提示用户检查弹窗阻止器');
+                        }
+                    } catch (e) {
+                        log('window.open调用失败: ' + e.message);
+                    }
+                }
+                
+                // 方法2：尝试使用Windows Script Host的Shell对象（更可靠的ActiveX方法）
+                if (!success && typeof ActiveXObject !== 'undefined') {
+                    log('尝试方法2: ActiveXObject - WScript.Shell');
+                    try {
+                        var shell = new ActiveXObject('WScript.Shell');
+                        // 使用start命令确保在系统默认浏览器中打开，添加更多安全参数
+                        shell.run('cmd /c start "" "' + url + '"', 0, false);
+                        success = true;
+                        log('ActiveXObject调用成功');
+                    } catch (e) {
+                        log('ActiveXObject调用失败: ' + e.message);
+                    }
+                }
+                
+                // 方法3：改进的window.open方法 - 添加更友好的用户提示
+                if (!success && typeof window.open === 'function') {
+                    log('尝试方法3: window.open');
+                    try {
+                        // 预先提示用户可能的弹窗阻止
+                        log('尝试打开新窗口，可能会触发浏览器弹窗阻止器');
+                        var newWindow = window.open(url, '_blank', 'noopener,noreferrer,width=800,height=600');
+                        if (newWindow) {
+                            success = true;
+                            log('window.open调用成功');
+                        } else {
+                            log('window.open被阻止 - 提示用户检查弹窗阻止器');
+                            // 不立即设置success为true，但提示用户
+                            document.getElementById('popupNotice').style.display = 'block';
+                        }
+                    } catch (e) {
+                        log('window.open调用失败: ' + e.message);
+                    }
+                }
+                
+                // 方法4：尝试使用Application对象的ShellExecute方法（适用于WPS环境）
+                if (!success && typeof window.Application !== 'undefined') {
+                    log('尝试方法4: Application对象');
+                    try {
+                        if (window.Application.ShellExecute) {
+                            window.Application.ShellExecute('open', url);
+                            success = true;
+                            log('Application.ShellExecute调用成功');
+                        } else if (window.Application.Run) {
+                            // 备选方案
+                            window.Application.Run('cmd /c start "" "' + url + '"');
+                            success = true;
+                            log('Application.Run调用成功');
+                        }
+                    } catch (e) {
+                        log('Application调用失败: ' + e.message);
+                    }
+                }
+                
+                // 方法5：尝试使用HTML DOM的点击方法模拟用户点击
+                if (!success) {
+                    log('尝试方法5: 模拟点击链接');
+                    try {
+                        var link = document.createElement('a');
+                        link.href = url;
+                        link.target = '_blank';
+                        // 添加样式使其不可见但可点击
+                        link.style.position = 'absolute';
+                        link.style.left = '-9999px';
+                        document.body.appendChild(link);
+                        // 使用鼠标事件模拟真实点击
+                        var event = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        });
+                        link.dispatchEvent(event);
+                        document.body.removeChild(link);
+                        success = true;
+                        log('模拟点击链接成功');
+                    } catch (e) {
+                        log('模拟点击链接失败: ' + e.message);
+                    }
+                }
+                
+                // 方法6：尝试使用PowerShell命令（Windows环境下更可靠）
+                if (!success && typeof ActiveXObject !== 'undefined') {
+                    log('尝试方法6: PowerShell命令（Windows环境）');
+                    try {
+                        var shell = new ActiveXObject('WScript.Shell');
+                        // 使用PowerShell的Start-Process命令打开URL
+                        var psCommand = 'powershell -Command "Start-Process \"' + url + '\""';
+                        shell.run(psCommand, 0, false);
+                        success = true;
+                        log('PowerShell命令执行成功');
+                    } catch (e) {
+                        log('PowerShell命令执行失败: ' + e.message);
+                    }
+                }
+                
+                // 方法7：尝试使用rundll32命令（Windows系统级命令）
+                if (!success && typeof ActiveXObject !== 'undefined') {
+                    log('尝试方法7: rundll32命令（Windows系统级）');
+                    try {
+                        var shell = new ActiveXObject('WScript.Shell');
+                        // 使用rundll32调用URL.dll打开URL
+                        shell.run('rundll32 url.dll,FileProtocolHandler "' + url + '"', 0, false);
+                        success = true;
+                        log('rundll32命令执行成功');
+                    } catch (e) {
+                        log('rundll32命令执行失败: ' + e.message);
+                    }
+                }
+                
+                // 显示结果信息
+                if (success) {
+                    document.getElementById('resultMessage').innerText = '系统浏览器已打开，请查看';
+                    document.getElementById('resultMessage').style.color = 'green';
+                    document.getElementById('resultMessage').style.backgroundColor = '#e8f5e9';
+                } else {
+                    document.getElementById('errorMessage').innerText = '所有方法都尝试失败，请手动点击下方链接';
+                }
+                
+            } catch (e) {
+                var errorMsg = '发生异常: ' + e.message + '\n' + e.stack;
+                log(errorMsg);
+                document.getElementById('errorMessage').innerText = errorMsg;
+            }
+        }
+        
+        // 页面加载时执行
+        window.onload = function() {
+            log('页面已加载，开始执行打开浏览器操作');
+            openInSystemBrowser();
+        };
+        
+        // 手动关闭对话框函数
+        function closeDialog() {
+            if (typeof window.close === 'function') {
+                log('用户手动关闭对话框');
+                window.close();
+            } else {
+                log('无法关闭对话框');
+                alert('无法关闭对话框，请手动关闭窗口');
+            }
+        }
+        
+        // 复制URL到剪贴板
+        function copyUrl() {
+            try {
+                var urlInput = document.getElementById('urlInput');
+                urlInput.select();
+                urlInput.setSelectionRange(0, 99999); // 兼容移动设备
+                
+                if (document.execCommand('copy')) {
+                    log('URL已复制到剪贴板');
+                    alert('网址已成功复制到剪贴板！');
+                } else {
+                    log('复制URL失败');
+                    alert('复制失败，请手动选择并复制网址');
+                }
+            } catch (e) {
+                log('复制URL发生异常: ' + e.message);
+                alert('复制失败，请手动选择并复制网址');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h3>正在调用系统浏览器...</h3>
+        <p>我们正在尝试使用多种方法打开系统默认浏览器访问目标页面。</p>
+        
+        <div id="resultMessage" style="margin: 15px 0; padding: 10px; border-radius: 4px;"></div>
+        <div id="popupNotice" style="display: none; color: orange; margin: 15px 0; padding: 10px; background-color: #fff8e1; border-radius: 4px; border: 1px solid #ffd54f;">
+            <strong>提示：</strong>浏览器弹窗阻止器可能已阻止打开新窗口，请检查浏览器设置或点击下方手动链接。
+        </div>
+        <div id="errorMessage" style="color: red; margin: 15px 0; padding: 10px; background-color: #ffebee; border-radius: 4px;"></div>
+        
+        <div style="margin: 20px 0;">
+            <a href="http://192.168.70.26:8002/" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">点击此处手动打开</a>
+            <button onclick="closeDialog()" style="padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">关闭此窗口</button>
+        </div>
+        
+        <div style="margin-top: 15px; font-size: 14px; color: #666;">
+            <p><strong>提示：</strong>此窗口不会自动关闭，您可以查看调试信息或根据需要手动关闭。</p>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+            <h4 style="margin-top: 0; color: #856404;">访问信息</h4>
+            <p>若仍然未跳转，请使用以下方式访问：</p>
+            
+            <div style="margin: 15px 0;">
+                <strong>方法1：</strong>直接点击上方的"点击此处手动打开"按钮
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <strong>方法2：</strong>复制以下网址到浏览器地址栏
+                <div style="display: flex; margin-top: 5px;">
+                    <input type="text" id="urlInput" value="http://192.168.70.26:8002/" readonly 
+                           style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px 0 0 4px;">
+                    <button onclick="copyUrl()" 
+                            style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer;">
+                        复制
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <strong>登录信息：</strong><br>
+                <strong>账号：</strong> a@a.com<br>
+                <strong>密码：</strong> aaa
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 12px; color: #666;">
+            <h4>调试信息:</h4>
+            <div id="debugLog" style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+</body>
+</html>

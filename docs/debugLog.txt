@@ -1,0 +1,686 @@
+formulaGenerator.js:34 ✅ [FormulaGenerator] AI接口初始化成功
+formulaGenerator.js:307 🔄 [调试] 开始公式生成流程
+formulaGenerator.js:311 🔍 [调试] 开始generateFormula方法
+formulaGenerator.js:312 📍 [调试] 调用堆栈信息:
+formulaGenerator.js:313 console.trace
+generateFormula @ formulaGenerator.js:313
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:318 🔍 [调试] 开始收集请求数据
+formulaGenerator.js:1016 🔍 [collectRequestData] 开始收集请求数据...
+formulaGenerator.js:1017 🔍 [collectRequestData] 调用堆栈:
+collectRequestData @ formulaGenerator.js:1017
+generateFormula @ formulaGenerator.js:319
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:1033 🔍 [collectRequestData] Excel对象状态检查...
+formulaGenerator.js:1034   - window.Application存在: true
+formulaGenerator.js:1035   - window.Application.ActiveSheet存在: true
+formulaGenerator.js:1036   - window.Application.Selection存在: true
+formulaGenerator.js:1037   - window.Application.ActiveWorkbook存在: true
+formulaGenerator.js:1046 📍 [collectRequestData] 原始单元格信息: {row: 9, column: 9, value: ƒ}
+formulaGenerator.js:1412 🔍 [getColumnHeaderFromCell] 尝试获取I1单元格值...
+formulaGenerator.js:1432 🔍 [getColumnHeaderFromCell] 原始值类型: string 值: 总库存
+formulaGenerator.js:1472 📋 [getColumnHeaderFromCell] 第9列标题: "总库存"
+formulaGenerator.js:1064 ✅ [collectRequestData] 单元格信息完整性检查:
+formulaGenerator.js:1065   - cellAddress: I9
+formulaGenerator.js:1066   - columnName: 总库存
+formulaGenerator.js:1067   - workSheetName: 2025.11.16实时库存112105
+formulaGenerator.js:1068   - workBookName: 工作簿1.xlsx
+formulaGenerator.js:1074 📍 [collectRequestData] 当前单元格: {cellAddress: 'I9', columnName: '总库存', workSheetName: '2025.11.16实时库存112105', workBookName: '工作簿1.xlsx', workBookPath: 'C:\\Users\\win\\Desktop'}
+formulaGenerator.js:1086 📚 [collectRequestData] 开始构建工作簿信息...
+formulaGenerator.js:1090 🔄 [collectRequestData] 调用buildSelectedWorkbooksInfo...
+formulaGenerator.js:1242 📊 [buildSelectedWorkbooksInfo] 使用已选择的工作簿信息，共 1 个工作簿
+formulaGenerator.js:1248 📁 [buildSelectedWorkbooksInfo] 处理已选择的工作簿 1: 工作簿1.xlsx
+formulaGenerator.js:1256 📋 [buildSelectedWorkbooksInfo] 工作簿 工作簿1.xlsx 有 1 个工作表
+formulaGenerator.js:1258 🔍 [buildSelectedWorkbooksInfo] 处理工作表 1: 2025.11.16实时库存112105
+formulaGenerator.js:1262 📊 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 原始列标题: []
+formulaGenerator.js:1266 🔄 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 没有现有列标题，尝试重新提取...
+formulaGenerator.js:778 🔍 [extractHeaders] 开始提取表头...
+formulaGenerator.js:787 📊 [extractHeaders] 检测到实际使用范围：16列，限制检查范围为21列
+formulaGenerator.js:857 📝 [extractHeaders] 列1: "id"
+formulaGenerator.js:857 📝 [extractHeaders] 列2: "所属型号"
+formulaGenerator.js:857 📝 [extractHeaders] 列3: "图号"
+formulaGenerator.js:857 📝 [extractHeaders] 列4: "名称"
+formulaGenerator.js:857 📝 [extractHeaders] 列5: "主制车间"
+formulaGenerator.js:857 📝 [extractHeaders] 列6: "库房"
+formulaGenerator.js:857 📝 [extractHeaders] 列7: "中央库库位库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列8: "配套库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列9: "总库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列10: "组件在制"
+formulaGenerator.js:857 📝 [extractHeaders] 列11: "别名"
+formulaGenerator.js:857 📝 [extractHeaders] 列12: "是否组件"
+formulaGenerator.js:857 📝 [extractHeaders] 列13: "当前时间"
+formulaGenerator.js:857 📝 [extractHeaders] 列14: "logFormName"
+formulaGenerator.js:857 📝 [extractHeaders] 列15: "logTitle"
+formulaGenerator.js:857 📝 [extractHeaders] 列16: "logType"
+formulaGenerator.js:810 🔍 [extractHeaders] Q1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] R1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] S1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] T1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] U1 Value2为空，尝试使用Text
+formulaGenerator.js:864 🛑 [extractHeaders] 连续5列为空，停止获取更多列
+formulaGenerator.js:880 ✅ [extractHeaders] 表头提取完成，获得16个有效列标题
+formulaGenerator.js:1274 📋 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 重新提取结果: 16 个列标题
+formulaGenerator.js:1292 🔄 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 转换后的列标题: {A: 'id', B: '所属型号', C: '图号', D: '名称', E: '主制车间', …}
+formulaGenerator.js:1302 ✅ [buildSelectedWorkbooksInfo] 已选择的工作簿有有效数据，使用它们
+formulaGenerator.js:1092 ✅ [collectRequestData] 工作簿信息构建完成，工作簿数量: 1
+formulaGenerator.js:1102 📊 [collectRequestData] 开始获取当前工作簿信息...
+formulaGenerator.js:1106 🔄 [collectRequestData] 调用getCurrentWorkbookInfo...
+formulaGenerator.js:778 🔍 [extractHeaders] 开始提取表头...
+formulaGenerator.js:787 📊 [extractHeaders] 检测到实际使用范围：16列，限制检查范围为21列
+formulaGenerator.js:857 📝 [extractHeaders] 列1: "id"
+formulaGenerator.js:857 📝 [extractHeaders] 列2: "所属型号"
+formulaGenerator.js:857 📝 [extractHeaders] 列3: "图号"
+formulaGenerator.js:857 📝 [extractHeaders] 列4: "名称"
+formulaGenerator.js:857 📝 [extractHeaders] 列5: "主制车间"
+formulaGenerator.js:857 📝 [extractHeaders] 列6: "库房"
+formulaGenerator.js:857 📝 [extractHeaders] 列7: "中央库库位库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列8: "配套库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列9: "总库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列10: "组件在制"
+formulaGenerator.js:857 📝 [extractHeaders] 列11: "别名"
+formulaGenerator.js:857 📝 [extractHeaders] 列12: "是否组件"
+formulaGenerator.js:857 📝 [extractHeaders] 列13: "当前时间"
+formulaGenerator.js:857 📝 [extractHeaders] 列14: "logFormName"
+formulaGenerator.js:857 📝 [extractHeaders] 列15: "logTitle"
+formulaGenerator.js:857 📝 [extractHeaders] 列16: "logType"
+formulaGenerator.js:810 🔍 [extractHeaders] Q1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] R1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] S1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] T1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] U1 Value2为空，尝试使用Text
+formulaGenerator.js:864 🛑 [extractHeaders] 连续5列为空，停止获取更多列
+formulaGenerator.js:880 ✅ [extractHeaders] 表头提取完成，获得16个有效列标题
+formulaGenerator.js:1108 ✅ [collectRequestData] 当前工作簿信息获取完成，列标题数量: 16
+formulaGenerator.js:1118 📝 [collectRequestData] 开始处理描述字段...
+formulaGenerator.js:1122 ⚠️ [collectRequestData] 描述为空，开始生成智能分析描述...
+formulaGenerator.js:1124 🔄 [collectRequestData] 调用buildIntelligentAnalysisDescription...
+formulaGenerator.js:612 🤖 [buildIntelligentAnalysisDescription] 开始生成智能分析描述...
+formulaGenerator.js:634 🤖 [buildIntelligentAnalysisDescription] 用户无描述，构建智能分析描述
+formulaGenerator.js:1412 🔍 [getColumnHeaderFromCell] 尝试获取I1单元格值...
+formulaGenerator.js:1432 🔍 [getColumnHeaderFromCell] 原始值类型: string 值: 总库存
+formulaGenerator.js:1472 📋 [getColumnHeaderFromCell] 第9列标题: "总库存"
+formulaGenerator.js:640 📍 [buildIntelligentAnalysisDescription] 当前单元格信息: {cellAddress: 'I9', columnName: '总库存', workSheetName: '2025.11.16实时库存112105', workBookName: '工作簿1.xlsx', workBookPath: 'C:\\Users\\win\\Desktop'}
+formulaGenerator.js:778 🔍 [extractHeaders] 开始提取表头...
+formulaGenerator.js:787 📊 [extractHeaders] 检测到实际使用范围：16列，限制检查范围为21列
+formulaGenerator.js:857 📝 [extractHeaders] 列1: "id"
+formulaGenerator.js:857 📝 [extractHeaders] 列2: "所属型号"
+formulaGenerator.js:857 📝 [extractHeaders] 列3: "图号"
+formulaGenerator.js:857 📝 [extractHeaders] 列4: "名称"
+formulaGenerator.js:857 📝 [extractHeaders] 列5: "主制车间"
+formulaGenerator.js:857 📝 [extractHeaders] 列6: "库房"
+formulaGenerator.js:857 📝 [extractHeaders] 列7: "中央库库位库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列8: "配套库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列9: "总库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列10: "组件在制"
+formulaGenerator.js:857 📝 [extractHeaders] 列11: "别名"
+formulaGenerator.js:857 📝 [extractHeaders] 列12: "是否组件"
+formulaGenerator.js:857 📝 [extractHeaders] 列13: "当前时间"
+formulaGenerator.js:857 📝 [extractHeaders] 列14: "logFormName"
+formulaGenerator.js:857 📝 [extractHeaders] 列15: "logTitle"
+formulaGenerator.js:857 📝 [extractHeaders] 列16: "logType"
+formulaGenerator.js:810 🔍 [extractHeaders] Q1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] R1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] S1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] T1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] U1 Value2为空，尝试使用Text
+formulaGenerator.js:864 🛑 [extractHeaders] 连续5列为空，停止获取更多列
+formulaGenerator.js:880 ✅ [extractHeaders] 表头提取完成，获得16个有效列标题
+formulaGenerator.js:651 📊 [buildIntelligentAnalysisDescription] 当前工作表列标题: (16) ['id', '所属型号', '图号', '名称', '主制车间', '库房', '中央库库位库存', '配套库存', '总库存', '组件在制', '别名', '是否组件', '当前时间', 'logFormName', 'logTitle', 'logType']
+formulaGenerator.js:1242 📊 [buildSelectedWorkbooksInfo] 使用已选择的工作簿信息，共 1 个工作簿
+formulaGenerator.js:1248 📁 [buildSelectedWorkbooksInfo] 处理已选择的工作簿 1: 工作簿1.xlsx
+formulaGenerator.js:1256 📋 [buildSelectedWorkbooksInfo] 工作簿 工作簿1.xlsx 有 1 个工作表
+formulaGenerator.js:1258 🔍 [buildSelectedWorkbooksInfo] 处理工作表 1: 2025.11.16实时库存112105
+formulaGenerator.js:1262 📊 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 原始列标题: []
+formulaGenerator.js:1266 🔄 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 没有现有列标题，尝试重新提取...
+formulaGenerator.js:778 🔍 [extractHeaders] 开始提取表头...
+formulaGenerator.js:787 📊 [extractHeaders] 检测到实际使用范围：16列，限制检查范围为21列
+formulaGenerator.js:857 📝 [extractHeaders] 列1: "id"
+formulaGenerator.js:857 📝 [extractHeaders] 列2: "所属型号"
+formulaGenerator.js:857 📝 [extractHeaders] 列3: "图号"
+formulaGenerator.js:857 📝 [extractHeaders] 列4: "名称"
+formulaGenerator.js:857 📝 [extractHeaders] 列5: "主制车间"
+formulaGenerator.js:857 📝 [extractHeaders] 列6: "库房"
+formulaGenerator.js:857 📝 [extractHeaders] 列7: "中央库库位库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列8: "配套库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列9: "总库存"
+formulaGenerator.js:857 📝 [extractHeaders] 列10: "组件在制"
+formulaGenerator.js:857 📝 [extractHeaders] 列11: "别名"
+formulaGenerator.js:857 📝 [extractHeaders] 列12: "是否组件"
+formulaGenerator.js:857 📝 [extractHeaders] 列13: "当前时间"
+formulaGenerator.js:857 📝 [extractHeaders] 列14: "logFormName"
+formulaGenerator.js:857 📝 [extractHeaders] 列15: "logTitle"
+formulaGenerator.js:857 📝 [extractHeaders] 列16: "logType"
+formulaGenerator.js:810 🔍 [extractHeaders] Q1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] R1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] S1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] T1 Value2为空，尝试使用Text
+formulaGenerator.js:810 🔍 [extractHeaders] U1 Value2为空，尝试使用Text
+formulaGenerator.js:864 🛑 [extractHeaders] 连续5列为空，停止获取更多列
+formulaGenerator.js:880 ✅ [extractHeaders] 表头提取完成，获得16个有效列标题
+formulaGenerator.js:1274 📋 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 重新提取结果: 16 个列标题
+formulaGenerator.js:1292 🔄 [buildSelectedWorkbooksInfo] 工作表 2025.11.16实时库存112105 转换后的列标题: {A: 'id', B: '所属型号', C: '图号', D: '名称', E: '主制车间', …}
+formulaGenerator.js:1302 ✅ [buildSelectedWorkbooksInfo] 已选择的工作簿有有效数据，使用它们
+formulaGenerator.js:676 📁 [buildIntelligentAnalysisDescription] 选中工作簿信息: [{…}]
+formulaGenerator.js:709 ✅ [buildIntelligentAnalysisDescription] 智能描述生成完成: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2025.11.16实时库存112105 (16个列标题)
+    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+参考类型：current
+
+🎯 核心任务 - 针对"总库存"列的Excel公式建议：
+
+当前情况：
+- 选中的单元格：I9
+- 所在列名：总库存
+- 当前值：待计算
+- 业务含义：总库存应该是通过其他库存数据计算得出
+
+具体需求：
+1. 📊 提供计算"总库存"的Excel公式
+2. 🔄 公式应该基于同行的其他库存数据（如中央库库位库存、配套库存等）
+3. 🎯 优先使用SUM、SUMIF、VLOOKUP等库存计算常用函数
+4. 🛡️ 考虑数据验证和错误处理
+5. 📈 确保公式适合向下或向右填充
+
+请重点分析如何基于当前行的"中央库库位库存"、"配套库存"等数据来计算"总库存"的值。
+
+🔍 分析提示：
+- 这是一个库存管理系统的数据表
+- "总库存"可能需要计算得出
+- 建议的公式类型：汇总公式、查找公式、条件计算公式
+- 输出格式：公式内容 + 详细解释 + 使用示例
+formulaGenerator.js:1126 ✅ [collectRequestData] 智能分析描述生成成功，描述长度: 734
+formulaGenerator.js:1127 🤖 [collectRequestData] 智能分析描述内容: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2025.11.16实时库存112105 (16个列标题)
+    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+参考类型：current
+
+🎯 核心任务 - 针对"总库存"列的Excel公式建议：
+
+当前情况：
+- 选中的单元格：I9
+- 所在列名：总库存
+- 当前值：待计算
+- 业务含义：总库存应该是通过其他库存数据计算得出
+
+具体需求：
+1. 📊 提供计算"总库存"的Excel公式
+2. 🔄 公式应该基于同行的其他库存数据（如中央库库位库存、配套库存等）
+3. 🎯 优先使用SUM、SUMIF、VLOOKUP等库存计算常用函数
+4. 🛡️ 考虑数据验证和错误处理
+5. 📈 确保公式适合向下或向右填充
+
+请重点分析如何基于当前行的"中央库库位库存"、"配套库存"等数据来计算"总库存"的值。
+
+🔍 分析提示：
+- 这是一个库存管理系统的数据表
+- "总库存"可能需要计算得出
+- 建议的公式类型：汇总公式、查找公式、条件计算公式
+- 输出格式：公式内容 + 详细解释 + 使用示例
+formulaGenerator.js:1150 ✅ [collectRequestData] 数据收集完成
+formulaGenerator.js:1151 📊 [collectRequestData] 收集到的数据: {description: '当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存\n\n当前工作表列标题…议的公式类型：汇总公式、查找公式、条件计算公式\n- 输出格式：公式内容 + 详细解释 + 使用示例', referenceType: 'current', currentCell: {…}, selectedWorkbooksCount: 1, columnHeadersCount: 16, …}
+formulaGenerator.js:1161 🔍 [collectRequestData] 进行最终数据验证...
+formulaGenerator.js:1165 🔍 [collectRequestData] 验证description字段...
+formulaGenerator.js:1170 🔍 [collectRequestData] 验证referenceType字段...
+formulaGenerator.js:1176 🔍 [collectRequestData] 验证currentCell字段...
+formulaGenerator.js:1188 🔍 [collectRequestData] 验证selectedWorkbooks字段...
+formulaGenerator.js:1194 🔍 [collectRequestData] 验证columnHeaders字段...
+formulaGenerator.js:1200 🔍 [collectRequestData] 验证allWorksheets字段...
+formulaGenerator.js:1207 ✅ [collectRequestData] 数据验证完成，所有字段状态良好
+formulaGenerator.js:1208 📋 [collectRequestData] 最终数据结构: {descriptionLength: 734, referenceType: 'current', hasCurrentCell: true, selectedWorkbooksCount: 1, columnHeadersCount: 16, …}
+formulaGenerator.js:1227 ✅ [collectRequestData] 数据收集和验证完全成功
+formulaGenerator.js:1228 🔄 [collectRequestData] 返回最终请求数据
+formulaGenerator.js:320 ✅ [调试] 请求数据收集成功
+formulaGenerator.js:334 🔍 [调试] 数据收集完成，开始验证
+formulaGenerator.js:335 📊 [调试] requestData详情:
+formulaGenerator.js:336   - description: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2025.11.16实时库存112105 (16个列标题)
+    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+参考类型：current
+
+🎯 核心任务 - 针对"总库存"列的Excel公式建议：
+
+当前情况：
+- 选中的单元格：I9
+- 所在列名：总库存
+- 当前值：待计算
+- 业务含义：总库存应该是通过其他库存数据计算得出
+
+具体需求：
+1. 📊 提供计算"总库存"的Excel公式
+2. 🔄 公式应该基于同行的其他库存数据（如中央库库位库存、配套库存等）
+3. 🎯 优先使用SUM、SUMIF、VLOOKUP等库存计算常用函数
+4. 🛡️ 考虑数据验证和错误处理
+5. 📈 确保公式适合向下或向右填充
+
+请重点分析如何基于当前行的"中央库库位库存"、"配套库存"等数据来计算"总库存"的值。
+
+🔍 分析提示：
+- 这是一个库存管理系统的数据表
+- "总库存"可能需要计算得出
+- 建议的公式类型：汇总公式、查找公式、条件计算公式
+- 输出格式：公式内容 + 详细解释 + 使用示例
+formulaGenerator.js:337   - currentCell: {"cellAddress":"I9","columnName":"总库存","workSheetName":"2025.11.16实时库存112105","workBookName":"工作簿1.xlsx","workBookPath":"C:\\Users\\win\\Desktop"}
+formulaGenerator.js:338   - columnHeaders: 16项
+formulaGenerator.js:339   - allWorksheets: 1项
+formulaGenerator.js:343 📝 [调试] description完整内容:
+formulaGenerator.js:344 ========== DESCRIPTION START ==========
+formulaGenerator.js:345 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2025.11.16实时库存112105 (16个列标题)
+    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+参考类型：current
+
+🎯 核心任务 - 针对"总库存"列的Excel公式建议：
+
+当前情况：
+- 选中的单元格：I9
+- 所在列名：总库存
+- 当前值：待计算
+- 业务含义：总库存应该是通过其他库存数据计算得出
+
+具体需求：
+1. 📊 提供计算"总库存"的Excel公式
+2. 🔄 公式应该基于同行的其他库存数据（如中央库库位库存、配套库存等）
+3. 🎯 优先使用SUM、SUMIF、VLOOKUP等库存计算常用函数
+4. 🛡️ 考虑数据验证和错误处理
+5. 📈 确保公式适合向下或向右填充
+
+请重点分析如何基于当前行的"中央库库位库存"、"配套库存"等数据来计算"总库存"的值。
+
+🔍 分析提示：
+- 这是一个库存管理系统的数据表
+- "总库存"可能需要计算得出
+- 建议的公式类型：汇总公式、查找公式、条件计算公式
+- 输出格式：公式内容 + 详细解释 + 使用示例
+formulaGenerator.js:346 ========== DESCRIPTION END ==========
+formulaGenerator.js:347 📏 [调试] description长度: 734 字符
+formulaGenerator.js:353 🔍 [调试] 关键词"组件在制": ✅ 包含
+formulaGenerator.js:353 🔍 [调试] 关键词"库存": ✅ 包含
+formulaGenerator.js:353 🔍 [调试] 关键词"Excel公式": ✅ 包含
+formulaGenerator.js:353 🔍 [调试] 关键词"单元格": ✅ 包含
+formulaGenerator.js:374 📤 [调试] 传递给AIInterface的完整requestData:
+formulaGenerator.js:375 {
+  "description": "当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存\n\n当前工作表列标题（16个）：\nid, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType\n\n可用的数据源（共1个工作簿）：\n- 工作簿：工作簿1.xlsx\n  - 工作表：2025.11.16实时库存112105 (16个列标题)\n    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType\n\n参考类型：current\n\n🎯 核心任务 - 针对\"总库存\"列的Excel公式建议：\n\n当前情况：\n- 选中的单元格：I9\n- 所在列名：总库存\n- 当前值：待计算\n- 业务含义：总库存应该是通过其他库存数据计算得出\n\n具体需求：\n1. 📊 提供计算\"总库存\"的Excel公式\n2. 🔄 公式应该基于同行的其他库存数据（如中央库库位库存、配套库存等）\n3. 🎯 优先使用SUM、SUMIF、VLOOKUP等库存计算常用函数\n4. 🛡️ 考虑数据验证和错误处理\n5. 📈 确保公式适合向下或向右填充\n\n请重点分析如何基于当前行的\"中央库库位库存\"、\"配套库存\"等数据来计算\"总库存\"的值。\n\n🔍 分析提示：\n- 这是一个库存管理系统的数据表\n- \"总库存\"可能需要计算得出\n- 建议的公式类型：汇总公式、查找公式、条件计算公式\n- 输出格式：公式内容 + 详细解释 + 使用示例",
+  "referenceType": "current",
+  "currentCell": {
+    "cellAddress": "I9",
+    "columnName": "总库存",
+    "workSheetName": "2025.11.16实时库存112105",
+    "workBookName": "工作簿1.xlsx",
+    "workBookPath": "C:\\Users\\win\\Desktop"
+  },
+  "selectedWorkbooks": [
+    {
+      "workBookName": "工作簿1.xlsx",
+      "workBookPath": "C:\\Users\\win\\Desktop",
+      "worksheets": [
+        {
+          "workSheetName": "2025.11.16实时库存112105",
+          "columnHeaders": {
+            "A": "id",
+            "B": "所属型号",
+            "C": "图号",
+            "D": "名称",
+            "E": "主制车间",
+            "F": "库房",
+            "G": "中央库库位库存",
+            "H": "配套库存",
+            "I": "总库存",
+            "J": "组件在制",
+            "K": "别名",
+            "L": "是否组件",
+            "M": "当前时间",
+            "N": "logFormName",
+            "O": "logTitle",
+            "P": "logType"
+          }
+        }
+      ]
+    }
+  ],
+  "columnHeaders": [
+    "id",
+    "所属型号",
+    "图号",
+    "名称",
+    "主制车间",
+    "库房",
+    "中央库库位库存",
+    "配套库存",
+    "总库存",
+    "组件在制",
+    "别名",
+    "是否组件",
+    "当前时间",
+    "logFormName",
+    "logTitle",
+    "logType"
+  ],
+  "allWorksheets": [
+    {
+      "name": "2025.11.16实时库存112105",
+      "usedRange": {
+        "rows": 11658,
+        "columns": 16
+      }
+    }
+  ]
+}
+formulaGenerator.js:391 🔄 [调试] 开始调用AIInterface.generateFormulaWithEndpoint
+formulaGenerator.js:392 🔍 [调试] AI接口调用堆栈:
+formulaGenerator.js:393 console.trace
+generateFormula @ formulaGenerator.js:393
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:396 📡 [调试] API调用前的完整检查:
+formulaGenerator.js:397   📋 [调试] 请求数据大小: 1558 字符
+formulaGenerator.js:398   📋 [调试] 请求数据字段: (6) ['description', 'referenceType', 'currentCell', 'selectedWorkbooks', 'columnHeaders', 'allWorksheets']
+formulaGenerator.js:399   📋 [调试] description字段长度: 734
+formulaGenerator.js:400   📋 [调试] 当前单元格地址: I9
+formulaGenerator.js:401   📋 [调试] 选中工作簿数量: 1
+formulaGenerator.js:402   📋 [调试] 列标题数量: 16
+formulaGenerator.js:405 ⚙️ [调试] AI接口配置检查:
+formulaGenerator.js:406   - API端点存在: false
+formulaGenerator.js:407   - API端点地址: 未设置
+formulaGenerator.js:408   - API密钥存在: false
+formulaGenerator.js:409   - API密钥长度: 0
+formulaGenerator.js:410   - 模型名称: 未设置
+formulaGenerator.js:411   - 超时设置: 默认
+formulaGenerator.js:412   - 最大Token数: 默认
+formulaGenerator.js:416 ⏰ [调试] API调用开始时间: 2025/11/19 07:03:11
+formulaGenerator.js:419 🚀 [调试] 正在发送API请求...
+aiInterface.js:113 🔄 开始AI公式生成流程...
+aiInterface.js:118 🔍 [调试] 创建请求数据副本，原对象ID: 无
+aiInterface.js:119 🔍 [调试] 副本对象ID: 新副本
+aiInterface.js:120 🔍 [调试] 副本description长度: 734
+aiInterface.js:147 🔍 [调试] buildAIRequest接收到原始description: string 734
+aiInterface.js:148 🔍 [调试] 原始description前100字符: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 
+aiInterface.js:209 🔍 开始数据完整性检查...
+aiInterface.js:227 🔍 [调试] 原始requestData对象ID: 无ID
+aiInterface.js:234 🔍 [调试] 数据完整性检查 - 检查description字段...
+aiInterface.js:235 🔍 [调试] 原始description: string 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2025.11.16实时库存112105 (16个列标题)
+    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+参考类型：current
+
+🎯 核心任务 - 针对"总库存"列的Excel公式建议：
+
+当前情况：
+- 选中的单元格：I9
+- 所在列名：总库存
+- 当前值：待计算
+- 业务含义：总库存应该是通过其他库存数据计算得出
+
+具体需求：
+1. 📊 提供计算"总库存"的Excel公式
+2. 🔄 公式应该基于同行的其他库存数据（如中央库库位库存、配套库存等）
+3. 🎯 优先使用SUM、SUMIF、VLOOKUP等库存计算常用函数
+4. 🛡️ 考虑数据验证和错误处理
+5. 📈 确保公式适合向下或向右填充
+
+请重点分析如何基于当前行的"中央库库位库存"、"配套库存"等数据来计算"总库存"的值。
+
+🔍 分析提示：
+- 这是一个库存管理系统的数据表
+- "总库存"可能需要计算得出
+- 建议的公式类型：汇总公式、查找公式、条件计算公式
+- 输出格式：公式内容 + 详细解释 + 使用示例
+aiInterface.js:236 🔍 [调试] description是否存在: true
+aiInterface.js:237 🔍 [调试] description长度: 734
+aiInterface.js:238 🔍 [调试] description前100字符: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 
+aiInterface.js:253 ✅ [调试] description字段有效且已清理，保留原始值
+aiInterface.js:262 🔍 [调试] 最终确认description: string 734
+aiInterface.js:361 ✅ 数据完整性检查完成，修复了4处异常
+aiInterface.js:362 🔍 [调试] 修复后的description字段信息:
+aiInterface.js:363 🔍 [调试] 修复后description长度: 734
+aiInterface.js:364 🔍 [调试] 修复后description类型: string
+aiInterface.js:365 🔍 [调试] 修复后description前150字符: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, 
+aiInterface.js:154 🔍 [调试] 数据完整性检查后description: string 734
+aiInterface.js:155 🔍 [调试] 检查后description前100字符: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 
+aiInterface.js:419 🔍 [调试] buildUserPrompt接收到requestData: object (10) ['description', 'referenceType', 'currentCell', 'selectedWorkbooks', 'columnHeaders', 'allWorksheets', '__id', 'selectedWorksheets', 'headers', 'fillOptions']
+aiInterface.js:440 🔍 [调试] 构建用户提示词 - 检查description字段...
+aiInterface.js:441 🔍 [调试] buildUserPrompt中description类型: string
+aiInterface.js:442 🔍 [调试] buildUserPrompt中description存在: true
+aiInterface.js:443 🔍 [调试] buildUserPrompt中description长度: 734
+aiInterface.js:444 🔍 [调试] buildUserPrompt中description前200字符: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2
+aiInterface.js:452 🔍 [调试] isEmptyDescription检查结果: false
+aiInterface.js:453 🔍 [调试] 检查条件详情: {!description: false, description类型: 'string', description === "undefined": false, description === "null": false, description.trim() === "": false, …}
+aiInterface.js:466 ✅ [调试] description有效，maxTokens已提升至30000，无需长度限制
+aiInterface.js:467 🔍 [调试] 当前description长度: 734
+aiInterface.js:477 💾 [调试] 完整description已保存到window.__originalDescription，长度: 734
+aiInterface.js:481 🔍 [调试] 处理后的description长度: 734
+aiInterface.js:482 🎯 [调试] Token预算充足，无需截断处理
+aiInterface.js:485 🔍 [调试] 构建的用户提示词长度: 740
+aiInterface.js:486 🔍 [调试] 用户提示词前300字符: 用户需求: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  - 工作表：2025.11.16实时库存112105 (16个列标题)
+    列标题：id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名,
+aiInterface.js:175 🎯 [调试] 使用兼容模式API，maxTokens设置为: 30000
+aiInterface.js:198 🔍 [调试] 构建的AI请求体中用户提示词长度: 1006
+aiInterface.js:199 🔍 [调试] 用户提示词前200字符: 用户需求: 当前工作表：2025.11.16实时库存112105，单元格：I9，列名：总库存
+
+当前工作表列标题（16个）：
+id, 所属型号, 图号, 名称, 主制车间, 库房, 中央库库位库存, 配套库存, 总库存, 组件在制, 别名, 是否组件, 当前时间, logFormName, logTitle, logType
+
+可用的数据源（共1个工作簿）：
+- 工作簿：工作簿1.xlsx
+  -
+aiInterface.js:124 📊 数据完整性检查完成，使用副本数据
+aiInterface.js:147 🔍 [调试] buildAIRequest接收到原始description: undefined 0
+aiInterface.js:148 🔍 [调试] 原始description前100字符: null/undefined
+aiInterface.js:209 🔍 开始数据完整性检查...
+aiInterface.js:227 🔍 [调试] 原始requestData对象ID: 无ID
+aiInterface.js:234 🔍 [调试] 数据完整性检查 - 检查description字段...
+aiInterface.js:235 🔍 [调试] 原始description: undefined undefined
+aiInterface.js:236 🔍 [调试] description是否存在: false
+aiInterface.js:237 🔍 [调试] description长度: 0
+aiInterface.js:238 🔍 [调试] description前100字符: null/undefined
+aiInterface.js:242 ⚠️ [调试] description为undefined/null，使用默认值
+aiInterface.js:262 🔍 [调试] 最终确认description: string 49
+aiInterface.js:361 ✅ 数据完整性检查完成，修复了7处异常
+aiInterface.js:362 🔍 [调试] 修复后的description字段信息:
+aiInterface.js:363 🔍 [调试] 修复后description长度: 49
+aiInterface.js:364 🔍 [调试] 修复后description类型: string
+aiInterface.js:365 🔍 [调试] 修复后description前150字符: 根据所提供信息，以当前单元格信息（当前工作簿、工作表名和表头信息）为主，其他信息为辅智能分析需求。
+aiInterface.js:154 🔍 [调试] 数据完整性检查后description: string 49
+aiInterface.js:155 🔍 [调试] 检查后description前100字符: 根据所提供信息，以当前单元格信息（当前工作簿、工作表名和表头信息）为主，其他信息为辅智能分析需求。
+aiInterface.js:419 🔍 [调试] buildUserPrompt接收到requestData: object (13) ['model', 'messages', 'max_tokens', 'temperature', 'top_p', '__id', 'description', 'referenceType', 'currentCell', 'selectedWorkbooks', 'selectedWorksheets', 'headers', 'fillOptions']
+aiInterface.js:440 🔍 [调试] 构建用户提示词 - 检查description字段...
+aiInterface.js:441 🔍 [调试] buildUserPrompt中description类型: string
+aiInterface.js:442 🔍 [调试] buildUserPrompt中description存在: true
+aiInterface.js:443 🔍 [调试] buildUserPrompt中description长度: 49
+aiInterface.js:444 🔍 [调试] buildUserPrompt中description前200字符: 根据所提供信息，以当前单元格信息（当前工作簿、工作表名和表头信息）为主，其他信息为辅智能分析需求。
+aiInterface.js:452 🔍 [调试] isEmptyDescription检查结果: false
+aiInterface.js:453 🔍 [调试] 检查条件详情: {!description: false, description类型: 'string', description === "undefined": false, description === "null": false, description.trim() === "": false, …}
+aiInterface.js:466 ✅ [调试] description有效，maxTokens已提升至30000，无需长度限制
+aiInterface.js:467 🔍 [调试] 当前description长度: 49
+aiInterface.js:477 💾 [调试] 完整description已保存到window.__originalDescription，长度: 49
+aiInterface.js:481 🔍 [调试] 处理后的description长度: 49
+aiInterface.js:482 🎯 [调试] Token预算充足，无需截断处理
+aiInterface.js:485 🔍 [调试] 构建的用户提示词长度: 55
+aiInterface.js:486 🔍 [调试] 用户提示词前300字符: 用户需求: 根据所提供信息，以当前单元格信息（当前工作簿、工作表名和表头信息）为主，其他信息为辅智能分析需求。
+aiInterface.js:175 🎯 [调试] 使用兼容模式API，maxTokens设置为: 30000
+aiInterface.js:198 🔍 [调试] 构建的AI请求体中用户提示词长度: 109
+aiInterface.js:199 🔍 [调试] 用户提示词前200字符: 用户需求: 根据所提供信息，以当前单元格信息（当前工作簿、工作表名和表头信息）为主，其他信息为辅智能分析需求。
+
+=== 当前单元格信息 ===
+工作表: 2025.11.16实时库存112105, 单元格地址: I9
+aiInterface.js:682 📤 发送给AI的请求信息:
+aiInterface.js:683    模型: qwen-plus
+aiInterface.js:684    端点: https://dashscope.aliyuncs.com/compatible-mode/v1
+aiInterface.js:688    消息数量: 2
+aiInterface.js:694    消息1 (系统): 你是一个专业的Excel公式专家助手。你的任务是根据用户的需求和提供的数据信息，生成精确的Excel公式。
+
+你的回答必须严格按照以下JSON格式返回，不要包含任何其他文本：
+
+{
+    "formulas": [
+        {
+            "title": "公式名称/描述",
+            "formula": "完整的Excel公式",
+            "explanation": "公式详细说明，包括各参数含义",
+            "confidence": 95,
+            "applicable_ranges": ["应用范围说明"],
+            "required_functions": ["使用的函数列表"],
+            "example": "使用示例"
+        }
+    ],
+    "data_analysis": {
+        "headers_found": ["发现的表头"],
+        "data_types": ["数据类型分析"],
+        "recommendations": ["使用建议"]
+    },
+    "alternative_formulas": [
+        {
+            "description": "替代方案描述",
+            "formula": "替代公式",
+            "pros": ["优点"],
+            "cons": ["缺点"]
+        }
+    ]
+}
+
+重要规则：
+1. 公式必须使用正确的Excel语法
+2. 如果引用跨工作簿数据，使用'[工作簿名]工作表名!单元格引用'格式
+3. 如果引用跨工作表数据，使用'工作表名!单元格引用'格式
+4. 考虑引用范围的锁定方式（相对/绝对引用）
+5. 如果需要填充，公式中的引用需要相应调整
+6. confidence值应该在70-99之间，反映公式的准确性
+7. 若信息不足，请直接按可能概率推荐有可能的公式
+aiInterface.js:694    消息2 (用户): 用户需求: 根据所提供信息，以当前单元格信息（当前工作簿、工作表名和表头信息）为主，其他信息为辅智能分析需求。
+
+=== 当前单元格信息 ===
+工作表: 2025.11.16实时库存112105, 单元格地址: I9
+aiHelper.html:1 Access to fetch at 'https://dashscope.aliyuncs.com/compatible-mode/v1' from origin 'http://127.0.0.1:3889' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
+aiInterface.js:736          POST https://dashscope.aliyuncs.com/compatible-mode/v1 net::ERR_FAILED
+sendAIRequest @ aiInterface.js:736
+generateFormulaWithEndpoint @ aiInterface.js:127
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+aiInterface.js:741          POST https://dashscope.aliyuncs.com/compatible-mode/v1 net::ERR_ABORTED 404
+sendAIRequest @ aiInterface.js:741
+await in sendAIRequest（异步）
+generateFormulaWithEndpoint @ aiInterface.js:127
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+aiInterface.js:794 ❌ API请求失败: HTTP错误: 0 
+sendAIRequest @ aiInterface.js:794
+await in sendAIRequest（异步）
+generateFormulaWithEndpoint @ aiInterface.js:127
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+aiInterface.js:795 📊 错误详情: {status: 0, statusText: '', url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', method: 'POST', headers: {…}, …}
+sendAIRequest @ aiInterface.js:795
+await in sendAIRequest（异步）
+generateFormulaWithEndpoint @ aiInterface.js:127
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+aiInterface.js:806 📍 错误堆栈跟踪: Error
+    at AIInterface.sendAIRequest (http://127.0.0.1:3889/js/aiHelper/aiInterface.js:805:32)
+    at async AIInterface.generateFormulaWithEndpoint (http://127.0.0.1:3889/js/aiHelper/aiInterface.js:127:30)
+    at async FormulaGenerator.generateFormula (http://127.0.0.1:3889/js/aiHelper/formulaGenerator.js:420:26)
+sendAIRequest @ aiInterface.js:806
+await in sendAIRequest（异步）
+generateFormulaWithEndpoint @ aiInterface.js:127
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+aiInterface.js:862 ❌ AI请求失败: HTTP错误: 0 
+sendAIRequest @ aiInterface.js:862
+await in sendAIRequest（异步）
+generateFormulaWithEndpoint @ aiInterface.js:127
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+aiInterface.js:137 ❌ AI公式生成失败: HTTP错误: 0 
+generateFormulaWithEndpoint @ aiInterface.js:137
+await in generateFormulaWithEndpoint（异步）
+generateFormula @ formulaGenerator.js:420
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:470 ⏰ [调试] API错误发生时间: 2025/11/19 07:03:11
+formulaGenerator.js:472 ❌ [调试] AI接口调用失败: Error: AI公式生成失败: HTTP错误: 0 
+    at AIInterface.generateFormulaWithEndpoint (aiInterface.js:138:19)
+    at async FormulaGenerator.generateFormula (formulaGenerator.js:420:26)
+generateFormula @ formulaGenerator.js:472
+await in generateFormula（异步）
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:473 📊 [调试] AI接口错误详情: {错误消息: 'AI公式生成失败: HTTP错误: 0 ', 错误类型: 'Error', 错误堆栈: 'Error: AI公式生成失败: HTTP错误: 0 \n    at AIInterface.gen….0.1:3889/js/aiHelper/formulaGenerator.js:420:26)', API端点: '未设置', API密钥存在: false, …}
+generateFormula @ formulaGenerator.js:473
+await in generateFormula（异步）
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:500 📋 [调试] 包装后的错误信息: AI接口调用失败 (Error): AI公式生成失败: HTTP错误: 0 
+generateFormula @ formulaGenerator.js:500
+await in generateFormula（异步）
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:524 ❌ [调试] generateFormula方法出错: Error: AI接口调用失败 (Error): AI公式生成失败: HTTP错误: 0 
+    at FormulaGenerator.generateFormula (formulaGenerator.js:501:23)
+generateFormula @ formulaGenerator.js:524
+await in generateFormula（异步）
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:525 📊 [调试] 错误堆栈: Error: AI接口调用失败 (Error): AI公式生成失败: HTTP错误: 0 
+    at FormulaGenerator.generateFormula (http://127.0.0.1:3889/js/aiHelper/formulaGenerator.js:501:23)
+generateFormula @ formulaGenerator.js:525
+await in generateFormula（异步）
+（匿名） @ formulaGenerator.js:71
+formulaGenerator.js:530 🔄 [调试] 重置生成状态
+formulaGenerator.js:501 Uncaught (in promise) Error: AI接口调用失败 (Error): AI公式生成失败: HTTP错误: 0 
+    at FormulaGenerator.generateFormula (formulaGenerator.js:501:23)
+generateFormula @ formulaGenerator.js:501
+await in generateFormula（异步）
+（匿名） @ formulaGenerator.js:71

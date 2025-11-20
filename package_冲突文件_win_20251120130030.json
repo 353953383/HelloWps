@@ -1,0 +1,22 @@
+{
+  "name": "HelloWps",
+  "addonType": "et",
+  "version": "1.0.0",
+  "description": "wps加载项示例, 执行npm install后，提供代码联想功能",
+  "devDependencies": {
+    "et-jsapi-declare": "latest"
+  },
+  "scripts": {
+    "dev": "wpsjs debug"
+  },
+  "dependencies": {
+    "@types/node": "^20.11.7",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "openai": "^4.52.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "wps-jsapi": "^1.0.5"
+  }
+}

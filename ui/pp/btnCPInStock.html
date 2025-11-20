@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        .global {
+            font-size: 15px;
+            min-height: 95%;
+        }
+        .divItem {
+            margin-left: 5px;
+            margin-bottom: 18px;
+            font-size: 15px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<script type="text/javascript" src="../../js/util.js" onerror="console.error('Failed to load util.js')"></script>
+<script type="text/javascript" src="../../.debugTemp/wpsjsrpcsdk.js" onerror="console.error('Failed to load wpsjsrpcsdk.js')"></script>
+<script type="text/javascript" src="../../js/Standard-lwy.js" onerror="console.error('Failed to load Standard-lwy.js')"></script>
+<script type="text/javascript" src="../../js/pp/btnCPInStock.js" onerror="console.error('Failed to load SbtnCPInStock.js')"></script>
+
+<body>
+    <div class="global">
+        <div class="divItem">
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('dockLeft')">靠左</button>
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('dockRight')">靠右</button>
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('refresh')">工作簿名</button>
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('hideTaskPane')">关闭</button>
+        </div>
+        <div class="divItem">
+            <span style="font-weight: bolder;font-size: large;">产品入库记录协同</span>
+        </div>
+        <div class="divItem">
+            请确认工作簿名称为 “YYYY产品入库记录.xlsx”，其中YYYY为年份
+        </div>
+        <div class="divItem">
+            <span style="font-weight: bolder;color: slateblue;cursor:pointer" id="docName"></span>
+        </div>
+        <hr>
+        <div class="divItem">
+            切换至型号汇总表，不同构型分开维护，谨慎修改。
+        </div>
+        <div class="divItem">
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('modelIndex')">打开型号汇总</button>
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('updateModelLink')">更新型号链接</button><br>
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('updateModel')">修改选中型号</button>
+            <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('deleteModel')">删除选中型号</button>
+
+        </div>
+        <hr>
+        <div class="divItem">
+            在型号汇总创建型号，或更新个人型号汇总表。
+        </div>
+        <div class="divItem">
+            <div class="radio-group">
+                <label><input type="radio" name="planner" value="陆会罗"> 陆会罗</label><br>
+                <label><input type="radio" name="planner" value="白旭"> 白旭</label><br>
+                <label><input type="radio" name="planner" value="王海岩"> 王海岩</label><br>
+                <label><input type="radio" name="planner" value="朱志超"> 朱志超</label><br>
+                <label><input type="radio" name="planner" value="张岩"> 张岩</label>
+            </div>
+        </div>
+        <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('creatModel')">创建型号</button>
+        <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('creatOwnModel')">创建个人汇总</button><br>
+        <hr>
+        <div class="divItem">
+            在型号入库明细中，选择待同步至计划系统的项目，点击同步计划系统。
+        </div>
+        <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('toPlanOld')">同步计划系统</button>
+        <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('planOldProductInStock')">查看计划系统记录</button>
+        <hr>
+        <div class="divItem">
+            <!-- <span style="font-weight: bolder;">筛选功能：仅限产品入库记录汇总表使用</span><br> -->
+            在型号汇总表A列，相应型号前填“是”参与筛选，所有型号均不填则全部参与筛选
+            <!-- <span style="font-weight: bolder;">重置筛选条件,暂时不好用</span> -->
+            <!-- 可按需要选择要筛选的任务年度范围、出入库时间范围、或指定军种或主制部门。 -->
+        </div>
+        <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('reSet')">重置筛选条件</button>
+        <button style="margin:3px;" onclick="onbuttonclick_btnCPInStock('startCreate')">查看筛选结果</button>
+        <div class="divItem">
+            <!-- 任务年度范围：<br> -->
+            <!-- <input type="number" name="rwnd1" id="rwnd1" min="2000" max="2040" step="1"> -->
+            <!-- -<input type="number" name="rwnd2" id="rwnd2" min="2000" max="2040" step="1"><br> -->
+            出库日期范围：<br>
+            <input type="date" name="ckrq1" id="ckrq1">-<input type="date" name="ckrq2" id="ckrq2"><br>
+            入库日期范围：<br>
+            <input type="date" name="rkrq1" id="rkrq1">-<input type="date" name="rkrq2" id="rkrq2"><br>
+            军种：<input type="text" name="jz" id="jz" size="10"><br>
+            主制部门：<input type="text" name="zzbm" id="zzbm" size="10"><br>
+        </div>
+        <hr>
+        <hr>
+                    <span style="font-weight: bolder;color: slateblue;cursor:pointer" id="log"></span>
+        <hr>
+    </div>
+
+
+    <script type="text/javascript">
+        window.onload = function() {
+            $print('start_btnCPInStock_html_onload');
+        }
+    </script>
+</body>
+</html>

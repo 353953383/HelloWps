@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            background-color: #e8e8e8;
+            margin: 0;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 49px,
+                rgba(0, 191, 255, 0.05) 49px,
+                rgba(0, 191, 255, 0.05) 50px
+            );
+            pointer-events: none;
+            animation: gridMove 15s linear infinite;
+        }
+        @keyframes gridMove {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: 50px 50px;
+            }
+        }
+        .global {
+            font-size: 15px;
+            min-height: 95%;
+            color: #333333;  /* 调整为深灰色提升对比度 */
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .divItem {
+            margin-left: 5px;
+            margin-bottom: 18px;
+            font-size: 15px;
+            word-wrap: break-word;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: transparent;  /* 设置为透明背景 */
+            background-image: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 122, 204, 0.05));  /* 蓝色渐变背景 */
+            box-shadow: 0 0 8px rgba(0, 191, 255, 0.15);  /* 蓝色发光阴影 */
+            position: relative;
+            overflow: hidden;
+        }
+        .divItem::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #00bfff 30%, transparent);  /* 增强蓝色渐变浓度 */
+            box-shadow: 0 0 4px rgba(0, 191, 255, 0.3);  /* 线条添加发光效果 */
+            animation: lineFade 3s ease-in-out infinite;
+        }
+        @keyframes lineFade {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+        button {
+            margin: 3px;
+            padding: 8px 16px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            color: #007acc;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 122, 204, 0.1);
+        }
+        button:hover {
+            background: linear-gradient(145deg, #4a4a4a, #3d3d3d);
+            border-color: #00bfff;
+        }
+        hr {
+            border: 0;
+            height: 1px;
+            background: #333;
+            margin: 15px 0;
+        }
+
+            body {
+                background-color: #e8e8e8;
+                margin: 0;
+                padding: 10px;
+                position: relative;
+                overflow: hidden;
+            }
+            body::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 49px,
+                    rgba(0, 191, 255, 0.05) 49px,
+                    rgba(0, 191, 255, 0.05) 50px
+                );
+                pointer-events: none;
+                animation: gridMove 15s linear infinite;
+            }
+            @keyframes gridMove {
+                from {
+                    background-position: 0 0;
+                }
+                to {
+                    background-position: 50px 50px;
+                }
+            }
+            .global {
+                font-size: 15px;
+                min-height: 95%;
+                color: #333333;  /* 调整为深灰色提升对比度 */
+                font-family: 'Segoe UI', sans-serif;
+            }
+            .divItem {
+                margin-left: 5px;
+                margin-bottom: 18px;
+                font-size: 15px;
+                word-wrap: break-word;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background-color: transparent;  /* 设置为透明背景 */
+                background-image: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 122, 204, 0.05));  /* 蓝色渐变背景 */
+                box-shadow: 0 0 8px rgba(0, 191, 255, 0.15);  /* 蓝色发光阴影 */
+                position: relative;
+                overflow: hidden;
+            }
+            .divItem::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 2px;
+                height: 100%;
+                background: linear-gradient(to bottom, transparent, #00bfff 30%, transparent);  /* 增强蓝色渐变浓度 */
+                box-shadow: 0 0 4px rgba(0, 191, 255, 0.3);  /* 线条添加发光效果 */
+                animation: lineFade 3s ease-in-out infinite;
+            }
+            @keyframes lineFade {
+                0%, 100% {
+                    opacity: 0.3;
+                }
+                50% {
+                    opacity: 0.8;
+                }
+            }
+            button {
+                margin: 3px;
+                padding: 8px 16px;
+                background: linear-gradient(145deg, #ffffff, #f0f0f0);
+                color: #007acc;
+                border: 1px solid #d0d0d0;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 4px rgba(0, 122, 204, 0.1);
+            }
+            button:hover {
+                background: linear-gradient(145deg, #4a4a4a, #3d3d3d);
+                border-color: #00bfff;
+            }
+            hr {
+                border: 0;
+                height: 1px;
+                background: #333;
+                margin: 15px 0;
+            }
+            /* 移除冲突的全局样式 */
+            /* span[style*="font-weight: bolder"] {
+                color: #00bfff !important;
+            } */
+        </style>
+    </style>
+</head>
+<script type="text/javascript" src="../../../js/util.js" onerror="console.error('Failed to load util.js')"></script>
+<script type="text/javascript" src="../../../js/Standard-lwy.js" onerror="console.error('Failed to load Standard-lwy.js')"></script>
+<script type="text/javascript" src="../../../js/pp/mbom/erpMBOM.js"></script>
+
+<body>
+    <div class="global">
+        <div class="divItem">
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('dockLeft')">靠左</button>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('dockRight')">靠右</button>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('refresh')">工作簿名</button>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('hideTaskPane')">关闭</button>
+        </div>
+        <div class="divItem">
+            <div style="text-align: center;">
+                <style>
+                    @keyframes rainbow {
+                        0% { background-position: 0% 50%; }
+                        50% { background-position: 100% 50%; }
+                        100% { background-position: 0% 50%; }
+                    }
+                </style>
+                <span style="font-weight: bolder;cursor:pointer;
+                      background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
+                      -webkit-background-clip: text;
+                      background-clip: text;
+                      color: transparent;
+                      animation: rainbow 3s linear infinite;" id="isMBOM_1">
+                    MBOM数据管理
+                </span>
+            </div>
+            请确认工作簿名称为“MBOM数据.xlsm”<br>
+            <span style="font-weight: bolder;color: slateblue;cursor:pointer" id="isMBOM"></span>
+        </div>
+        <hr>
+        <div class="divItem">
+            在ERP物料主数据界面选择物料代号，一键或分别生成ERP导入文件<br>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('createAll')">一键MBOM主材工艺工序领料</button><br>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('createMBOM')">MBOM</button>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('createZC')">主材定额</button><br>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('createGY')">工艺路线</button>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('createGX')">工序领料</button>
+        </div>
+
+        <hr>
+        <div class="divItem">
+            数据处理<br>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('checkError')">定位错误</button>
+            <button style="margin:3px;" onclick="onbuttonclick_erpMBOM('syncData')">上传同步</button><br>
+        </div>
+        <hr>
+                    <span style="font-weight: bolder;color: slateblue;cursor:pointer" id="log"></span>
+        <hr>
+    </div>
+
+
+    <script type="text/javascript">
+        window.onload = function() {
+            $print('start_erpMBOM_html_onload');
+        }
+    </script>
+</body>
+</html>

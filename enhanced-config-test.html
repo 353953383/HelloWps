@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手增强版配置测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .nav-tab.active {
+            background: white;
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .config-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .config-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .status-card {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .status-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .status-info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        
+        .log-area {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .log-line {
+            margin-bottom: 2px;
+            padding: 2px 0;
+        }
+        
+        .log-timestamp {
+            color: #888;
+        }
+        
+        .log-error {
+            color: #ff6b6b;
+        }
+        
+        .log-success {
+            color: #51cf66;
+        }
+        
+        .log-warning {
+            color: #ffd43b;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card h4 {
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI助手增强版</h1>
+            <p>解决CORS错误、API配置和网络请求问题</p>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('config')">配置管理</button>
+            <button class="nav-tab" onclick="showTab('test')">功能测试</button>
+            <button class="nav-tab" onclick="showTab('logs')">日志监控</button>
+            <button class="nav-tab" onclick="showTab('proxy')">代理服务器</button>
+            <button class="nav-tab" onclick="showTab('docs')">使用文档</button>
+        </div>
+        
+        <!-- 配置管理 -->
+        <div id="config" class="tab-content active">
+            <h2>🔧 API配置管理</h2>
+            
+            <div class="config-section">
+                <h3>当前配置状态</h3>
+                <div id="config-status"></div>
+            </div>
+            
+            <div class="config-section">
+                <h3>基本配置</h3>
+                <div class="form-group">
+                    <label>API端点地址</label>
+                    <input type="url" id="endpoint" class="form-control" placeholder="http://localhost:8080">
+                    <small class="text-muted">建议使用代理服务器地址避免CORS问题</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>模型名称</label>
+                    <input type="text" id="modelName" class="form-control" placeholder="qwen-plus" value="qwen-plus">
+                </div>
+                
+                <div class="form-group">
+                    <label>超时时间（毫秒）</label>
+                    <input type="number" id="timeout" class="form-control" value="30000" min="5000" max="300000">
+                </div>
+                
+                <div class="form-group">
+                    <label>最大重试次数</label>
+                    <input type="number" id="maxRetries" class="form-control" value="3" min="0" max="10">
+                </div>
+                
+                <button class="btn btn-primary" onclick="updateConfig()">保存配置</button>
+                <button class="btn btn-warning" onclick="resetConfig()">重置配置</button>
+                <button class="btn btn-success" onclick="autoDetectConfig()">智能检测</button>
+            </div>
+            
+            <div class="config-section">
+                <h3>高级选项</h3>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="useProxy"> 使用代理服务器
+                    </label>
+                    <small class="text-muted">推荐开启以解决CORS跨域问题</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="enableCORS"> 启用CORS支持
+                    </label>
+                    <small class="text-muted">仅在代理服务器不支持时使用</small>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>配置导入/导出</h3>
+                <button class="btn btn-primary" onclick="exportConfig()">导出配置</button>
+                <button class="btn btn-warning" onclick="importConfig()">导入配置</button>
+                <button class="btn btn-info" onclick="showConfigPreview()">配置预览</button>
+            </div>
+        </div>
+        
+        <!-- 功能测试 -->
+        <div id="test" class="tab-content">
+            <h2>🧪 功能测试</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🔌 连接测试</h4>
+                    <p>测试API连接状态和响应时间</p>
+                    <button class="btn btn-success" onclick="testConnection()">开始测试</button>
+                    <div id="connection-result"></div>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>⚙️ 配置验证</h4>
+                    <p>验证当前配置的正确性和有效性</p>
+                    <button class="btn btn-primary" onclick="validateConfig()">验证配置</button>
+                    <div id="validation-result"></div>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🤖 AI请求测试</h4>
+                    <p>测试AI公式生成功能</p>
+                    <div class="form-group">
+                        <label>测试描述</label>
+                        <input type="text" id="testDescription" class="form-control" placeholder="计算A列和B列的和" value="计算总库存">
+                    </div>
+                    <button class="btn btn-success" onclick="testAIRequest()">发送请求</button>
+                    <div id="ai-test-result"></div>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>📊 性能统计</h4>
+                    <p>查看请求统计和性能指标</p>
+                    <button class="btn btn-info" onclick="showStats()">查看统计</button>
+                    <div id="stats-result"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 日志监控 -->
+        <div id="logs" class="tab-content">
+            <h2>📋 日志监控</h2>
+            
+            <div class="config-section">
+                <h3>日志控制</h3>
+                <button class="btn btn-primary" onclick="clearLogs()">清空日志</button>
+                <button class="btn btn-success" onclick="startLogMonitor()">开始监控</button>
+                <button class="btn btn-warning" onclick="stopLogMonitor()">停止监控</button>
+                <button class="btn btn-info" onclick="exportLogs()">导出日志</button>
+            </div>
+            
+            <div class="config-section">
+                <h3>实时日志</h3>
+                <div class="log-area" id="logArea">
+                    <div class="log-line">系统日志启动完成...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 代理服务器 -->
+        <div id="proxy" class="tab-content">
+            <h2>🔄 代理服务器</h2>
+            
+            <div class="config-section">
+                <h3>服务器状态</h3>
+                <div id="proxy-status"></div>
+            </div>
+            
+            <div class="config-section">
+                <h3>启动代理服务器</h3>
+                <p>代理服务器用于解决CORS跨域问题，需要先安装Python和Flask</p>
+                <div class="code-block">
+# 1. 安装依赖
+pip install flask requests flask-cors
+
+# 2. 启动服务器
+python server/proxy-server.py
+
+# 3. 检查状态
+curl http://localhost:8080/api/health
+                </div>
+                <button class="btn btn-primary" onclick="checkProxyServer()">检查服务器状态</button>
+                <button class="btn btn-success" onclick="openProxyDocs()">查看文档</button>
+            </div>
+            
+            <div class="config-section">
+                <h3>配置说明</h3>
+                <div class="status-info status-card">
+                    <strong>环境变量配置</strong><br>
+                    在启动代理服务器之前，请设置以下环境变量：
+                    <div class="code-block">
+# Windows
+set DASHSCOPE_API_KEY=your_api_key_here
+
+# Linux/Mac
+export DASHSCOPE_API_KEY=your_api_key_here
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 使用文档 -->
+        <div id="docs" class="tab-content">
+            <h2>📚 使用文档</h2>
+            
+            <div class="config-section">
+                <h3>问题解决方案</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🚫 CORS错误</h4>
+                        <p><strong>问题：</strong>Access-Control-Allow-Origin错误</p>
+                        <p><strong>解决：</strong>使用代理服务器或浏览器插件</p>
+                        <div class="code-block">
+// 使用代理配置
+apiConfigManager.updateConfig({
+    endpoint: 'http://localhost:8080',
+    useProxy: true
+});
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>🔗 网络错误</h4>
+                        <p><strong>问题：</strong>fetch请求失败</p>
+                        <p><strong>解决：</strong>检查网络和代理服务器</p>
+                        <div class="code-block">
+// 网络状态检查
+const status = await apiConfigManager.testConnection();
+if (!status.success) {
+    console.log('错误建议:', status.suggestions);
+}
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>⚙️ 配置错误</h4>
+                        <p><strong>问题：</strong>API配置不完整</p>
+                        <p><strong>解决：</strong>使用智能检测和验证</p>
+                        <div class="code-block">
+// 智能配置检测
+const detection = await apiConfigManager.detectOptimalConfig();
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>⏱️ 超时错误</h4>
+                        <p><strong>问题：</strong>请求超时</p>
+                        <p><strong>解决：</strong>调整超时和重试设置</p>
+                        <div class="code-block">
+// 调整超时设置
+apiConfigManager.updateConfig({
+    timeout: 60000,
+    maxRetries: 5
+});
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>API接口说明</h3>
+                <div class="code-block">
+// 代理服务器API接口
+POST http://localhost:8080/api/chat/completions
+{
+  "model": "qwen-plus",
+  "messages": [
+    {
+      "role": "system",
+      "content": "系统提示词"
+    },
+    {
+      "role": "user", 
+      "content": "用户输入"
+    }
+  ]
+}
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>集成示例</h3>
+                <div class="code-block">
+// 1. 引入配置管理器
+&lt;script src="js/aiHelper/api-config.js"&gt;&lt;/script&gt;
+
+// 2. 引入增强AI接口
+&lt;script src="js/aiHelper/enhanced-ai-interface.js"&gt;&lt;/script&gt;
+
+// 3. 使用接口
+const result = await enhancedAIInterface.generateFormula('计算总和');
+console.log(result);
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入配置文件 -->
+    <script src="js/aiHelper/api-config.js"></script>
+    <script src="js/aiHelper/enhanced-ai-interface.js"></script>
+    
+    <script>
+        // 全局变量
+        let logMonitorInterval = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentConfig();
+            addLog('系统初始化完成', 'success');
+        });
+        
+        // 标签切换
+        function showTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // 加载当前配置
+        function loadCurrentConfig() {
+            if (window.apiConfigManager) {
+                const config = window.apiConfigManager.getSafeConfig();
+                document.getElementById('endpoint').value = config.endpoint;
+                document.getElementById('modelName').value = config.modelName;
+                document.getElementById('timeout').value = config.timeout;
+                document.getElementById('maxRetries').value = config.maxRetries;
+                document.getElementById('useProxy').checked = config.useProxy;
+                document.getElementById('enableCORS').checked = config.enableCORS;
+                
+                updateConfigStatus();
+            }
+        }
+        
+        // 更新配置状态
+        function updateConfigStatus() {
+            if (window.apiConfigManager) {
+                const status = window.apiConfigManager.getStatus();
+                const statusDiv = document.getElementById('config-status');
+                
+                statusDiv.innerHTML = `
+                    <div class="status-card ${status.isConfigured ? 'status-success' : 'status-error'}">
+                        <strong>配置状态：</strong>${status.isConfigured ? '✅ 已配置' : '❌ 未配置'}<br>
+                        <strong>最后检查：</strong>${status.lastCheck ? new Date(status.lastCheck).toLocaleString() : '未检查'}<br>
+                        <strong>端点地址：</strong>${status.config.endpoint}<br>
+                        <strong>模型名称：</strong>${status.config.modelName}<br>
+                        <strong>使用代理：</strong>${status.config.useProxy ? '是' : '否'}<br>
+                        <strong>超时设置：</strong>${status.config.timeout}ms
+                    </div>
+                `;
+            }
+        }
+        
+        // 更新配置
+        function updateConfig() {
+            if (window.apiConfigManager) {
+                const newConfig = {
+                    endpoint: document.getElementById('endpoint').value,
+                    modelName: document.getElementById('modelName').value,
+                    timeout: parseInt(document.getElementById('timeout').value),
+                    maxRetries: parseInt(document.getElementById('maxRetries').value),
+                    useProxy: document.getElementById('useProxy').checked,
+                    enableCORS: document.getElementById('enableCORS').checked
+                };
+                
+                const result = window.apiConfigManager.updateConfig(newConfig);
+                
+                if (result.success) {
+                    addLog('配置更新成功', 'success');
+                    updateConfigStatus();
+                } else {
+                    addLog('配置更新失败', 'error');
+                }
+            }
+        }
+        
+        // 重置配置
+        function resetConfig() {
+            if (window.apiConfigManager) {
+                window.apiConfigManager.resetConfig();
+                loadCurrentConfig();
+                addLog('配置已重置', 'success');
+            }
+        }
+        
+        // 智能检测
+        function autoDetectConfig() {
+            if (window.apiConfigManager) {
+                addLog('开始智能检测配置...', 'info');
+                
+                window.apiConfigManager.detectOptimalConfig().then(result => {
+                    addLog('智能检测完成', 'success');
+                    loadCurrentConfig();
+                    
+                    const resultDiv = document.getElementById('validation-result');
+                    resultDiv.innerHTML = `
+                        <div class="status-info status-card">
+                            <strong>检测结果：</strong><br>
+                            推荐配置: ${result.recommended.endpoint}<br>
+                            使用代理: ${result.recommended.useProxy ? '是' : '否'}
+                        </div>
+                    `;
+                }).catch(error => {
+                    addLog('智能检测失败: ' + error.message, 'error');
+                });
+            }
+        }
+        
+        // 验证配置
+        function validateConfig() {
+            if (window.apiConfigManager) {
+                const validation = window.apiConfigManager.validateConfig();
+                const resultDiv = document.getElementById('validation-result');
+                
+                resultDiv.innerHTML = `
+                    <div class="status-card ${validation.isValid ? 'status-success' : 'status-error'}">
+                        <strong>验证结果：</strong>${validation.isValid ? '通过' : '失败'}<br>
+                        ${validation.errors.length > 0 ? '错误列表：' + validation.errors.join(', ') : '配置正确'}
+                    </div>
+                `;
+                
+                addLog('配置验证完成', validation.isValid ? 'success' : 'error');
+            }
+        }
+        
+        // 测试连接
+        async function testConnection() {
+            if (window.apiConfigManager) {
+                addLog('开始连接测试...', 'info');
+                
+                try {
+                    const result = await window.apiConfigManager.testConnection();
+                    const resultDiv = document.getElementById('connection-result');
+                    
+                    if (result.success) {
+                        resultDiv.innerHTML = `
+                            <div class="status-success status-card">
+                                ✅ 连接测试成功<br>
+                                ${result.message}
+                            </div>
+                        `;
+                        addLog('连接测试成功', 'success');
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="status-error status-card">
+                                ❌ 连接测试失败<br>
+                                错误: ${result.error}<br>
+                                建议: ${result.suggestions ? result.suggestions.join('<br>') : ''}
+                            </div>
+                        `;
+                        addLog('连接测试失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    addLog('连接测试异常: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // 测试AI请求
+        async function testAIRequest() {
+            const description = document.getElementById('testDescription').value;
+            const resultDiv = document.getElementById('ai-test-result');
+            
+            if (!description.trim()) {
+                addLog('请输入测试描述', 'warning');
+                return;
+            }
+            
+            addLog('开始AI请求测试...', 'info');
+            resultDiv.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width: 50%">处理中...</div></div>';
+            
+            try {
+                if (window.enhancedAIInterface) {
+                    const result = await window.enhancedAIInterface.generateFormula(description);
+                    
+                    if (result.success) {
+                        resultDiv.innerHTML = `
+                            <div class="status-success status-card">
+                                ✅ AI请求成功<br>
+                                生成公式数量: ${result.formulas ? result.formulas.length : 0}<br>
+                                响应时间: ${new Date().toLocaleTimeString()}
+                            </div>
+                        `;
+                        addLog('AI请求测试成功', 'success');
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="status-error status-card">
+                                ❌ AI请求失败<br>
+                                错误: ${result.error || '未知错误'}
+                            </div>
+                        `;
+                        addLog('AI请求失败: ' + result.error, 'error');
+                    }
+                } else {
+                    throw new Error('增强AI接口未初始化');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status-error status-card">
+                        ❌ 请求异常<br>
+                        错误: ${error.message}
+                    </div>
+                `;
+                addLog('AI请求异常: ' + error.message, 'error');
+            }
+        }
+        
+        // 显示统计
+        function showStats() {
+            if (window.enhancedAIInterface) {
+                const stats = window.enhancedAIInterface.getStats();
+                const resultDiv = document.getElementById('stats-result');
+                
+                resultDiv.innerHTML = `
+                    <div class="status-info status-card">
+                        <strong>请求统计：</strong><br>
+                        总请求数: ${stats.totalRequests}<br>
+                        成功请求: ${stats.successfulRequests}<br>
+                        失败请求: ${stats.failedRequests}<br>
+                        成功率: ${stats.successRate}<br>
+                        队列长度: ${stats.queueLength}<br>
+                        处理状态: ${stats.isProcessing ? '处理中' : '空闲'}
+                    </div>
+                `;
+                
+                addLog('统计信息已更新', 'info');
+            }
+        }
+        
+        // 检查代理服务器状态
+        function checkProxyServer() {
+            addLog('检查代理服务器状态...', 'info');
+            
+            fetch('http://localhost:8080/api/health')
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = document.getElementById('proxy-status');
+                    statusDiv.innerHTML = `
+                        <div class="status-success status-card">
+                            ✅ 代理服务器运行正常<br>
+                            响应时间: ${new Date().toLocaleString()}
+                        </div>
+                    `;
+                    addLog('代理服务器运行正常', 'success');
+                })
+                .catch(error => {
+                    const statusDiv = document.getElementById('proxy-status');
+                    statusDiv.innerHTML = `
+                        <div class="status-error status-card">
+                            ❌ 代理服务器未响应<br>
+                            错误: ${error.message}
+                        </div>
+                    `;
+                    addLog('代理服务器未响应', 'error');
+                });
+        }
+        
+        // 打开代理文档
+        function openProxyDocs() {
+            window.open('ai-interface-improvements.md', '_blank');
+        }
+        
+        // 导出配置
+        function exportConfig() {
+            if (window.apiConfigManager) {
+                const config = window.apiConfigManager.exportConfig();
+                const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ai-helper-config.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                addLog('配置已导出', 'success');
+            }
+        }
+        
+        // 导入配置
+        function importConfig() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const config = JSON.parse(e.target.result);
+                            if (window.apiConfigManager) {
+                                window.apiConfigManager.updateConfig(config.config);
+                                loadCurrentConfig();
+                                addLog('配置导入成功', 'success');
+                            }
+                        } catch (error) {
+                            addLog('配置文件格式错误', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+        
+        // 配置预览
+        function showConfigPreview() {
+            if (window.apiConfigManager) {
+                const config = window.apiConfigManager.exportConfig();
+                const preview = JSON.stringify(config, null, 2);
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 8px; max-width: 80%; max-height: 80%; overflow: auto;">
+                        <h3>配置预览</h3>
+                        <pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px;">${preview}</pre>
+                        <button onclick="this.closest('div').parentElement.remove()" class="btn btn-primary">关闭</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            }
+        }
+        
+        // 日志管理
+        function addLog(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = type === 'error' ? 'log-error' : 
+                           type === 'success' ? 'log-success' :
+                           type === 'warning' ? 'log-warning' : 'log-info';
+            
+            const logLine = document.createElement('div');
+            logLine.className = `log-line ${logClass}`;
+            logLine.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+            
+            logArea.appendChild(logLine);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logArea').innerHTML = '<div class="log-line">日志已清空...</div>';
+        }
+        
+        function startLogMonitor() {
+            if (!logMonitorInterval) {
+                logMonitorInterval = setInterval(() => {
+                    if (window.apiConfigManager) {
+                        const status = window.apiConfigManager.getStatus();
+                        addLog(`监控: 配置状态 ${status.isConfigured ? '正常' : '异常'}`, 'info');
+                    }
+                }, 5000);
+                addLog('日志监控已启动', 'success');
+            }
+        }
+        
+        function stopLogMonitor() {
+            if (logMonitorInterval) {
+                clearInterval(logMonitorInterval);
+                logMonitorInterval = null;
+                addLog('日志监控已停止', 'warning');
+            }
+        }
+        
+        function exportLogs() {
+            const logArea = document.getElementById('logArea');
+            const logs = logArea.innerText;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-helper-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addLog('日志已导出', 'success');
+        }
+    </script>
+</body>
+</html>
