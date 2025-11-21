@@ -12,6 +12,13 @@ var AIHelperMain = (function() {
         this.config = {};
         this.currentFormulas = []; // 存储当前生成的公式
         
+        // 添加翻页功能相关变量
+        this.allFormulas = [];
+        this.currentFormulaIndex = 0;
+        
+        // 添加滚动条相关变量
+        this.scrollInterval = null;
+        
         this.init();
     }
     
@@ -148,6 +155,13 @@ var AIHelperMain = (function() {
     AIHelperMain.prototype.handleGenerateClick = function() {
         var self = this;
         try {
+            // 禁用生成按钮并显示加载状态
+            var generateBtn = document.getElementById('generateFormula');
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<span class="btn-icon">⏳</span> 生成中请等待';
+            }
+
             var description = document.getElementById('formulaDescription');
             var value = description ? description.value : '';
             
@@ -167,7 +181,14 @@ var AIHelperMain = (function() {
                 down: fillDirection === 'down' || fillDirection === 'both'
             };
             
+            // 检查是否有描述或使用智能分析
             if (!value.trim()) {
+                // 显示确认对话框，询问用户是否要进行智能分析
+                if (!confirm("您没有输入公式描述，系统将根据当前单元格上下文自动分析并生成公式建议。是否继续？")) {
+                    self.resetGenerateButton(); // 重置按钮状态
+                    return;
+                }
+                
                 // 获取当前单元格信息
                 this.getCurrentCellInfo().then(function(currentCellInfo) {
                     // 获取所有工作簿信息
@@ -188,6 +209,7 @@ var AIHelperMain = (function() {
                 }).catch(function(error) {
                     console.error('获取单元格信息失败:', error);
                     self.showNotification('获取单元格信息失败：' + error.message, 'error');
+                    self.resetGenerateButton(); // 重置按钮状态
                 });
                 
             } else {
@@ -212,12 +234,59 @@ var AIHelperMain = (function() {
                 }).catch(function(error) {
                     console.error('获取单元格信息失败:', error);
                     self.showNotification('获取单元格信息失败：' + error.message, 'error');
+                    self.resetGenerateButton(); // 重置按钮状态
                 });
             }
             
         } catch (error) {
             console.error('生成处理失败:', error);
             this.showNotification('生成失败：' + error.message, 'error');
+            this.resetGenerateButton(); // 重置按钮状态
+        }
+    };
+    
+    /**
+     * 重置生成按钮状态
+     */
+    AIHelperMain.prototype.resetGenerateButton = function() {
+        var generateBtn = document.getElementById('generateFormula');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<span class="btn-icon">🚀</span> 生成公式建议';
+        }
+        
+        // 滚动定时器逻辑已移除
+    };
+    
+    /**
+     * 显示AI状态栏
+     */
+    AIHelperMain.prototype.showAIStatusBar = function() {
+        var statusBar = document.getElementById('aiStatusBar');
+        if (statusBar) {
+            statusBar.style.display = 'block';
+        }
+    };
+    
+    /**
+     * 隐藏AI状态栏
+     */
+    AIHelperMain.prototype.hideAIStatusBar = function() {
+        var statusBar = document.getElementById('aiStatusBar');
+        if (statusBar) {
+            statusBar.style.display = 'none';
+        }
+        
+        // 滚动定时器逻辑已移除
+    };
+    
+    /**
+     * 更新AI思考过程显示
+     */
+    AIHelperMain.prototype.updateThinkingProcess = function(text) {
+        var thinkingElement = document.getElementById('thinkingProcess');
+        if (thinkingElement) {
+            thinkingElement.textContent = text;
         }
     };
     
@@ -276,6 +345,16 @@ var AIHelperMain = (function() {
             
             // 清空当前公式
             this.currentFormulas = [];
+            
+            // 重置翻页相关变量
+            this.allFormulas = [];
+            this.currentFormulaIndex = 0;
+            
+            // 隐藏导航
+            var formulaNavigation = document.getElementById('formulaNavigation');
+            if (formulaNavigation) {
+                formulaNavigation.style.display = 'none';
+            }
         } catch (error) {
             console.error('清空公式结果失败:', error);
         }
@@ -588,13 +667,21 @@ var AIHelperMain = (function() {
         return new Promise(function(resolve, reject) {
             try {
                 self.showNotification('正在生成公式...', 'info');
+                self.showAIStatusBar(); // 显示AI状态栏
+                self.updateThinkingProcess('正在初始化AI请求...');
                 
                 // 打印发送给AI的原始数据
                 console.log('📤 发送给AI的原始数据:', JSON.stringify(requestData, null, 2));
                 
                 // 使用增强AI接口
                 if (window.enhancedAIInterface) {
-                    window.enhancedAIInterface.generateFormulaRequest(requestData).then(function(result) {
+                    // 监听流式响应
+                    window.enhancedAIInterface.generateFormulaRequest(requestData, {
+                        onProgress: function(thinkingProcess) {
+                            // 更新思考过程显示
+                            self.updateThinkingProcess(thinkingProcess);
+                        }
+                    }).then(function(result) {
                         // 打印AI响应的原始数据
                         console.log('📥 AI响应的原始数据:', JSON.stringify(result, null, 2));
                         
@@ -606,27 +693,37 @@ var AIHelperMain = (function() {
                             self.showFormulaResults(result);
                             
                             self.showNotification('公式生成成功！', 'success');
+                            self.hideAIStatusBar(); // 隐藏AI状态栏
+                            self.resetGenerateButton(); // 重置按钮状态
                             resolve(result);
                         } else {
                             var error = new Error('API返回结果格式错误');
                             console.error('❌ API返回结果格式错误:', result);
+                            self.hideAIStatusBar(); // 隐藏AI状态栏
+                            self.resetGenerateButton(); // 重置按钮状态
                             reject(error);
                         }
                     }).catch(function(error) {
                         console.error('❌ API请求失败:', error);
                         self.showNotification('API请求失败：' + error.message, 'error');
+                        self.hideAIStatusBar(); // 隐藏AI状态栏
+                        self.resetGenerateButton(); // 重置按钮状态
                         reject(error);
                     });
                 } else {
                     // 如果没有增强AI接口，使用简单模拟
                     var error = new Error('AI接口未初始化');
                     console.error('❌ AI接口未初始化');
+                    self.hideAIStatusBar(); // 隐藏AI状态栏
+                    self.resetGenerateButton(); // 重置按钮状态
                     reject(error);
                 }
                 
             } catch (error) {
                 console.error('❌ API请求异常:', error);
                 self.showNotification('API请求异常：' + error.message, 'error');
+                self.hideAIStatusBar(); // 隐藏AI状态栏
+                self.resetGenerateButton(); // 重置按钮状态
                 reject(error);
             }
         });
@@ -643,32 +740,136 @@ var AIHelperMain = (function() {
                 aiResults.style.display = 'block';
             }
             
+            // 初始化当前公式索引
+            this.currentFormulaIndex = 0;
+            
+            // 保存所有公式
+            if (result.formulas && result.formulas.length > 0) {
+                this.allFormulas = result.formulas;
+            } else {
+                this.allFormulas = [];
+            }
+            
             // 显示公式建议
             var formulaSuggestions = document.getElementById('formulaSuggestions');
-            if (formulaSuggestions) {
+            var formulaNavigation = document.getElementById('formulaNavigation');
+            if (formulaSuggestions && formulaNavigation) {
+                // 如果有多个公式，显示导航
+                if (this.allFormulas.length > 1) {
+                    formulaNavigation.style.display = 'flex';
+                    this.setupFormulaNavigation();
+                } else {
+                    formulaNavigation.style.display = 'none';
+                }
+                
+                // 显示第一个公式
+                this.displayCurrentFormula(result);
+            }
+            
+            // 显示应用公式区域
+            // 合并主公式和替代方案用于应用选项显示
+            var allFormulasForApply = [];
+            
+            // 添加主公式
+            if (result.formulas && result.formulas.length > 0) {
+                allFormulasForApply = allFormulasForApply.concat(result.formulas);
+            }
+            
+            // 添加替代方案（如果有）
+            if (result.alternative_formulas && result.alternative_formulas.length > 0) {
+                // 转换替代方案格式以匹配主公式格式
+                var alternativeFormulas = result.alternative_formulas.map(function(alt, index) {
+                    return {
+                        title: alt.description || '替代方案 ' + (index + 1),
+                        formula: alt.formula || '',
+                        explanation: '替代方案',
+                        confidence: Math.max(90 - (index * 10), 50), // 逐渐降低置信度
+                        applicable_ranges: [],
+                        required_functions: [],
+                        example: ''
+                    };
+                });
+                allFormulasForApply = allFormulasForApply.concat(alternativeFormulas);
+            }
+            
+            this.showApplyFormulaOptions(allFormulasForApply);
+            
+        } catch (error) {
+            console.error('显示公式结果失败:', error);
+        }
+    };
+    
+    /**
+     * 设置公式导航
+     */
+    AIHelperMain.prototype.setupFormulaNavigation = function() {
+        var prevButton = document.getElementById('prevFormula');
+        var nextButton = document.getElementById('nextFormula');
+        var self = this;
+        
+        if (prevButton) {
+            prevButton.onclick = function() {
+                self.showPreviousFormula();
+            };
+        }
+        
+        if (nextButton) {
+            nextButton.onclick = function() {
+                self.showNextFormula();
+            };
+        }
+        
+        this.updateFormulaNavigation();
+    };
+    
+    /**
+     * 更新公式导航状态
+     */
+    AIHelperMain.prototype.updateFormulaNavigation = function() {
+        var prevButton = document.getElementById('prevFormula');
+        var nextButton = document.getElementById('nextFormula');
+        var formulaCounter = document.getElementById('formulaCounter');
+        
+        if (prevButton && nextButton && formulaCounter) {
+            // 更新按钮状态
+            prevButton.disabled = this.currentFormulaIndex <= 0;
+            nextButton.disabled = this.currentFormulaIndex >= this.allFormulas.length - 1;
+            
+            // 更新计数器
+            formulaCounter.textContent = (this.currentFormulaIndex + 1) + ' / ' + this.allFormulas.length;
+        }
+    };
+    
+    /**
+     * 显示当前公式
+     */
+    AIHelperMain.prototype.displayCurrentFormula = function(result) {
+        try {
+            var formulaSuggestions = document.getElementById('formulaSuggestions');
+            if (formulaSuggestions && this.allFormulas && this.allFormulas.length > 0) {
                 formulaSuggestions.innerHTML = '';
                 
-                result.formulas.forEach(function(formula, index) {
-                    var formulaItem = document.createElement('div');
-                    formulaItem.className = 'formula-item';
-                    formulaItem.innerHTML = `
-                        <div class="formula-header">
-                            <h4>${formula.title || '推荐公式'}</h4>
-                            <span class="confidence">置信度: ${formula.confidence || 0}%</span>
-                        </div>
-                        <div class="formula-content">
-                            <div class="formula-code">${formula.formula || '无公式'}</div>
-                            <div class="formula-explanation">${formula.explanation || '无说明'}</div>
-                            ${formula.applicable_ranges ? `<div class="formula-ranges">适用范围: ${formula.applicable_ranges.join(', ')}</div>` : ''}
-                            ${formula.required_functions ? `<div class="formula-functions">所需函数: ${formula.required_functions.join(', ')}</div>` : ''}
-                            ${formula.example ? `<div class="formula-example">示例: ${formula.example}</div>` : ''}
-                        </div>
-                    `;
-                    formulaSuggestions.appendChild(formulaItem);
-                });
+                // 显示当前公式
+                var currentFormula = this.allFormulas[this.currentFormulaIndex];
+                var formulaItem = document.createElement('div');
+                formulaItem.className = 'formula-item';
+                formulaItem.innerHTML = `
+                    <div class="formula-header">
+                        <h4>${currentFormula.title || '推荐公式'}</h4>
+                        <span class="confidence">置信度: ${currentFormula.confidence || 0}%</span>
+                    </div>
+                    <div class="formula-content">
+                        <div class="formula-code">${currentFormula.formula || '无公式'}</div>
+                        <div class="formula-explanation">${currentFormula.explanation || '无说明'}</div>
+                        ${currentFormula.applicable_ranges ? `<div class="formula-ranges">适用范围: ${currentFormula.applicable_ranges.join(', ')}</div>` : ''}
+                        ${currentFormula.required_functions ? `<div class="formula-functions">所需函数: ${currentFormula.required_functions.join(', ')}</div>` : ''}
+                        ${currentFormula.example ? `<div class="formula-example">示例: ${currentFormula.example}</div>` : ''}
+                    </div>
+                `;
+                formulaSuggestions.appendChild(formulaItem);
                 
-                // 显示数据分析信息
-                if (result.data_analysis) {
+                // 显示数据分析信息（只在第一个公式时显示）
+                if (this.currentFormulaIndex === 0 && result.data_analysis) {
                     var analysisDiv = document.createElement('div');
                     analysisDiv.className = 'data-analysis';
                     analysisDiv.innerHTML = `
@@ -693,52 +894,79 @@ var AIHelperMain = (function() {
                     `;
                     formulaSuggestions.appendChild(analysisDiv);
                 }
-            }
-            
-            // 显示替代公式
-            if (result.alternative_formulas && result.alternative_formulas.length > 0) {
-                var alternativesDiv = document.createElement('div');
-                alternativesDiv.className = 'alternative-formulas';
-                alternativesDiv.innerHTML = `
-                    <h4>🔄 替代方案</h4>
-                    ${result.alternative_formulas.map((alt, index) => `
-                        <div class="alternative-item">
-                            <div class="alternative-header">
-                                <h5>${alt.description}</h5>
+                
+                // 显示替代公式（只在第一个公式时显示）
+                if (this.currentFormulaIndex === 0 && result.alternative_formulas && result.alternative_formulas.length > 0) {
+                    var alternativesDiv = document.createElement('div');
+                    alternativesDiv.className = 'alternative-formulas';
+                    alternativesDiv.innerHTML = `
+                        <h4>🔄 替代方案</h4>
+                        ${result.alternative_formulas.map((alt, index) => `
+                            <div class="alternative-item">
+                                <div class="alternative-header">
+                                    <h5>${alt.description}</h5>
+                                </div>
+                                <div class="alternative-content">
+                                    <div class="alternative-formula">${alt.formula}</div>
+                                    ${alt.pros ? `
+                                        <div class="alternative-pros">
+                                            <strong>优点:</strong>
+                                            <ul>
+                                                ${alt.pros.map(pro => `<li>${pro}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                    ${alt.cons ? `
+                                        <div class="alternative-cons">
+                                            <strong>缺点:</strong>
+                                            <ul>
+                                                ${alt.cons.map(con => `<li>${con}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
-                            <div class="alternative-content">
-                                <div class="alternative-formula">${alt.formula}</div>
-                                ${alt.pros ? `
-                                    <div class="alternative-pros">
-                                        <strong>优点:</strong>
-                                        <ul>
-                                            ${alt.pros.map(pro => `<li>${pro}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
-                                ${alt.cons ? `
-                                    <div class="alternative-cons">
-                                        <strong>缺点:</strong>
-                                        <ul>
-                                            ${alt.cons.map(con => `<li>${con}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                `;
-                formulaSuggestions.appendChild(alternativesDiv);
+                        `).join('')}
+                    `;
+                    formulaSuggestions.appendChild(alternativesDiv);
+                }
+                
+                // 更新导航状态
+                this.updateFormulaNavigation();
             }
-            
-            // 显示应用公式区域
-            this.showApplyFormulaOptions(result.formulas);
-            
         } catch (error) {
-            console.error('显示公式结果失败:', error);
+            console.error('显示当前公式失败:', error);
         }
     };
-
+    
+    /**
+     * 显示下一个公式
+     */
+    AIHelperMain.prototype.showNextFormula = function() {
+        if (this.allFormulas && this.currentFormulaIndex < this.allFormulas.length - 1) {
+            this.currentFormulaIndex++;
+            // 创建一个简化版的result对象用于显示
+            var dummyResult = {
+                formulas: this.allFormulas
+            };
+            this.displayCurrentFormula(dummyResult);
+        }
+    };
+    
+    /**
+     * 显示上一个公式
+     */
+    AIHelperMain.prototype.showPreviousFormula = function() {
+        if (this.allFormulas && this.currentFormulaIndex > 0) {
+            this.currentFormulaIndex--;
+            // 创建一个简化版的result对象用于显示
+            var dummyResult = {
+                formulas: this.allFormulas
+            };
+            this.displayCurrentFormula(dummyResult);
+        }
+    };
+    
     /**
      * 显示应用公式选项
      */
@@ -751,6 +979,12 @@ var AIHelperMain = (function() {
                 // 显示区域
                 applyFormulaSection.style.display = 'block';
                 formulaApplyOptions.innerHTML = '';
+                
+                // 检查是否有公式
+                if (!formulas || formulas.length === 0) {
+                    formulaApplyOptions.innerHTML = '<p>无可用公式</p>';
+                    return;
+                }
                 
                 // 按置信度排序（从高到低）
                 var sortedFormulas = formulas.slice().sort(function(a, b) {

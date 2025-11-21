@@ -154,9 +154,25 @@
                     <div class="loading-text">AI正在分析您的需求...</div>
                 </div>
 
+                <!-- AI状态栏 -->
+                <div class="ai-status-bar" id="aiStatusBar" style="display: none;">
+                    <div class="status-header">
+                        <span class="status-icon">🧠</span>
+                        <span class="status-title">AI思考中...</span>
+                    </div>
+                    <div class="status-content">
+                        <div class="thinking-process" id="thinkingProcess"></div>
+                    </div>
+                </div>
+
                 <!-- AI结果展示 -->
                 <div class="ai-results" id="aiResults" style="display: none;">
                     <h3>💡 AI建议的公式</h3>
+                    <div class="formula-navigation" id="formulaNavigation" style="display: none;">
+                        <button class="nav-button prev-button" id="prevFormula">◀ 上一个</button>
+                        <span class="formula-counter" id="formulaCounter">1 / 1</span>
+                        <button class="nav-button next-button" id="nextFormula">下一个 ▶</button>
+                    </div>
                     <div class="formula-suggestions" id="formulaSuggestions">
                         <!-- 动态生成的公式建议 -->
                     </div>

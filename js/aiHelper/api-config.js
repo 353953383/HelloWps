@@ -286,5 +286,8 @@ var ApiConfigManager = (function() {
 window.apiConfigManager = new ApiConfigManager();
 
 // 导出配置管理器的状态
-console.log('🔧 API配置管理器已初始化');
-console.log('📋 配置状态:', window.apiConfigManager.getConfigStatus());
+if (window.apiConfigManager.isValid) {
+    console.log('✅ API配置初始化成功');
+} else {
+    console.log('❌ API配置初始化失败');
+}
