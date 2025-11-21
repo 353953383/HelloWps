@@ -108,9 +108,35 @@ var AIHelperMain = (function() {
             // 只初始化基本的UI事件
             this.initBasicUIEvents();
             
+            // 初始化单元格变更监听
+            this.initCellChangeListeners();
+            
         } catch (error) {
             console.error('组件初始化失败:', error);
             // 不抛出错误，避免卡死
+        }
+    };
+    
+    /**
+     * 初始化单元格变更监听器
+     */
+    AIHelperMain.prototype.initCellChangeListeners = function() {
+        try {
+            // 监听工作表内容变更事件
+            if (window.Application && window.Application.ApiEvent) {
+                window.Application.ApiEvent.AddApiEventListener("SheetChange", (sh, target) => {
+                    // 当单元格内容发生变更时触发刷新（静默刷新，不显示通知）
+                    this.handleRefreshClick(true);
+                });
+                
+                // 监听工作表选择变更事件
+                window.Application.ApiEvent.AddApiEventListener("SheetSelectionChange", (sh, target) => {
+                    // 当单元格选择发生变更时触发刷新（静默刷新，不显示通知）
+                    this.handleRefreshClick(true);
+                });
+            }
+        } catch (error) {
+            console.error('单元格变更监听器初始化失败:', error);
         }
     };
     
@@ -132,7 +158,7 @@ var AIHelperMain = (function() {
             var refreshBtn = document.getElementById('refreshWorkbooks');
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', function() {
-                    self.handleRefreshClick();
+                    self.handleRefreshClick(false); // 手动刷新显示通知
                 });
             }
             
@@ -292,12 +318,58 @@ var AIHelperMain = (function() {
     
     /**
      * 处理刷新按钮点击
+     * @param {boolean} silent - 是否静默刷新（不显示通知）
      */
-    AIHelperMain.prototype.handleRefreshClick = function() {
+    AIHelperMain.prototype.handleRefreshClick = function(silent = false) {
         try {
-            this.showNotification('刷新完成', 'success');
+            // 更新当前单元格显示
+            this.updateCurrentCellDisplay();
+            
+            // 更新已选择数据源显示
+            this.updateSelectedSourcesDisplay();
+            
+            // 只有在非静默模式下才显示通知
+            if (!silent) {
+                this.showNotification('刷新完成', 'success');
+            }
         } catch (error) {
             console.error('刷新处理失败:', error);
+        }
+    };
+    
+    /**
+     * 更新当前单元格显示
+     */
+    AIHelperMain.prototype.updateCurrentCellDisplay = function() {
+        var self = this;
+        this.getCurrentCellInfo().then(function(cellInfo) {
+            var currentCellElement = document.getElementById('currentCell');
+            if (currentCellElement) {
+                currentCellElement.textContent = 
+                    cellInfo.cellAddress + ' (' + cellInfo.worksheet + ')';
+            }
+        }).catch(function(error) {
+            console.error('更新当前单元格显示失败:', error);
+        });
+    };
+    
+    /**
+     * 更新已选择数据源显示
+     */
+    AIHelperMain.prototype.updateSelectedSourcesDisplay = function() {
+        try {
+            var selectedSourcesElement = document.getElementById('selectedSources');
+            if (selectedSourcesElement) {
+                // 获取工作簿选择器模块
+                if (this.modules.workbookSelector) {
+                    var selectedWorkbooks = this.modules.workbookSelector.selectedWorkbooks || [];
+                    selectedSourcesElement.textContent = selectedWorkbooks.length;
+                } else {
+                    selectedSourcesElement.textContent = '0';
+                }
+            }
+        } catch (error) {
+            console.error('更新已选择数据源显示失败:', error);
         }
     };
     
