@@ -76,7 +76,7 @@ class APIConfigManager {
         const errors = [];
         
         // 检查端点配置
-        if (!this.config.endpoint || this.co·nfig.endpoint.trim() === '') {
+        if (!this.config.endpoint || this.config.endpoint.trim() === '') {
             errors.push('API端点地址不能为空');
         } else if (!this.isValidURL(this.config.endpoint)) {
             errors.push('API端点地址格式不正确');
