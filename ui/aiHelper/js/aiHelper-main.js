@@ -108,12 +108,31 @@ var AIHelperMain = (function() {
             // 只初始化基本的UI事件
             this.initBasicUIEvents();
             
-            // 初始化单元格变更监听
+            // 初始化单元格变更监听器
             this.initCellChangeListeners();
             
         } catch (error) {
             console.error('组件初始化失败:', error);
             // 不抛出错误，避免卡死
+        }
+    };
+    
+    /**
+     * 显示工作簿选择器
+     */
+    AIHelperMain.prototype.showWorkbookSelector = function() {
+        try {
+            if (this.modules.workbookSelector) {
+                this.modules.workbookSelector.openWorkbookSelector();
+            } else {
+                // 如果没有工作簿选择器模块，直接显示模态框
+                var workbookModal = document.getElementById('workbookModal');
+                if (workbookModal) {
+                    workbookModal.style.display = 'flex';
+                }
+            }
+        } catch (error) {
+            console.error('显示工作簿选择器失败:', error);
         }
     };
     
@@ -207,6 +226,9 @@ var AIHelperMain = (function() {
                 down: fillDirection === 'down' || fillDirection === 'both'
             };
             
+            // 获取引用类型
+            var referenceType = this.getReferenceType();
+            
             // 检查是否有描述或使用智能分析
             if (!value.trim()) {
                 // 显示确认对话框，询问用户是否要进行智能分析
@@ -223,7 +245,7 @@ var AIHelperMain = (function() {
                     // 构建完整的请求数据
                     var requestData = {
                         description: "", // 空描述，让AI根据单元格信息自行推测需求
-                        referenceType: "current",
+                        referenceType: referenceType, // 使用实际的引用类型
                         currentCell: currentCellInfo,
                         selectedWorkbooks: workbookInfo.selectedWorkbooks || [],
                         selectedWorksheets: workbookInfo.selectedWorksheets || [],
@@ -248,7 +270,7 @@ var AIHelperMain = (function() {
                     // 构建完整的请求数据
                     var requestData = {
                         description: value.trim(),
-                        referenceType: "current",
+                        referenceType: referenceType, // 使用实际的引用类型
                         currentCell: currentCellInfo,
                         selectedWorkbooks: workbookInfo.selectedWorkbooks || [],
                         selectedWorksheets: workbookInfo.selectedWorksheets || [],
@@ -360,16 +382,60 @@ var AIHelperMain = (function() {
         try {
             var selectedSourcesElement = document.getElementById('selectedSources');
             if (selectedSourcesElement) {
-                // 获取工作簿选择器模块
-                if (this.modules.workbookSelector) {
-                    var selectedWorkbooks = this.modules.workbookSelector.selectedWorkbooks || [];
-                    selectedSourcesElement.textContent = selectedWorkbooks.length;
-                } else {
-                    selectedSourcesElement.textContent = '0';
+                var referenceType = this.getReferenceType();
+                
+                // 根据不同的引用类型计算工作表数量
+                switch (referenceType) {
+                    case 'current':
+                        // 当前工作表模式，只计算当前工作表
+                        selectedSourcesElement.textContent = '1';
+                        break;
+                        
+                    case 'worksheet':
+                        // 跨工作表模式，计算选中的工作表数量
+                        if (this.modules.workbookSelector) {
+                            var selectedWorkbooks = this.modules.workbookSelector.selectedWorkbooks || [];
+                            // 对于跨工作表模式，显示工作簿数量（通常是1个）
+                            selectedSourcesElement.textContent = selectedWorkbooks.length || 1;
+                        } else {
+                            selectedSourcesElement.textContent = '1';
+                        }
+                        break;
+                        
+                    case 'workbook':
+                        // 跨工作簿模式，显示选中的工作簿数量
+                        if (this.modules.workbookSelector) {
+                            var selectedWorkbooks = this.modules.workbookSelector.selectedWorkbooks || [];
+                            selectedSourcesElement.textContent = selectedWorkbooks.length || 0;
+                        } else {
+                            selectedSourcesElement.textContent = '0';
+                        }
+                        break;
+                        
+                    default:
+                        selectedSourcesElement.textContent = '0';
                 }
             }
         } catch (error) {
             console.error('更新已选择数据源显示失败:', error);
+        }
+    };
+    
+    /**
+     * 获取引用类型
+     */
+    AIHelperMain.prototype.getReferenceType = function() {
+        try {
+            var referenceTypeElements = document.querySelectorAll('input[name="referenceType"]');
+            for (var i = 0; i < referenceTypeElements.length; i++) {
+                if (referenceTypeElements[i].checked) {
+                    return referenceTypeElements[i].value;
+                }
+            }
+            return 'current'; // 默认值
+        } catch (error) {
+            console.error('获取引用类型失败:', error);
+            return 'current';
         }
     };
     
@@ -535,45 +601,135 @@ var AIHelperMain = (function() {
      */
     AIHelperMain.prototype.getAllWorkbookInfo = function() {
         try {
-            // 尝试获取工作簿选择器中的工作簿信息
-            if (this.modules.workbookSelector && typeof this.modules.workbookSelector.getAllWorkbooks === 'function') {
-                // 获取所有工作簿（不仅仅是选中的）
-                var allWorkbooks = this.modules.workbookSelector.getAllWorkbooks();
-                
-                // 格式化为AI接口需要的格式
-                var formattedWorkbooks = allWorkbooks.map(workbook => {
-                    return {
-                        workBookName: workbook.name,
-                        workBookPath: workbook.path,
-                        worksheets: workbook.worksheets.map(worksheet => {
-                            // 确保列标题格式正确
-                            let columnHeaders = {};
-                            if (worksheet.headers && Array.isArray(worksheet.headers)) {
-                                worksheet.headers.forEach((header, index) => {
+            var referenceType = this.getReferenceType();
+            
+            // 根据引用类型返回不同的数据
+            switch (referenceType) {
+                case 'current':
+                    // 当前工作表模式，只返回当前工作簿和工作表
+                    if (window.Application && window.Application.ActiveWorkbook) {
+                        var activeWorkbook = window.Application.ActiveWorkbook;
+                        var activeSheet = window.Application.ActiveSheet;
+                        
+                        if (activeWorkbook && activeSheet) {
+                            // 获取当前工作表的表头信息
+                            var headers = this.extractWorksheetHeaders(activeSheet);
+                            var columnHeaders = {};
+                            if (headers && Array.isArray(headers)) {
+                                headers.forEach((header, index) => {
                                     const columnLetter = this.getColumnLetter(index + 1);
-                                    if (header && typeof header === 'object' && header.value) {
-                                        columnHeaders[columnLetter] = header.value;
-                                    } else if (typeof header === 'string') {
-                                        columnHeaders[columnLetter] = header;
-                                    }
+                                    columnHeaders[columnLetter] = header;
                                 });
                             }
                             
                             return {
-                                workSheetName: worksheet.name,
-                                columnHeaders: columnHeaders
+                                selectedWorkbooks: [{
+                                    workBookName: activeWorkbook.Name,
+                                    workBookPath: activeWorkbook.Path || '',
+                                    worksheets: [{
+                                        workSheetName: activeSheet.Name,
+                                        columnHeaders: columnHeaders
+                                    }]
+                                }],
+                                selectedWorksheets: []
                             };
-                        })
-                    };
-                });
-                
-                return {
-                    selectedWorkbooks: formattedWorkbooks,
-                    selectedWorksheets: []
-                };
+                        }
+                    }
+                    break;
+                    
+                case 'worksheet':
+                    // 跨工作表模式，返回当前工作簿的所有工作表
+                    if (window.Application && window.Application.ActiveWorkbook) {
+                        var activeWorkbook = window.Application.ActiveWorkbook;
+                        var worksheets = [];
+                        
+                        if (activeWorkbook.Worksheets) {
+                            for (var j = 1; j <= activeWorkbook.Worksheets.Count; j++) {
+                                var ws = activeWorkbook.Worksheets.Item(j);
+                                // 获取表头信息
+                                var headers = this.extractWorksheetHeaders(ws);
+                                
+                                // 格式化列标题
+                                let columnHeaders = {};
+                                if (headers && Array.isArray(headers)) {
+                                    headers.forEach((header, index) => {
+                                        const columnLetter = this.getColumnLetter(index + 1);
+                                        columnHeaders[columnLetter] = header;
+                                    });
+                                }
+                                
+                                worksheets.push({
+                                    workSheetName: ws.Name,
+                                    columnHeaders: columnHeaders
+                                });
+                            }
+                        }
+                        
+                        return {
+                            selectedWorkbooks: [{
+                                workBookName: activeWorkbook.Name,
+                                workBookPath: activeWorkbook.Path || '',
+                                worksheets: worksheets
+                            }],
+                            selectedWorksheets: []
+                        };
+                    }
+                    break;
+                    
+                case 'workbook':
+                    // 跨工作簿模式，返回选中的工作簿信息
+                    if (this.modules.workbookSelector) {
+                        // 获取选中的工作簿（仅选中的工作簿，不是所有工作簿）
+                        var selectedWorkbooks = [];
+                        if (this.modules.workbookSelector.selectedWorkbooks && 
+                            this.modules.workbookSelector.selectedWorkbooks.length > 0) {
+                            // 只使用选中的工作簿
+                            selectedWorkbooks = this.modules.workbookSelector.selectedWorkbooks;
+                        }
+                        // 不再提供默认选项，如果用户没有选择任何工作簿，则返回空数组
+                        
+                        // 使用 workbookSelector 的 getSelectedWorkbooks 方法来获取格式化的工作簿信息
+                        var formattedWorkbooks = [];
+                        if (typeof this.modules.workbookSelector.getSelectedWorkbooks === 'function') {
+                            formattedWorkbooks = this.modules.workbookSelector.getSelectedWorkbooks();
+                        } else {
+                            // 备用方案：手动格式化
+                            formattedWorkbooks = selectedWorkbooks.map(workbook => {
+                                return {
+                                    workBookName: workbook.name,
+                                    workBookPath: workbook.path,
+                                    worksheets: workbook.worksheets.map(worksheet => {
+                                        // 确保列标题格式正确
+                                        let columnHeaders = {};
+                                        if (worksheet.headers && Array.isArray(worksheet.headers)) {
+                                            worksheet.headers.forEach((header, index) => {
+                                                const columnLetter = this.getColumnLetter(index + 1);
+                                                if (header && typeof header === 'object' && header.value) {
+                                                    columnHeaders[columnLetter] = header.value;
+                                                } else if (typeof header === 'string') {
+                                                    columnHeaders[columnLetter] = header;
+                                                }
+                                            });
+                                        }
+                                        
+                                        return {
+                                            workSheetName: worksheet.name,
+                                            columnHeaders: columnHeaders
+                                        };
+                                    })
+                                };
+                            });
+                        }
+                        
+                        return {
+                            selectedWorkbooks: formattedWorkbooks,
+                            selectedWorksheets: []
+                        };
+                    }
+                    break;
             }
             
-            // 如果没有工作簿选择器，则尝试直接从WPS获取信息
+            // 默认情况，尝试直接从WPS获取信息
             if (window.Application && window.Application.Workbooks) {
                 var workbooks = [];
                 for (var i = 1; i <= window.Application.Workbooks.Count; i++) {
@@ -1092,15 +1248,40 @@ var AIHelperMain = (function() {
     AIHelperMain.prototype.applyFormula = function(formula) {
         try {
             if (window.Application && window.Application.Selection) {
+                // 保存应用前的值
+                var originalValue = window.Application.Selection.Value;
+                var originalFormula = window.Application.Selection.Formula;
+                
+                // 尝试应用公式
                 window.Application.Selection.Formula = formula;
-                this.showNotification('公式已应用到当前单元格', 'success');
+                
+                // 检查单元格是否包含公式（通过Formula属性）
+                var currentFormula = window.Application.Selection.Formula;
+                var hasFormula = currentFormula && currentFormula !== '';
+                
+                // 检查值是否发生变化（用于判断公式是否被接受）
+                var currentValue = window.Application.Selection.Value;
+                var valueChanged = (originalValue !== currentValue);
+                
+                // 如果单元格现在包含公式，或者值发生了变化，说明公式应用成功
+                if (hasFormula || valueChanged) {
+                    this.showNotification('公式已应用到当前单元格', 'success');
+                } else {
+                    // 公式可能有语法问题
+                    this.showNotification('公式应用失败：可能存在语法错误', 'error');
+                }
             } else {
                 this.showNotification('无法访问Excel对象模型', 'warning');
             }
             
         } catch (error) {
             console.error('应用公式失败:', error);
-            this.showNotification('应用公式失败：' + error.message, 'error');
+            // 检查是否是公式语法错误
+            if (error.message && (error.message.includes('公式') || error.message.includes('syntax') || error.message.includes('Syntax'))) {
+                this.showNotification('公式语法错误：' + error.message, 'error');
+            } else {
+                this.showNotification('应用公式失败：' + error.message, 'error');
+            }
         }
     };
 

@@ -198,7 +198,7 @@
             </div>
             <div class="footer-info">
                 <span class="info-item">当前单元格: <span id="currentCell">-</span></span>
-                <span class="info-item">已选择数据源: <span id="selectedSources">0</span></span>
+                <span class="info-item">已选择<span id="selectedSources">0</span>个工作簿</span>
             </div>
         </div>
     </div>
@@ -234,5 +234,21 @@
             <span class="notification-message"></span>
         </div>
     </div>
+    
+    <script>
+        // 定义全局函数供HTML调用
+        function closeWorkbookModal() {
+            var workbookModal = document.getElementById('workbookModal');
+            if (workbookModal) {
+                workbookModal.style.display = 'none';
+            }
+        }
+        
+        function confirmWorkbookSelection() {
+            if (window.aiHelperMainInstance && window.aiHelperMainInstance.modules.workbookSelector) {
+                window.aiHelperMainInstance.modules.workbookSelector.confirmSelection();
+            }
+        }
+    </script>
 </body>
 </html>
