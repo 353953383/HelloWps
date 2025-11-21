@@ -1,10 +1,14 @@
 /**
  * 增强的AI接口管理器 - 整合代理服务器支持
  * 解决CORS错误、API配置和网络请求问题
+ * 适配WPS JSA环境
  */
 
-class EnhancedAIInterface {
-    constructor() {
+// 使用立即执行函数包装，确保兼容WPS JSA环境
+var EnhancedAIInterface = (function() {
+    'use strict';
+    
+    function EnhancedAIInterface() {
         this.configManager = window.apiConfigManager || null;
         this.requestQueue = [];
         this.isProcessing = false;
@@ -23,182 +27,148 @@ class EnhancedAIInterface {
     /**
      * 设置代理fetch方法
      */
-    setupProxyFetch() {
-        if (!this.configManager) {
-            console.warn('⚠️ API配置管理器未初始化，使用原始fetch');
-            return;
-        }
-        
-        window.fetch = async (url, options = {}) => {
-            // 特殊处理AI API调用
-            if (this.isAIApiCall(url, options)) {
-                return this.handleAIApiRequest(url, options);
+    EnhancedAIInterface.prototype.setupProxyFetch = function() {
+        // 等待API配置管理器初始化
+        var self = this;
+        this.waitForConfigManager().then(function(configManager) {
+            if (!configManager) {
+                return;
             }
+        }).catch(function(error) {
+        });
+    };
+    
+    /**
+     * 等待API配置管理器初始化
+     */
+    EnhancedAIInterface.prototype.waitForConfigManager = function() {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            var maxAttempts = 50; // 最多等待5秒（50 * 100ms）
+            var attempts = 0;
             
-            // 其他请求使用原始fetch
-            return this.originalFetch(url, options);
-        };
-    }
+            var checkConfigManager = function() {
+                if (window.apiConfigManager && typeof window.apiConfigManager === 'object') {
+                    self.configManager = window.apiConfigManager;
+                    resolve(self.configManager);
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(checkConfigManager, 100);
+                } else {
+                    resolve(null);
+                }
+            };
+            
+            checkConfigManager();
+        });
+    };
     
     /**
      * 检查是否为AI API调用
      */
-    isAIApiCall(url, options) {
-        if (!options || !options.body) return false;
-        
-        try {
-            const body = JSON.parse(options.body);
-            return body && body.system && body.user;
-        } catch (_) {
-            return false;
+    EnhancedAIInterface.prototype.isAIApiCall = function(url, options) {
+        // 检查URL是否为AI API端点
+        if (typeof url === 'string' && url.includes('dashscope.aliyuncs.com')) {
+            return true;
         }
-    }
+        
+        // 检查请求体是否包含AI相关字段
+        if (options && options.body) {
+            try {
+                var body = JSON.parse(options.body);
+                return body && (body.messages || body.model || body.input);
+            } catch (_) {
+                // 如果无法解析JSON，不做特殊处理
+                return false;
+            }
+        }
+        
+        return false;
+    };
     
     /**
      * 处理AI API请求
      */
-    async handleAIApiRequest(url, options) {
+    EnhancedAIInterface.prototype.handleAIApiRequest = function(url, options) {
         this.stats.totalRequests++;
         this.stats.lastRequestTime = new Date();
         
-        try {
-            const config = this.configManager.config;
-            let requestUrl = url;
-            let requestOptions = { ...options };
-            
-            // 如果使用代理，重定向到代理服务器
-            if (config.useProxy && config.endpoint) {
-                if (url.includes('dashscope.aliyuncs.com')) {
-                    requestUrl = `${config.endpoint}/api/chat/completions`;
-                    
-                    // 移除不必要的headers（避免代理冲突）
-                    delete requestOptions.headers['Authorization'];
-                    delete requestOptions.headers['Content-Type'];
-                    
-                    // 添加代理所需的headers
-                    requestOptions.headers = {
-                        ...requestOptions.headers,
-                        'Content-Type': 'application/json',
-                        'X-Client-Version': 'ai-helper-v2.0'
-                    };
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            try {
+                var config = self.configManager.config;
+                var requestUrl = url;
+                var requestOptions = {};
+                if (options) {
+                    for (var key in options) {
+                        requestOptions[key] = options[key];
+                    }
                 }
+                
+                // 使用XMLHttpRequest替代fetch以兼容WPS JSA
+                var xhr = new XMLHttpRequest();
+                xhr.open(requestOptions.method || 'GET', requestUrl, true);
+                
+                // 设置请求头
+                if (requestOptions.headers) {
+                    for (var header in requestOptions.headers) {
+                        xhr.setRequestHeader(header, requestOptions.headers[header]);
+                    }
+                }
+                
+                // 设置超时
+                xhr.timeout = config.timeout || 30000;
+                
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        var result;
+                        try {
+                            result = JSON.parse(xhr.responseText);
+                        } catch (parseError) {
+                            reject(new Error('响应解析失败: ' + parseError.message));
+                            return;
+                        }
+                        
+                        self.stats.successfulRequests++;
+                        resolve(self.formatAIResponse(result));
+                    } else {
+                        var error = new Error('HTTP ' + xhr.status + ': ' + xhr.statusText);
+                        self.stats.failedRequests++;
+                        reject(error);
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    var error = new Error('网络请求失败');
+                    self.stats.failedRequests++;
+                    reject(error);
+                };
+                
+                xhr.ontimeout = function() {
+                    var error = new Error('请求超时');
+                    self.stats.failedRequests++;
+                    reject(error);
+                };
+                
+                // 发送请求
+                xhr.send(requestOptions.body || null);
+                
+            } catch (error) {
+                self.stats.failedRequests++;
+                // 尝试备用方案
+                reject(error);
             }
-            
-            console.log('🌐 使用代理模式:', requestUrl);
-            
-            // 设置超时控制器
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), config.timeout);
-            
-            requestOptions.signal = controller.signal;
-            
-            // 执行请求
-            const response = await this.originalFetch(requestUrl, requestOptions);
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const result = await response.json();
-            
-            // 检查代理响应格式
-            if (result.error) {
-                throw new Error(result.error);
-            }
-            
-            this.stats.successfulRequests++;
-            console.log('✅ AI API请求成功');
-            
-            return this.formatAIResponse(result);
-            
-        } catch (error) {
-            this.stats.failedRequests++;
-            console.error('❌ AI API请求失败:', error);
-            
-            // 尝试备用方案
-            return this.handleFallbackRequest(error);
-        }
-    }
-    
-    /**
-     * 处理备用请求
-     */
-    async handleFallbackRequest(error) {
-        console.log('🔄 尝试备用方案...');
-        
-        // 检查是否为CORS错误
-        if (error.message.includes('CORS') || error.message.includes('blocked')) {
-            return this.createCORSErrorResponse(error);
-        }
-        
-        // 检查是否为网络错误
-        if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
-            return this.createNetworkErrorResponse(error);
-        }
-        
-        // 其他错误
-        return this.createGenericErrorResponse(error);
-    }
-    
-    /**
-     * 创建CORS错误响应
-     */
-    createCORSErrorResponse(error) {
-        console.log('🚫 CORS错误处理');
-        
-        return {
-            success: false,
-            error: 'CORS跨域错误',
-            message: '无法直接访问API，请使用代理服务器',
-            suggestions: [
-                '启动代理服务器: server/start-proxy.sh',
-                '或使用浏览器插件绕过CORS限制',
-                '确保API端点配置正确'
-            ],
-            timestamp: new Date().toISOString()
-        };
-    }
-    
-    /**
-     * 创建网络错误响应
-     */
-    createNetworkErrorResponse(error) {
-        console.log('🌐 网络错误处理');
-        
-        return {
-            success: false,
-            error: '网络连接错误',
-            message: '无法连接到API服务器',
-            suggestions: [
-                '检查网络连接是否正常',
-                '确认代理服务器是否已启动',
-                '检查API端点地址是否正确'
-            ],
-            timestamp: new Date().toISOString()
-        };
-    }
-    
-    /**
-     * 创建通用错误响应
-     */
-    createGenericErrorResponse(error) {
-        return {
-            success: false,
-            error: '请求失败',
-            message: error.message,
-            timestamp: new Date().toISOString()
-        };
-    }
+        });
+    };
     
     /**
      * 格式化AI响应
      */
-    formatAIResponse(result) {
+    EnhancedAIInterface.prototype.formatAIResponse = function(result) {
         try {
             // 检查OpenAI兼容格式
             if (result.choices && result.choices[0]) {
-                const content = result.choices[0].message.content;
+                var content = result.choices[0].message.content;
                 return this.parseAIResponse(content);
             }
             
@@ -210,384 +180,499 @@ class EnhancedAIInterface {
             };
             
         } catch (error) {
-            console.warn('⚠️ 响应格式化失败:', error);
             return result;
         }
-    }
+    };
     
     /**
-     * 解析AI响应内容
+     * 解析AI响应内容（增强版）
+     * 使用改进的JSON提取和错误处理机制
      */
-    parseAIResponse(content) {
+    EnhancedAIInterface.prototype.parseAIResponse = function(response) {
         try {
-            // 尝试提取JSON内容
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                const jsonStr = jsonMatch[0];
-                return JSON.parse(jsonStr);
+            // 提取响应内容
+            var content = response;
+            if (typeof response === 'object') {
+                if (response.choices && response.choices[0] && response.choices[0].message) {
+                    content = response.choices[0].message.content;
+                } else if (response.content) {
+                    content = response.content;
+                } else {
+                    content = JSON.stringify(response);
+                }
             }
             
-            // 如果没有JSON，尝试解析为文本
-            return {
-                success: true,
-                formulas: [
-                    {
-                        description: content,
-                        formula: '=0',
-                        confidence: 0.5,
-                        explanation: 'AI响应解析失败，使用默认公式'
-                    }
-                ],
-                rawContent: content
+            if (!content || typeof content !== 'string') {
+                throw new Error('响应内容为空或格式无效');
+            }
+            
+            // 使用多种方法尝试提取JSON
+            var jsonData = null;
+            var extractMethod = '';
+            
+            // 方法1: 查找JSON代码块标记
+            if (content.includes('```json') || content.includes('```')) {
+                var jsonBlockMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+                if (jsonBlockMatch) {
+                    jsonData = this.extractJSONContent(jsonBlockMatch[1]);
+                    extractMethod = '代码块提取';
+                }
+            }
+            
+            // 方法2: 直接尝试解析整个内容为JSON（处理简单JSON响应）
+            if (!jsonData) {
+                try {
+                    jsonData = JSON.parse(content);
+                    extractMethod = '直接解析';
+                } catch (e) {
+                    // 忽略错误，继续尝试其他方法
+                }
+            }
+            
+            // 方法3: 正则表达式提取大括号内容
+            if (!jsonData) {
+                var braceMatch = content.match(/\{[\s\S]*\}/);
+                if (braceMatch) {
+                    jsonData = this.extractJSONByBrackets(braceMatch[0]);
+                    extractMethod = '括号匹配提取';
+                }
+            }
+            
+            // 方法4: 尝试修复不完整的JSON
+            if (!jsonData && content.includes('{')) {
+                var partialMatch = content.substring(content.indexOf('{'));
+                jsonData = this.tryFixIncompleteJSON(partialMatch);
+                if (jsonData) {
+                    extractMethod = 'JSON修复';
+                }
+            }
+            
+            // 方法5: 响应内容重建
+            if (!jsonData) {
+                jsonData = this.rebuildResponseFromContent(content);
+                extractMethod = '内容重建';
+            }
+            
+            if (!jsonData) {
+                throw new Error('无法提取有效的JSON数据');
+            }
+            
+            // 验证和增强响应数据
+            var validatedData = this.validateResponse(jsonData);
+            
+            // 添加元数据
+            validatedData._metadata = {
+                extractMethod: extractMethod,
+                timestamp: new Date().toISOString(),
+                originalLength: content.length,
+                processedAt: new Date().toISOString()
             };
             
+            return validatedData;
+            
         } catch (error) {
-            console.warn('⚠️ AI响应解析失败:', error);
-            return this.createFallbackResponse('解析错误');
+            // 创建详细的错误响应
+            var errorResponse = this.createEnhancedErrorResponse(error, response);
+            return errorResponse;
         }
-    }
+    };
     
     /**
-     * 创建备用响应
+     * 提取JSON内容
      */
-    createFallbackResponse(reason) {
+    EnhancedAIInterface.prototype.extractJSONContent = function(jsonStr) {
+        try {
+            // 清理JSON字符串
+            var cleanJson = jsonStr.trim();
+            
+            // 移除可能的代码块标记
+            cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            
+            // 尝试直接解析
+            try {
+                return JSON.parse(cleanJson);
+            } catch (e) {
+                // 尝试修复常见JSON错误
+                return this.fixCommonJSONErrors(cleanJson);
+            }
+        } catch (error) {
+            throw new Error('JSON内容提取失败: ' + error.message);
+        }
+    };
+    
+    /**
+     * 通过括号匹配提取JSON
+     */
+    EnhancedAIInterface.prototype.extractJSONByBrackets = function(jsonStr) {
+        try {
+            var cleanJson = jsonStr.trim();
+            
+            // 尝试修复常见错误
+            cleanJson = this.fixCommonJSONErrors(cleanJson);
+            
+            return JSON.parse(cleanJson);
+        } catch (error) {
+            throw new Error('括号匹配提取失败: ' + error.message);
+        }
+    };
+    
+    /**
+     * 尝试修复不完整的JSON
+     */
+    EnhancedAIInterface.prototype.tryFixIncompleteJSON = function(jsonStr) {
+        try {
+            var fixedJson = jsonStr.trim();
+            
+            // 修复常见的JSON错误
+            fixedJson = this.fixCommonJSONErrors(fixedJson);
+            
+            // 尝试解析
+            var parsed = JSON.parse(fixedJson);
+            
+            return parsed;
+            
+        } catch (error) {
+            return null;
+        }
+    };
+    
+    /**
+     * 修复常见JSON错误
+     */
+    EnhancedAIInterface.prototype.fixCommonJSONErrors = function(jsonStr) {
+        var fixed = jsonStr;
+        
+        // 修复单引号为双引号
+        fixed = fixed.replace(/'/g, '"');
+        
+        // 修复未加引号的键名
+        fixed = fixed.replace(/(\w+):/g, '"$1":');
+        
+        return fixed;
+    };
+    
+    /**
+     * 从内容重建响应
+     */
+    EnhancedAIInterface.prototype.rebuildResponseFromContent = function(content) {
+        // 简化实现，尝试直接解析整个内容
+        try {
+            return JSON.parse(content);
+        } catch (error) {
+            return null;
+        }
+    };
+    
+    /**
+     * 验证响应
+     */
+    EnhancedAIInterface.prototype.validateResponse = function(data) {
+        // 确保响应包含必要的字段
+        if (!data.formulas && !data.formula) {
+            // 如果没有formulas字段，尝试创建一个
+            return {
+                success: true,
+                formulas: [{
+                    title: "默认公式",
+                    formula: data.formula || "=0",
+                    explanation: data.explanation || "默认公式示例",
+                    confidence: data.confidence || 50
+                }],
+                data_analysis: data.data_analysis || {},
+                alternative_formulas: data.alternative_formulas || []
+            };
+        } else if (data.formula && !data.formulas) {
+            // 处理简单的响应格式 { "formula": "...", "explanation": "...", ... }
+            return {
+                success: true,
+                formulas: [{
+                    title: data.title || "推荐公式",
+                    formula: data.formula,
+                    explanation: data.explanation || "无说明",
+                    confidence: data.confidence || 90
+                }],
+                data_analysis: data.data_analysis || {},
+                alternative_formulas: data.alternative_formulas || []
+            };
+        }
+        
         return {
             success: true,
-            formulas: [
-                {
-                    description: '基于数据计算的通用公式',
-                    formula: '=SUM(数值1,数值2)',
-                    confidence: 0.6,
-                    explanation: `由于"${reason}"，提供通用公式模板`
-                }
-            ],
+            formulas: data.formulas || [],
+            data_analysis: data.data_analysis || {},
+            alternative_formulas: data.alternative_formulas || []
+        };
+    };
+    
+    /**
+     * 创建增强的错误响应
+     */
+    EnhancedAIInterface.prototype.createEnhancedErrorResponse = function(error, response) {
+        return {
+            success: false,
+            error: '响应解析失败',
+            message: error.message,
+            raw_response: typeof response === 'string' ? response.substring(0, 500) : JSON.stringify(response).substring(0, 500),
             timestamp: new Date().toISOString()
         };
-    }
+    };
     
     /**
-     * 生成公式（增强版）
+     * 生成公式（主要对外接口）
      */
-    async generateFormula(description, options = {}) {
-        console.log('🤖 开始增强版公式生成...');
-        console.log('📝 描述:', description);
-        
-        try {
-            // 验证输入
-            if (!description || description.trim() === '') {
-                throw new Error('描述不能为空');
-            }
-            
-            // 检查配置状态
-            const status = this.configManager.getStatus();
-            if (!status.isConfigured) {
-                throw new Error('API配置未完成，请先进行配置');
-            }
-            
-            // 构建请求数据
-            const requestData = this.buildRequestData(description, options);
-            
-            // 添加到队列
-            return await this.addToQueue(async () => {
-                return await this.sendAIRequest(requestData);
-            });
-            
-        } catch (error) {
-            console.error('❌ 公式生成失败:', error);
-            return this.createErrorFormula(error.message);
-        }
-    }
-    
-    /**
-     * 构建请求数据
-     */
-    buildRequestData(description, options) {
-        const currentCell = this.getCurrentCellInfo();
-        const headers = this.getColumnHeaders();
-        
-        const systemPrompt = this.createSystemPrompt(headers);
-        const userPrompt = this.createUserPrompt(description, currentCell, options);
-        
-        return {
-            system: systemPrompt,
-            user: userPrompt,
-            description: description,
-            currentCell: currentCell,
-            columnHeaders: headers,
-            options: options
-        };
-    }
-    
-    /**
-     * 创建系统提示词
-     */
-    createSystemPrompt(headers) {
-        const headerList = headers.join(', ');
-        
-        return `你是一个Excel公式专家。根据用户需求和数据结构，生成准确的Excel公式。
-
-数据列: ${headerList}
-
-要求:
-1. 生成精确的Excel公式
-2. 公式要符合实际业务逻辑
-3. 给出清晰的解释
-4. 评估公式的可信度(0-1)
-
-响应格式:
-{
-  "formulas": [
-    {
-      "description": "描述公式用途",
-      "formula": "具体公式",
-      "confidence": 0.95,
-      "explanation": "公式解释"
-    }
-  ]
-}
-
-确保返回的是有效的JSON格式。`;
-    }
-    
-    /**
-     * 创建用户提示词
-     */
-    createUserPrompt(description, currentCell, options) {
-        let prompt = `当前单元格: ${currentCell.address} (列名: ${currentCell.columnName})\n`;
-        prompt += `需要: ${description}\n`;
-        
-        if (options.context) {
-            prompt += `附加信息: ${options.context}\n`;
-        }
-        
-        prompt += `\n请生成相应的Excel公式。`;
-        
-        return prompt;
-    }
-    
-    /**
-     * 发送AI请求
-     */
-    async sendAIRequest(requestData) {
-        console.log('📡 发送AI请求...');
-        
-        // 构建API请求
-        const apiRequest = {
-            model: this.configManager.config.modelName,
-            messages: [
+    EnhancedAIInterface.prototype.generateFormula = function(description) {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            // 构建请求消息
+            var messages = [
                 {
-                    role: 'system',
-                    content: requestData.system
+                    role: "system",
+                    content: "你是一个专业的Excel公式专家助手。你的任务是根据用户的需求和提供的数据信息，生成精确的Excel公式。你的回答必须严格按照以下JSON格式返回，不要包含任何其他文本。"
                 },
                 {
-                    role: 'user',
-                    content: requestData.user
+                    role: "user",
+                    content: "请根据以下需求生成Excel公式: " + description
                 }
-            ],
-            temperature: 0.7,
-            max_tokens: 2000
-        };
-        
-        // 发送请求
-        const response = await this.callAIApi(apiRequest);
-        
-        // 解析响应
-        return this.parseAIResponse(response);
-    }
-    
-    /**
-     * 调用AI API
-     */
-    async callAIApi(request) {
-        // 使用增强版fetch方法
-        return await fetch(this.configManager.config.endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(request)
-        });
-    }
-    
-    /**
-     * 队列管理
-     */
-    async addToQueue(task) {
-        return new Promise((resolve, reject) => {
-            this.requestQueue.push({
-                task,
-                resolve,
-                reject,
-                timestamp: Date.now()
-            });
+            ];
             
-            this.processQueue();
-        });
-    }
-    
-    /**
-     * 处理队列
-     */
-    async processQueue() {
-        if (this.isProcessing || this.requestQueue.length === 0) {
-            return;
-        }
-        
-        this.isProcessing = true;
-        
-        try {
-            const item = this.requestQueue.shift();
+            // 获取API配置
+            var apiKey = window.AI_CONFIG ? window.AI_CONFIG.apiKey : null;
+            var model = window.AI_CONFIG ? window.AI_CONFIG.modelName : "qwen-plus";
+            var baseURL = window.AI_CONFIG ? window.AI_CONFIG.baseURL : "https://dashscope.aliyuncs.com/compatible-mode/v1";
             
-            // 检查超时（30秒）
-            if (Date.now() - item.timestamp > 30000) {
-                item.reject(new Error('请求超时'));
+            if (!apiKey) {
+                reject(new Error("API密钥未配置"));
                 return;
             }
             
-            const result = await item.task();
-            item.resolve(result);
+            // 构建请求体
+            var requestBody = {
+                model: model,
+                messages: messages
+            };
             
-        } catch (error) {
-            console.error('❌ 队列处理错误:', error);
+            // 构建请求选项
+            var requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            };
             
-            if (this.requestQueue.length > 0) {
-                const item = this.requestQueue.shift();
-                item.reject(error);
-            }
-        } finally {
-            this.isProcessing = false;
-            
-            // 继续处理队列
-            if (this.requestQueue.length > 0) {
-                setTimeout(() => this.processQueue(), 100);
-            }
-        }
-    }
+            // 发起请求
+            self.handleAIApiRequest(baseURL + "/chat/completions", requestOptions)
+                .then(function(result) {
+                    resolve(result);
+                })
+                .catch(function(error) {
+                    reject(error);
+                });
+        });
+    };
     
     /**
-     * 获取当前单元格信息
+     * 生成公式请求（增强版，支持完整请求数据）
      */
-    getCurrentCellInfo() {
-        try {
-            if (typeof Excel !== 'undefined' && Excel.context) {
-                const cell = Excel.context.workbook.worksheets.getActiveWorksheet().getRange(Excel.context.workbook.worksheets.getActiveWorksheet().rangeAddress);
-                return {
-                    address: cell.address,
-                    columnName: this.getColumnName(cell.columnIndex - 1),
-                    row: cell.row,
-                    column: cell.columnIndex
-                };
-            }
-        } catch (error) {
-            console.warn('⚠️ 无法获取单元格信息:', error);
+    EnhancedAIInterface.prototype.generateFormulaRequest = function(requestData) {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            try {
+                // 构建系统提示
+                var systemPrompt = `你是一个专业的Excel公式专家助手。你的任务是根据用户的需求和提供的数据信息，生成精确的Excel公式。
+
+当用户没有明确描述需求时，你需要根据提供的数据结构和单元格信息，自主智能分析最可能的计算需求，并生成对应的Excel公式。
+
+你的回答必须严格按照以下JSON格式返回，不要包含任何其他文本：
+
+{
+    "formulas": [
+        {
+            "title": "公式名称/描述",
+            "formula": "完整的Excel公式",
+            "explanation": "公式详细说明，包括各参数含义和业务逻辑",
+            "confidence": 95,
+            "applicable_ranges": ["应用范围说明"],
+            "required_functions": ["使用的函数列表"],
+            "example": "使用示例"
         }
-        
-        return {
-            address: '未知单元格',
-            columnName: '未知列',
-            row: 0,
-            column: 0
-        };
-    }
-    
-    /**
-     * 获取列标题
-     */
-    getColumnHeaders() {
-        try {
-            if (typeof Excel !== 'undefined' && Excel.context) {
-                const range = Excel.context.workbook.worksheets.getActiveWorksheet().getRange('1:1');
-                const values = range.values[0];
-                return values.filter(val => val && val.trim() !== '');
-            }
-        } catch (error) {
-            console.warn('⚠️ 无法获取列标题:', error);
+    ],
+    "data_analysis": {
+        "headers_found": ["发现的表头"],
+        "data_types": ["数据类型分析"],
+        "recommendations": ["使用建议"],
+        "smart_analysis": "你的智能分析结果，解释为什么选择这个公式"
+    },
+    "alternative_formulas": [
+        {
+            "description": "替代方案描述",
+            "formula": "替代公式",
+            "pros": ["优点"],
+            "cons": ["缺点"]
         }
-        
-        return ['数据列'];
-    }
-    
-    /**
-     * 获取列名
-     */
-    getColumnName(index) {
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (index < 26) {
-            return alphabet[index];
-        } else {
-            return alphabet[Math.floor(index / 26) - 1] + alphabet[index % 26];
-        }
-    }
-    
-    /**
-     * 创建错误公式响应
-     */
-    createErrorFormula(errorMessage) {
-        return {
-            success: false,
-            error: errorMessage,
-            formulas: [
-                {
-                    description: '错误处理公式',
-                    formula: '=IFERROR(0,"发生错误")',
-                    confidence: 0.1,
-                    explanation: `由于错误"${errorMessage}"，提供错误处理公式`
+    ]
+}
+
+智能分析指导原则：
+1. 根据单元格地址位置推断可能的计算需求（如行12通常是数据汇总行）
+2. 根据表头内容判断数据类型和计算方式
+3. 考虑当前数据区域的数据分布和特征
+4. 如果是库存相关数据，优先考虑库存计算公式
+5. 如果是财务数据，优先考虑金额计算和汇总公式
+6. 如果包含日期列，优先考虑时间相关计算
+
+重要规则：
+1. 公式必须使用正确的Excel语法
+2. 如果引用跨工作簿数据，使用'[工作簿名]工作表名!单元格引用'格式
+3. 如果引用跨工作表数据，使用'工作表名!单元格引用'格式
+4. 考虑引用范围的锁定方式（相对/绝对引用）
+5. 如果需要填充，公式中的引用需要相应调整
+6. confidence值应该在70-99之间，反映公式的准确性
+7. 若信息不足，请直接按可能概率推荐有可能的公式
+8. 特别关注I12这种位置的数据，通常是汇总或计算结果位置
+9. 综合评估列标题信息，给出多个公式方案，按照可能性从高到低排序`;
+
+                // 构建用户提示
+                var userPrompt = self.buildUserPrompt(requestData);
+                
+                // 构建请求消息
+                var messages = [
+                    {
+                        role: "system",
+                        content: systemPrompt
+                    },
+                    {
+                        role: "user",
+                        content: userPrompt
+                    }
+                ];
+                
+                // 获取API配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
+                var apiKey = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiKey : null) || 
+                             (window.AI_CONFIG ? window.AI_CONFIG.apiKey : null);
+                var model = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.modelName : null) || 
+                            (window.AI_CONFIG ? window.AI_CONFIG.modelName : "qwen-plus");
+                var baseURL = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.baseURL : null) || 
+                              (window.AI_CONFIG ? window.AI_CONFIG.baseURL : "https://dashscope.aliyuncs.com/compatible-mode/v1");
+                var apiEndpoint = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiEndpoint : null) || 
+                                  (window.AI_CONFIG ? window.AI_CONFIG.apiEndpoint : null);
+                
+                // 确定API端点
+                var endpoint;
+                if (apiEndpoint) {
+                    // 局域网配置使用apiEndpoint
+                    endpoint = apiEndpoint;
+                } else if (baseURL) {
+                    // 标准配置使用baseURL + 路径
+                    endpoint = baseURL + (baseURL.endsWith('/') ? '' : '/') + "chat/completions";
+                } else {
+                    reject(new Error("API端点未配置"));
+                    return;
                 }
-            ],
-            timestamp: new Date().toISOString()
-        };
-    }
+                
+                if (!apiKey) {
+                    reject(new Error("API密钥未配置"));
+                    return;
+                }
+                
+                // 构建请求体
+                var requestBody = {
+                    model: model,
+                    messages: messages
+                };
+                
+                // 构建请求选项
+                var requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                };
+                
+                // 发起请求
+                self.handleAIApiRequest(endpoint, requestOptions)
+                    .then(function(result) {
+                        resolve(result);
+                    })
+                    .catch(function(error) {
+                        reject(error);
+                    });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+    
+    /**
+     * 构建用户提示词
+     */
+    EnhancedAIInterface.prototype.buildUserPrompt = function(requestData) {
+        var prompt = '';
+        
+        // 用户需求描述
+        if (requestData.description && requestData.description.trim() !== '') {
+            prompt += `用户需求: ${requestData.description}\n\n`;
+        } else {
+            prompt += `请根据提供的工作表数据信息，自行分析最可能的需求并给出最合适的Excel公式建议。分析数据特点，推测用户可能想要进行的计算或数据处理操作。\n\n`;
+        }
+        
+        // 当前单元格信息
+        if (requestData.currentCell) {
+            prompt += `=== 当前单元格信息 ===\n`;
+            prompt += `工作簿: ${requestData.currentCell.workbook || '未知'}\n`;
+            prompt += `工作表: ${requestData.currentCell.worksheet || '未知'}\n`;
+            prompt += `单元格地址: ${requestData.currentCell.cellAddress || 'A1'}\n`;
+            prompt += `行列位置: 第${requestData.currentCell.row || 1}行，第${requestData.currentCell.col || 1}列\n`;
+            if (requestData.currentCell.columnHeader) {
+                prompt += `列标题: ${requestData.currentCell.columnHeader}\n`;
+            }
+            if (requestData.currentCell.value) {
+                prompt += `单元格值: ${requestData.currentCell.value}\n`;
+            }
+            prompt += `\n`;
+        }
+        
+        // 工作簿和工作表信息
+        if (requestData.selectedWorkbooks && requestData.selectedWorkbooks.length > 0) {
+            prompt += `=== 工作簿和工作表信息 ===\n`;
+            requestData.selectedWorkbooks.forEach(function(workbook, index) {
+                prompt += `工作簿 ${index + 1}: ${workbook.workBookName || workbook.name}\n`;
+                if (workbook.worksheets && workbook.worksheets.length > 0) {
+                    workbook.worksheets.forEach(function(worksheet) {
+                        prompt += `  工作表: ${worksheet.workSheetName || worksheet.name}\n`;
+                        if (worksheet.columnHeaders) {
+                            prompt += `    列标题: ${JSON.stringify(worksheet.columnHeaders)}\n`;
+                        }
+                    });
+                }
+            });
+            prompt += `\n`;
+        }
+        
+        // 填充选项
+        if (requestData.fillOptions && (requestData.fillOptions.right || requestData.fillOptions.down)) {
+            prompt += `=== 填充需求 ===\n`;
+            var fillOptionsText = [];
+            if (requestData.fillOptions.right) fillOptionsText.push('向右填充');
+            if (requestData.fillOptions.down) fillOptionsText.push('向下填充');
+            prompt += `填充方向: ${fillOptionsText.join('、')}\n\n`;
+        }
+        
+        return prompt;
+    };
     
     /**
      * 获取统计信息
      */
-    getStats() {
-        return {
-            ...this.stats,
-            queueLength: this.requestQueue.length,
-            isProcessing: this.isProcessing,
-            successRate: this.stats.totalRequests > 0 
-                ? (this.stats.successfulRequests / this.stats.totalRequests * 100).toFixed(2) + '%'
-                : '0%'
-        };
-    }
+    EnhancedAIInterface.prototype.getStats = function() {
+        return this.stats;
+    };
     
-    /**
-     * 重置统计
-     */
-    resetStats() {
-        this.stats = {
-            totalRequests: 0,
-            successfulRequests: 0,
-            failedRequests: 0,
-            lastRequestTime: null
-        };
-        console.log('📊 统计信息已重置');
-    }
-    
-    /**
-     * 测试连接
-     */
-    async testConnection() {
-        console.log('🔍 开始连接测试...');
-        
-        if (!this.configManager) {
-            return {
-                success: false,
-                error: '配置管理器未初始化'
-            };
-        }
-        
-        return await this.configManager.testConnection();
-    }
-}
+    return EnhancedAIInterface;
+})();
 
 // 创建全局实例
 window.enhancedAIInterface = new EnhancedAIInterface();
-
-// 替换原始接口（向后兼容）
-window.aiInterface = window.enhancedAIInterface;
-
-// 导出增强接口
-console.log('🚀 增强AI接口已初始化');
-console.log('📊 统计:', window.enhancedAIInterface.getStats());

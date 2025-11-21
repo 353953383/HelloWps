@@ -1,1005 +1,881 @@
 /**
- * 智能办公主入口文件
+ * 智能办公主入口文件 - 简化版
  * 负责加载和管理智能办公功能的所有模块
  */
 
-class AIHelperMain {
-    constructor() {
+var AIHelperMain = (function() {
+    'use strict';
+    
+    function AIHelperMain() {
         this.isInitialized = false;
         this.modules = {};
         this.config = {};
+        this.currentFormulas = []; // 存储当前生成的公式
         
         this.init();
     }
     
-    init() {
+    AIHelperMain.prototype.init = function() {
         try {
             // 等待DOM加载完成
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => this.initializeModules());
+                document.addEventListener('DOMContentLoaded', this.initializeModules.bind(this));
             } else {
                 this.initializeModules();
             }
         } catch (error) {
             console.error('AI Helper初始化失败:', error);
-            this.showError('初始化失败，请刷新页面重试');
         }
-    }
+    };
     
-    async initializeModules() {
+    AIHelperMain.prototype.initializeModules = function() {
         try {
-            this.showLoading();
-            
-            // 加载基础模块
-            await this.loadModule('jsonSpec', '/js/aiHelper/jsonSpec.js');
-            await this.loadModule('aiInterface', '/js/aiHelper/aiInterface.js');
-            await this.loadModule('workbookSelector', '/js/aiHelper/workbookSelector.js');
-            await this.loadModule('formulaGenerator', '/js/aiHelper/formulaGenerator.js');
-            
-            // 初始化各个模块
+            // 直接使用已加载的全局模块，不进行异步加载
             this.initializeComponents();
             
-            // 设置事件监听
-            this.setupEventListeners();
-            
             this.isInitialized = true;
-            this.hideLoading();
-            this.showSuccess('智能办公系统初始化完成');
+            
+            // 更新状态显示
+            var statusElement = document.getElementById('aiStatus');
+            if (statusElement) {
+                statusElement.textContent = '准备就绪';
+                statusElement.className = 'status-indicator success';
+            }
             
         } catch (error) {
-            console.error('模块加载失败:', error);
-            this.hideLoading();
-            this.showError('模块加载失败: ' + error.message);
+            console.error('模块初始化失败:', error);
+            
+            var statusElement = document.getElementById('aiStatus');
+            if (statusElement) {
+                statusElement.textContent = '初始化失败';
+                statusElement.className = 'status-indicator error';
+            }
         }
-    }
+    };
     
     /**
-     * 动态加载JavaScript模块
+     * 直接获取已加载的JavaScript模块
      */
-    async loadModule(moduleName, scriptPath) {
-        if (this.modules[moduleName]) {
-            return this.modules[moduleName];
+    AIHelperMain.prototype.loadModule = function(moduleName) {
+        try {
+            switch(moduleName) {
+                case 'formulaGenerator':
+                    if (typeof FormulaGenerator !== 'undefined') {
+                        this.modules[moduleName] = new FormulaGenerator();
+                    }
+                    break;
+                case 'workbookSelector':
+                    if (typeof WorkbookSelector !== 'undefined') {
+                        this.modules[moduleName] = new WorkbookSelector();
+                    }
+                    break;
+                case 'aiInterface':
+                    if (typeof window.aiInterface !== 'undefined') {
+                        this.modules[moduleName] = window.aiInterface;
+                    }
+                    break;
+                case 'jsonSpec':
+                    if (typeof window.jsonSpec !== 'undefined') {
+                        this.modules[moduleName] = window.jsonSpec;
+                    }
+                    break;
+            }
+        } catch (error) {
+            console.warn('模块 ' + moduleName + ' 获取失败:', error);
         }
         
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = scriptPath;
-            script.async = true;
-            
-            script.onload = () => {
-                resolve(this.modules[moduleName]);
-            };
-            
-            script.onerror = () => {
-                console.error(`模块 ${moduleName} 加载失败`);
-                reject(new Error(`无法加载模块: ${moduleName}`));
-            };
-            
-            document.head.appendChild(script);
-        });
-    }
+        return this.modules[moduleName];
+    };
     
     /**
      * 初始化各个组件
      */
-    initializeComponents() {
+    AIHelperMain.prototype.initializeComponents = function() {
         try {
-            // 初始化公式生成器
-            if (typeof FormulaGenerator !== 'undefined') {
-                this.modules.formulaGenerator = new FormulaGenerator();
-            }
+            // 加载模块但不依赖它们
+            this.modules.formulaGenerator = this.loadModule('formulaGenerator');
+            this.modules.workbookSelector = this.loadModule('workbookSelector'); 
+            this.modules.aiInterface = this.loadModule('aiInterface');
+            this.modules.jsonSpec = this.loadModule('jsonSpec');
             
-            // 初始化工作簿选择器
-            if (typeof WorkbookSelector !== 'undefined') {
-                this.modules.workbookSelector = new WorkbookSelector();
-            }
-            
-            // 初始化AI接口
-            if (typeof AIInterface !== 'undefined') {
-                this.modules.aiInterface = window.aiInterface;
-            }
-            
-            // 初始化界面交互
-            this.initUIEvents();
+            // 只初始化基本的UI事件
+            this.initBasicUIEvents();
             
         } catch (error) {
             console.error('组件初始化失败:', error);
-            throw error;
+            // 不抛出错误，避免卡死
         }
-    }
+    };
     
     /**
-     * 设置事件监听器
+     * 只初始化基本的UI事件，移除可能导致卡死的复杂逻辑
      */
-    setupEventListeners() {
-        // 监听来自WPS的事件
-        document.addEventListener('wps-ready', () => {
-            this.refreshStatus();
-        });
-        
-        // 监听配置更新事件
-        document.addEventListener('ai-config-updated', (e) => {
-            this.updateConfig(e.detail);
-        });
-        
-        // 监听键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                this.handleQuickFormula();
-            }
-        });
-    }
-    
-    /**
-     * 初始化UI事件
-     */
-    initUIEvents() {
-        // 公式需求输入
-        const requirementInput = document.getElementById('requirementInput');
-        if (requirementInput) {
-            requirementInput.addEventListener('input', this.debounce((e) => {
-                this.updateFormulaPreview(e.target.value);
-            }, 500));
-        }
-        
-        // 引用类型变化
-        const referenceTypeRadios = document.querySelectorAll('input[name="referenceType"]');
-        referenceTypeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.handleReferenceTypeChange(e.target.value);
-            });
-        });
-        
-        // 填充选项变化
-        const fillOptions = document.querySelectorAll('input[name="fillOption"]');
-        fillOptions.forEach(option => {
-            option.addEventListener('change', () => {
-                this.updateFillOptions();
-            });
-        });
-        
-        // 生成公式按钮
-        const generateBtn = document.getElementById('generateBtn');
-        if (generateBtn) {
-            generateBtn.addEventListener('click', () => {
-                this.generateFormulas();
-            });
-        }
-        
-        // 应用公式按钮
-        const applyBtn = document.getElementById('applyBtn');
-        if (applyBtn) {
-            applyBtn.addEventListener('click', () => {
-                this.applySelectedFormula();
-            });
-        }
-        
-        // 设置按钮
-        const settingsBtn = document.getElementById('settingsBtn');
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', () => {
-                this.showSettings();
-            });
-        }
-        
-        // 工作簿选择按钮
-        const selectWorkbookBtn = document.getElementById('selectWorkbookBtn');
-        if (selectWorkbookBtn) {
-            selectWorkbookBtn.addEventListener('click', () => {
-                this.selectWorkbooks();
-            });
-        }
-    }
-    
-    /**
-     * 处理引用类型变化
-     */
-    handleReferenceTypeChange(type) {
-        const workbookSelector = document.getElementById('workbookSelector');
-        const currentWorksheetInfo = document.getElementById('currentWorksheetInfo');
-        
-        if (type === 'current') {
-            if (workbookSelector) workbookSelector.style.display = 'none';
-            if (currentWorksheetInfo) currentWorksheetInfo.style.display = 'block';
-        } else {
-            if (workbookSelector) workbookSelector.style.display = 'block';
-            if (currentWorksheetInfo) currentWorksheetInfo.style.display = 'none';
-        }
-        
-        // 更新工作簿选择器
-        if (this.modules.workbookSelector) {
-            this.modules.workbookSelector.updateReferenceType(type);
-        }
-    }
-    
-    /**
-     * 生成公式建议
-     */
-    async generateFormulas() {
+    AIHelperMain.prototype.initBasicUIEvents = function() {
+        var self = this;
         try {
-            this.showGenerating();
-            
-            // 获取用户输入
-            const requestData = this.collectRequestData();
-            
-            // 验证输入数据
-            const validation = AIJsonValidator.validateRequest(requestData);
-            if (!validation.isValid) {
-                throw new Error('输入数据验证失败: ' + validation.errors.join(', '));
+            // 生成公式按钮
+            var generateBtn = document.getElementById('generateFormula');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', function() {
+                    self.handleGenerateClick();
+                });
             }
             
-            // 调用AI接口生成公式
-            const response = await this.modules.aiInterface.generateFormula(requestData);
+            // 刷新工作簿按钮
+            var refreshBtn = document.getElementById('refreshWorkbooks');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    self.handleRefreshClick();
+                });
+            }
             
-            // 显示结果
-            this.displayFormulaResults(response);
-            
-            this.hideGenerating();
+            // 清空所有按钮
+            var clearBtn = document.getElementById('clearAll');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    self.handleClearClick();
+                });
+            }
             
         } catch (error) {
-            console.error('公式生成失败:', error);
-            this.hideGenerating();
-            this.showError('公式生成失败: ' + error.message);
+            console.error('UI事件初始化失败:', error);
         }
-    }
+    };
     
     /**
-     * 收集请求数据
+     * 处理生成按钮点击
      */
-    collectRequestData() {
-        const requirementInput = document.getElementById('requirementInput');
-        const referenceType = document.querySelector('input[name="referenceType"]:checked');
-        const fillOptions = {
-            right: document.getElementById('fillRight').checked,
-            down: document.getElementById('fillDown').checked
-        };
-        
-        // 获取当前单元格信息
-        let currentCell = {};
-        let workbookInfo = {};
+    AIHelperMain.prototype.handleGenerateClick = function() {
+        var self = this;
         try {
-            if (window.Application && window.Application.ActiveSheet) {
-                const activeCell = window.Application.ActiveSheet.ActiveCell;
-                const activeWorkbook = window.Application.ActiveWorkbook;
-                const activeSheet = window.Application.ActiveSheet;
-                
-                currentCell = {
-                    cellAddress: activeCell.Address,
-                    row: activeCell.Row,
-                    column: activeCell.Column,
-                    worksheet: activeSheet.Name
-                };
-                
-                // 获取完整的工作簿信息
-                workbookInfo = this.getCurrentWorkbookInfo();
-            }
-        } catch (error) {
-            console.warn('无法获取当前单元格信息:', error);
-        }
-        
-        const requestData = {
-            description: requirementInput ? requirementInput.value : '',
-            referenceType: referenceType ? referenceType.value : 'current',
-            currentCell: currentCell,
-            selectedWorkbooks: this.modules.workbookSelector ? this.modules.workbookSelector.getSelectedWorkbooks() : [],
-            selectedWorksheets: this.modules.workbookSelector ? this.modules.workbookSelector.getSelectedWorksheets() : [],
-            fillOptions: fillOptions,
-            headers: this.modules.workbookSelector ? this.modules.workbookSelector.getHeadersInfo() : [],
-            // 新增完整的工作表信息
-            currentWorkbook: workbookInfo.currentWorkbook,
-            currentWorksheet: workbookInfo.currentWorksheet,
-            allWorksheets: workbookInfo.allWorksheets,
-            columnHeaders: workbookInfo.columnHeaders
-        };
-        
-        return requestData;
-    }
-    
-    /**
-     * 获取当前工作簿的完整信息 (与 formulaGenerator.js 中的实现保持一致)
-     */
-    getCurrentWorkbookInfo() {
-        console.log('🔍 开始获取当前工作簿信息...');
-        
-        try {
-            // 检查Excel COM对象是否可用
-            if (!window.Application) {
-                console.warn('⚠️ window.Application不可用，可能在Web环境中');
-                return this.getFallbackWorkbookInfo();
-            }
+            var description = document.getElementById('formulaDescription');
+            var value = description ? description.value : '';
             
-            const activeWorkbook = window.Application.ActiveWorkbook;
-            const activeSheet = window.Application.ActiveSheet;
-            
-            if (!activeWorkbook) {
-                console.warn('⚠️ 无法获取ActiveWorkbook');
-                return this.getFallbackWorkbookInfo();
-            }
-            
-            if (!activeSheet) {
-                console.warn('⚠️ 无法获取ActiveSheet');
-                return this.getFallbackWorkbookInfo();
-            }
-            
-            // 获取当前工作簿信息
-            const currentWorkbook = {
-                name: activeWorkbook ? activeWorkbook.Name : '未知工作簿'
-            };
-            console.log('📁 工作簿名称:', currentWorkbook.name);
-            
-            // 获取所有工作表信息
-            const allWorksheets = [];
-            if (activeWorkbook && activeWorkbook.Worksheets) {
-                console.log(`📊 开始处理工作簿中的 ${activeWorkbook.Worksheets.Count} 个工作表...`);
-                for (let i = 1; i <= activeWorkbook.Worksheets.Count; i++) {
-                    try {
-                        const ws = activeWorkbook.Worksheets.Item(i);
-                        if (ws) {
-                            const usedRange = ws.UsedRange;
-                            const sheetInfo = {
-                                name: ws.Name,
-                                usedRange: usedRange ? {
-                                    rows: usedRange.Rows.Count,
-                                    columns: usedRange.Columns.Count
-                                } : { rows: 0, columns: 0 }
-                            };
-                            allWorksheets.push(sheetInfo);
-                            console.log(`  ✅ 工作表${i}: ${ws.Name} (${sheetInfo.usedRange.rows}x${sheetInfo.usedRange.columns})`);
-                        }
-                    } catch (error) {
-                        console.warn(`⚠️ 处理工作表 ${i} 失败:`, error);
-                    }
+            // 获取填充方向设置
+            var fillDirection = 'none';
+            var fillDirectionRadios = document.querySelectorAll('input[name="fillDirection"]');
+            for (var i = 0; i < fillDirectionRadios.length; i++) {
+                if (fillDirectionRadios[i].checked) {
+                    fillDirection = fillDirectionRadios[i].value;
+                    break;
                 }
             }
-            console.log(`📋 成功获取 ${allWorksheets.length} 个工作表信息`);
             
-            // 获取当前工作表详细信息
-            const currentWorksheet = {
-                name: activeSheet ? activeSheet.Name : '未知工作表',
-                usedRange: null
+            // 转换填充方向设置为旧格式
+            var fillOptions = {
+                right: fillDirection === 'right' || fillDirection === 'both',
+                down: fillDirection === 'down' || fillDirection === 'both'
             };
-            if (activeSheet && activeSheet.UsedRange) {
-                const usedRange = activeSheet.UsedRange;
-                currentWorksheet.usedRange = {
-                    rows: usedRange.Rows.Count,
-                    columns: usedRange.Columns.Count
-                };
-                console.log(`📄 当前工作表: ${currentWorksheet.name} (${currentWorksheet.usedRange.rows}x${currentWorksheet.usedRange.columns})`);
+            
+            if (!value.trim()) {
+                // 获取当前单元格信息
+                this.getCurrentCellInfo().then(function(currentCellInfo) {
+                    // 获取所有工作簿信息
+                    var workbookInfo = self.getAllWorkbookInfo();
+                    
+                    // 构建完整的请求数据
+                    var requestData = {
+                        description: "", // 空描述，让AI根据单元格信息自行推测需求
+                        referenceType: "current",
+                        currentCell: currentCellInfo,
+                        selectedWorkbooks: workbookInfo.selectedWorkbooks || [],
+                        selectedWorksheets: workbookInfo.selectedWorksheets || [],
+                        fillOptions: fillOptions
+                    };
+                    
+                    // 发送到API
+                    return self.sendFormulaRequest(requestData);
+                }).catch(function(error) {
+                    console.error('获取单元格信息失败:', error);
+                    self.showNotification('获取单元格信息失败：' + error.message, 'error');
+                });
+                
             } else {
-                console.log(`📄 当前工作表: ${currentWorksheet.name} (无法获取使用范围)`);
+                // 使用用户输入的描述
+                // 获取当前单元格信息
+                this.getCurrentCellInfo().then(function(currentCellInfo) {
+                    // 获取所有工作簿信息
+                    var workbookInfo = self.getAllWorkbookInfo();
+                    
+                    // 构建完整的请求数据
+                    var requestData = {
+                        description: value.trim(),
+                        referenceType: "current",
+                        currentCell: currentCellInfo,
+                        selectedWorkbooks: workbookInfo.selectedWorkbooks || [],
+                        selectedWorksheets: workbookInfo.selectedWorksheets || [],
+                        fillOptions: fillOptions
+                    };
+                    
+                    // 发送到API
+                    return self.sendFormulaRequest(requestData);
+                }).catch(function(error) {
+                    console.error('获取单元格信息失败:', error);
+                    self.showNotification('获取单元格信息失败：' + error.message, 'error');
+                });
             }
-            
-            // 获取当前工作表的所有列标题
-            let columnHeaders = [];
-            if (activeSheet) {
-                console.log('🔍 开始提取表头信息...');
-                columnHeaders = this.extractHeaders(activeSheet);
-                console.log(`📊 提取到 ${columnHeaders.length} 个表头:`, columnHeaders.slice(0, 5));
-            }
-            
-            const result = {
-                currentWorkbook,
-                currentWorksheet,
-                allWorksheets,
-                columnHeaders
-            };
-            
-            console.log('✅ 工作簿信息获取完成:', result);
-            return result;
             
         } catch (error) {
-            console.error('❌ 获取当前工作簿信息失败:', error);
-            return this.getFallbackWorkbookInfo();
+            console.error('生成处理失败:', error);
+            this.showNotification('生成失败：' + error.message, 'error');
         }
-    }
+    };
     
     /**
-     * 获取备用工作簿信息 (当COM对象不可用时)
+     * 处理刷新按钮点击
      */
-    getFallbackWorkbookInfo() {
-        console.log('🔄 使用备用工作簿信息获取策略...');
-        
+    AIHelperMain.prototype.handleRefreshClick = function() {
         try {
-            // 尝试通过ActiveCell获取基本信息
-            let basicInfo = {};
-            if (window.Application && window.Application.ActiveSheet) {
-                const activeCell = window.Application.ActiveSheet.ActiveCell;
-                const activeSheet = window.Application.ActiveSheet;
-                
-                basicInfo = {
-                    cellAddress: activeCell ? activeCell.Address : '未知',
-                    worksheet: activeSheet ? activeSheet.Name : '未知工作表'
-                };
-                console.log('📍 基本单元格信息:', basicInfo);
+            this.showNotification('刷新完成', 'success');
+        } catch (error) {
+            console.error('刷新处理失败:', error);
+        }
+    };
+    
+    /**
+     * 处理清空按钮点击
+     */
+    AIHelperMain.prototype.handleClearClick = function() {
+        try {
+            var description = document.getElementById('formulaDescription');
+            if (description) {
+                description.value = '';
             }
             
-            // 构建备用信息结构
-            const fallbackInfo = {
-                currentWorkbook: {
-                    name: window.Application?.ActiveWorkbook?.Name || '工作簿信息不可用'
-                },
-                currentWorksheet: {
-                    name: basicInfo.worksheet || '工作表信息不可用',
-                    usedRange: { rows: 0, columns: 0 }
-                },
-                allWorksheets: [], // 在Web环境中无法获取所有工作表
-                columnHeaders: this.getFallbackHeaders(basicInfo.worksheet)
-            };
+            // 清空公式结果
+            this.clearFormulaResults();
             
-            console.log('✅ 备用信息构建完成:', fallbackInfo);
-            return fallbackInfo;
-            
+            this.showNotification('已清空', 'success');
         } catch (error) {
-            console.error('❌ 备用信息获取也失败:', error);
-            return {
-                currentWorkbook: { name: '信息获取失败' },
-                currentWorksheet: { name: '信息获取失败', usedRange: { rows: 0, columns: 0 } },
-                allWorksheets: [],
-                columnHeaders: []
-            };
+            console.error('清空处理失败:', error);
         }
-    }
+    };
     
     /**
-     * 获取备用表头信息
+     * 清空公式结果
      */
-    getFallbackHeaders(worksheetName) {
-        console.log(`🔍 为工作表"${worksheetName}"生成备用表头...`);
-        
-        // 根据工作表名称推测可能的表头
-        if (worksheetName && worksheetName.includes('库存')) {
-            console.log('📦 检测到库存相关工作表，生成预设表头');
-            return [
-                '模块编号', '模块名称', '库存数量', '安全库存', '库存金额',
-                '供应商', '入库日期', '出库日期', '库存状态', '备注'
-            ];
-        }
-        
-        if (worksheetName && worksheetName.includes('模块说明')) {
-            console.log('📋 检测到模块说明工作表，生成预设表头');
-            return [
-                '模块编号', '模块名称', '模块类型', '功能描述', '参数说明',
-                '安装位置', '维护周期', '技术规格', '供应商信息', '备注'
-            ];
-        }
-        
-        // 默认表头
-        console.log('📊 生成默认表头');
-        return [
-            '列1', '列2', '列3', '列4', '列5',
-            '列6', '列7', '列8', '列9', '列10'
-        ];
-    }
-    
-    /**
-     * 提取工作表表头信息 (与 formulaGenerator.js 中的实现保持一致)
-     */
-    extractHeaders(worksheet) {
+    AIHelperMain.prototype.clearFormulaResults = function() {
         try {
-            // 优先从第一行获取表头
-            const firstRow = worksheet.Rows.Item(1);
-            if (firstRow) {
-                const usedColumns = firstRow.Columns.Count;
-                const headers = [];
-                
-                // 获取所有非空列的标题
-                for (let col = 1; col <= usedColumns; col++) {
+            // 隐藏AI结果区域
+            var aiResults = document.getElementById('aiResults');
+            if (aiResults) {
+                aiResults.style.display = 'none';
+            }
+            
+            // 清空公式建议
+            var formulaSuggestions = document.getElementById('formulaSuggestions');
+            if (formulaSuggestions) {
+                formulaSuggestions.innerHTML = '';
+            }
+            
+            // 隐藏应用公式区域
+            var applyFormulaSection = document.getElementById('applyFormulaSection');
+            if (applyFormulaSection) {
+                applyFormulaSection.style.display = 'none';
+            }
+            
+            // 清空当前公式
+            this.currentFormulas = [];
+        } catch (error) {
+            console.error('清空公式结果失败:', error);
+        }
+    };
+    
+    /**
+     * 获取当前单元格信息
+     */
+    AIHelperMain.prototype.getCurrentCellInfo = function() {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            try {
+                // 优先使用WPS JSA环境
+                if (window.Application && window.Application.ActiveCell) {
+                    var cell = window.Application.ActiveCell;
+                    // 正确获取单元格地址
+                    var address = '';
                     try {
-                        const cell = firstRow.Cells.Item(1, col);
-                        let cellValue = '';
-                        
-                        if (cell && cell.Value !== null && cell.Value !== undefined) {
-                            // 处理不同的数据类型
-                            if (typeof cell.Value === 'string') {
-                                cellValue = cell.Value.trim();
-                            } else if (typeof cell.Value === 'number') {
-                                cellValue = cell.Value.toString();
-                            } else if (cell.Value instanceof Date) {
-                                cellValue = cell.Value.toLocaleDateString();
-                            } else {
-                                cellValue = cell.Value.toString();
-                            }
+                        // 尝试多种方式获取地址
+                        if (typeof cell.Address === 'function') {
+                            address = cell.Address();
+                        } else if (typeof cell.Address === 'string') {
+                            address = cell.Address;
+                        } else {
+                            address = 'A1'; // 默认值
                         }
-                        
-                        headers.push(cellValue || `列${col}`);
-                    } catch (error) {
-                        console.warn(`获取第${col}列表头失败:`, error);
-                        headers.push(`列${col}`);
+                    } catch (addrError) {
+                        address = 'A1';
                     }
+                    
+                    // 获取工作表和工作簿信息
+                    var worksheet = window.Application.ActiveSheet;
+                    var workbook = window.Application.ActiveWorkbook;
+                    
+                    var cellInfo = {
+                        workbook: workbook ? workbook.Name : '未知工作簿',
+                        worksheet: worksheet ? worksheet.Name : '未知工作表',
+                        row: cell.Row || 1,
+                        col: cell.Column || 1,
+                        cellAddress: address,
+                        value: self.extractCellValue(cell),
+                        formula: cell.Formula || '',
+                        numberFormat: cell.NumberFormat || '',
+                        columnHeader: self.getColumnHeader(worksheet, cell.Column || 1),
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    resolve(cellInfo);
+                    return;
                 }
                 
-                // 如果第一行都是空值，尝试查找实际的数据行
-                const hasValidHeaders = headers.some(header => header !== '' && header !== `列1`);
-                if (!hasValidHeaders) {
-                    return this.extractHeadersFromDataRange(worksheet);
+                // 尝试使用Office.js环境
+                if (typeof Office !== 'undefined' && Office.context && Office.context.document) {
+                    Office.context.document.getSelectedDataAsync(Office.CoercionType.Text, function(result) {
+                        if (result.status === Office.AsyncResultStatus.Succeeded) {
+                            var cellInfo = {
+                                address: result.value || 'A1',
+                                columnName: self.extractColumnName(result.value || 'A1'),
+                                value: result.value || '',
+                                rowNumber: self.extractRowNumber(result.value || 'A1'),
+                                timestamp: new Date().toISOString()
+                            };
+                            
+                            resolve(cellInfo);
+                        } else {
+                            reject(new Error('无法获取单元格信息'));
+                        }
+                    });
+                    return;
                 }
                 
-                return headers;
+                // 开发环境回退
+                resolve({
+                    workbook: '示例工作簿.xlsx',
+                    worksheet: 'Sheet1',
+                    address: 'A1',
+                    columnName: 'A',
+                    value: '',
+                    rowNumber: 1,
+                    row: 1,
+                    col: 1,
+                    isDevelopmentMode: true,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (error) {
+                console.error('❌ 获取当前单元格信息失败:', error);
+                resolve({
+                    workbook: '未知工作簿',
+                    worksheet: '未知工作表',
+                    address: 'A1',
+                    columnName: 'A',
+                    value: '',
+                    rowNumber: 1,
+                    row: 1,
+                    col: 1,
+                    isErrorMode: true,
+                    timestamp: new Date().toISOString()
+                });
             }
-        } catch (error) {
-            console.warn('提取表头失败:', error);
-        }
-        
-        return [];
-    }
-    
+        });
+    };
+
     /**
-     * 从数据范围中提取表头（当第一行为空时使用）
+     * 获取所有工作簿信息
      */
-    extractHeadersFromDataRange(worksheet) {
+    AIHelperMain.prototype.getAllWorkbookInfo = function() {
         try {
-            const usedRange = worksheet.UsedRange;
-            if (usedRange && usedRange.Rows.Count > 1) {
-                // 尝试第一行到第五行，查找第一个非空行作为表头
-                const maxRowToCheck = Math.min(5, usedRange.Rows.Count);
-                const headers = [];
+            // 尝试获取工作簿选择器中的工作簿信息
+            if (this.modules.workbookSelector && typeof this.modules.workbookSelector.getAllWorkbooks === 'function') {
+                // 获取所有工作簿（不仅仅是选中的）
+                var allWorkbooks = this.modules.workbookSelector.getAllWorkbooks();
                 
-                for (let row = 1; row <= maxRowToCheck; row++) {
-                    const headerRow = usedRange.Rows.Item(row);
-                    let hasData = false;
-                    const rowHeaders = [];
-                    
-                    for (let col = 1; col <= headerRow.Columns.Count; col++) {
-                        try {
-                            const cell = headerRow.Cells.Item(1, col);
-                            let cellValue = '';
-                            
-                            if (cell && cell.Value !== null && cell.Value !== undefined) {
-                                if (typeof cell.Value === 'string') {
-                                    cellValue = cell.Value.trim();
-                                } else {
-                                    cellValue = cell.Value.toString();
-                                }
+                // 格式化为AI接口需要的格式
+                var formattedWorkbooks = allWorkbooks.map(workbook => {
+                    return {
+                        workBookName: workbook.name,
+                        workBookPath: workbook.path,
+                        worksheets: workbook.worksheets.map(worksheet => {
+                            // 确保列标题格式正确
+                            let columnHeaders = {};
+                            if (worksheet.headers && Array.isArray(worksheet.headers)) {
+                                worksheet.headers.forEach((header, index) => {
+                                    const columnLetter = this.getColumnLetter(index + 1);
+                                    if (header && typeof header === 'object' && header.value) {
+                                        columnHeaders[columnLetter] = header.value;
+                                    } else if (typeof header === 'string') {
+                                        columnHeaders[columnLetter] = header;
+                                    }
+                                });
                             }
                             
-                            rowHeaders.push(cellValue || `列${col}`);
-                            if (cellValue !== '') hasData = true;
-                        } catch (error) {
-                            rowHeaders.push(`列${col}`);
+                            return {
+                                workSheetName: worksheet.name,
+                                columnHeaders: columnHeaders
+                            };
+                        })
+                    };
+                });
+                
+                return {
+                    selectedWorkbooks: formattedWorkbooks,
+                    selectedWorksheets: []
+                };
+            }
+            
+            // 如果没有工作簿选择器，则尝试直接从WPS获取信息
+            if (window.Application && window.Application.Workbooks) {
+                var workbooks = [];
+                for (var i = 1; i <= window.Application.Workbooks.Count; i++) {
+                    var wb = window.Application.Workbooks.Item(i);
+                    var worksheets = [];
+                    
+                    if (wb.Worksheets) {
+                        for (var j = 1; j <= wb.Worksheets.Count; j++) {
+                            var ws = wb.Worksheets.Item(j);
+                            // 获取表头信息
+                            var headers = this.extractWorksheetHeaders(ws);
+                            
+                            // 格式化列标题
+                            let columnHeaders = {};
+                            if (headers && Array.isArray(headers)) {
+                                headers.forEach((header, index) => {
+                                    const columnLetter = this.getColumnLetter(index + 1);
+                                    columnHeaders[columnLetter] = header;
+                                });
+                            }
+                            
+                            worksheets.push({
+                                workSheetName: ws.Name,
+                                columnHeaders: columnHeaders
+                            });
                         }
                     }
                     
-                    if (hasData) {
-                        return rowHeaders;
-                    }
+                    workbooks.push({
+                        workBookName: wb.Name,
+                        workBookPath: wb.Path || '',
+                        worksheets: worksheets
+                    });
+                }
+                
+                return {
+                    selectedWorkbooks: workbooks,
+                    selectedWorksheets: []
+                };
+            }
+            
+            return {
+                selectedWorkbooks: [],
+                selectedWorksheets: []
+            };
+        } catch (error) {
+            console.error('❌ 获取工作簿信息失败:', error);
+            return {
+                selectedWorkbooks: [],
+                selectedWorksheets: []
+            };
+        }
+    };
+
+    /**
+     * 提取工作表表头
+     */
+    AIHelperMain.prototype.extractWorksheetHeaders = function(worksheet) {
+        try {
+            if (!worksheet || !worksheet.UsedRange) {
+                return [];
+            }
+            
+            var usedRange = worksheet.UsedRange;
+            if (usedRange.Rows.Count < 1) {
+                return [];
+            }
+            
+            // 获取第一行作为表头
+            var headerRow = usedRange.Rows.Item(1);
+            var headers = [];
+            
+            for (var col = 1; col <= usedRange.Columns.Count; col++) {
+                try {
+                    var cell = worksheet.Cells.Item(usedRange.Row, usedRange.Column + col - 1);
+                    var value = this.extractCellValue(cell);
+                    headers.push(value || '列' + this.getColumnLetter(col));
+                } catch (e) {
+                    headers.push('列' + this.getColumnLetter(col));
                 }
             }
+            
+            return headers;
         } catch (error) {
-            console.warn('从数据范围提取表头失败:', error);
+            return [];
         }
-        
-        return [];
-    }
-    
+    };
+
+    /**
+     * 提取单元格值（兼容WPS JSA环境）
+     */
+    AIHelperMain.prototype.extractCellValue = function(cell) {
+        try {
+            if (cell.Value2 !== null && cell.Value2 !== undefined) {
+                return cell.Value2;
+            }
+            if (cell.Value && typeof cell.Value === 'function') {
+                return cell.Value();
+            }
+            if (cell.Value && typeof cell.Value === 'string') {
+                return cell.Value;
+            }
+            if (cell.Text && typeof cell.Text === 'string') {
+                return cell.Text;
+            }
+            return null;
+        } catch (error) {
+            return null;
+        }
+    };
+
+    /**
+     * 获取列标题
+     */
+    AIHelperMain.prototype.getColumnHeader = function(worksheet, column) {
+        try {
+            if (worksheet && worksheet.Cells) {
+                var headerCell = worksheet.Cells.Item(1, column); // 第一行是标题行
+                var headerValue = this.extractCellValue(headerCell);
+                return headerValue || '列' + this.getColumnLetter(column);
+            }
+            return '未知列';
+        } catch (error) {
+            return '未知列';
+        }
+    };
+
+    /**
+     * 获取列号对应的字母表示 (1 -> A, 2 -> B, ..., 26 -> Z, 27 -> AA)
+     */
+    AIHelperMain.prototype.getColumnLetter = function(columnNumber) {
+        let result = '';
+        while (columnNumber > 0) {
+            columnNumber--;
+            result = String.fromCharCode(65 + (columnNumber % 26)) + result;
+            columnNumber = Math.floor(columnNumber / 26);
+        }
+        return result;
+    };
+
+    /**
+     * 从单元格地址提取列名
+     */
+    AIHelperMain.prototype.extractColumnName = function(address) {
+        if (!address) return 'A';
+        return address.replace(/[0-9]/g, '').toUpperCase();
+    };
+
+    /**
+     * 从单元格地址提取行号
+     */
+    AIHelperMain.prototype.extractRowNumber = function(address) {
+        if (!address) return 1;
+        var match = address.match(/[0-9]+/);
+        return match ? parseInt(match[0]) : 1;
+    };
+
+    /**
+     * 发送公式生成请求到API
+     */
+    AIHelperMain.prototype.sendFormulaRequest = function(requestData) {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            try {
+                self.showNotification('正在生成公式...', 'info');
+                
+                // 打印发送给AI的原始数据
+                console.log('📤 发送给AI的原始数据:', JSON.stringify(requestData, null, 2));
+                
+                // 使用增强AI接口
+                if (window.enhancedAIInterface) {
+                    window.enhancedAIInterface.generateFormulaRequest(requestData).then(function(result) {
+                        // 打印AI响应的原始数据
+                        console.log('📥 AI响应的原始数据:', JSON.stringify(result, null, 2));
+                        
+                        if (result.success && result.formulas && result.formulas.length > 0) {
+                            // 保存当前公式
+                            self.currentFormulas = result.formulas;
+                            
+                            // 显示公式结果
+                            self.showFormulaResults(result);
+                            
+                            self.showNotification('公式生成成功！', 'success');
+                            resolve(result);
+                        } else {
+                            var error = new Error('API返回结果格式错误');
+                            console.error('❌ API返回结果格式错误:', result);
+                            reject(error);
+                        }
+                    }).catch(function(error) {
+                        console.error('❌ API请求失败:', error);
+                        self.showNotification('API请求失败：' + error.message, 'error');
+                        reject(error);
+                    });
+                } else {
+                    // 如果没有增强AI接口，使用简单模拟
+                    var error = new Error('AI接口未初始化');
+                    console.error('❌ AI接口未初始化');
+                    reject(error);
+                }
+                
+            } catch (error) {
+                console.error('❌ API请求异常:', error);
+                self.showNotification('API请求异常：' + error.message, 'error');
+                reject(error);
+            }
+        });
+    };
+
     /**
      * 显示公式结果
      */
-    displayFormulaResults(response) {
-        const resultsContainer = document.getElementById('formulaResults');
-        const alternativeContainer = document.getElementById('alternativeResults');
-        
-        if (resultsContainer) {
-            resultsContainer.innerHTML = '';
-            
-            if (response.formulas && response.formulas.length > 0) {
-                response.formulas.forEach((formula, index) => {
-                    const formulaElement = this.createFormulaElement(formula, index);
-                    resultsContainer.appendChild(formulaElement);
-                });
-            } else {
-                resultsContainer.innerHTML = '<p class="no-results">未找到合适的公式建议</p>';
-            }
-        }
-        
-        if (alternativeContainer) {
-            alternativeContainer.innerHTML = '';
-            
-            if (response.alternative_formulas && response.alternative_formulas.length > 0) {
-                response.alternative_formulas.forEach((altFormula, index) => {
-                    const altElement = this.createAlternativeElement(altFormula, index);
-                    alternativeContainer.appendChild(altElement);
-                });
-            }
-        }
-        
-        // 显示数据分析结果
-        if (response.data_analysis) {
-            this.displayDataAnalysis(response.data_analysis);
-        }
-        
-        // 显示使用统计
-        if (response.metadata) {
-            this.displayMetadata(response.metadata);
-        }
-    }
-    
-    /**
-     * 创建公式元素
-     */
-    createFormulaElement(formula, index) {
-        const element = document.createElement('div');
-        element.className = 'formula-item';
-        element.innerHTML = `
-            <div class="formula-header">
-                <h4>${formula.title}</h4>
-                <div class="confidence-badge confidence-${Math.floor(formula.confidence / 20)}">
-                    置信度: ${formula.confidence}%
-                </div>
-            </div>
-            <div class="formula-content">
-                <div class="formula-text">${formula.formula}</div>
-                <div class="formula-explanation">${formula.explanation}</div>
-                <div class="formula-meta">
-                    <span class="functions">函数: ${formula.required_functions.join(', ')}</span>
-                    <span class="applicable-ranges">适用: ${formula.applicable_ranges.join(', ')}</span>
-                </div>
-                <button class="select-formula-btn" data-index="${index}">选择此公式</button>
-            </div>
-        `;
-        
-        // 添加选择事件
-        const selectBtn = element.querySelector('.select-formula-btn');
-        selectBtn.addEventListener('click', () => {
-            this.selectFormula(formula, index);
-        });
-        
-        return element;
-    }
-    
-    /**
-     * 创建替代方案元素
-     */
-    createAlternativeElement(altFormula, index) {
-        const element = document.createElement('div');
-        element.className = 'alternative-item';
-        element.innerHTML = `
-            <div class="alternative-header">
-                <h4>${altFormula.description}</h4>
-            </div>
-            <div class="alternative-content">
-                <div class="alternative-formula">${altFormula.formula}</div>
-                <div class="pros-cons">
-                    <div class="pros">
-                        <strong>优点:</strong>
-                        <ul>${altFormula.pros.map(pro => `<li>${pro}</li>`).join('')}</ul>
-                    </div>
-                    <div class="cons">
-                        <strong>缺点:</strong>
-                        <ul>${altFormula.cons.map(con => `<li>${con}</li>`).join('')}</ul>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        return element;
-    }
-    
-    /**
-     * 选择公式
-     */
-    selectFormula(formula, index) {
-        // 移除之前选中的样式
-        document.querySelectorAll('.formula-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        
-        // 添加当前选中的样式
-        const selectedElement = document.querySelector(`[data-index="${index}"]`).closest('.formula-item');
-        selectedElement.classList.add('selected');
-        
-        // 保存选中的公式
-        this.selectedFormula = formula;
-        
-        // 更新应用按钮状态
-        const applyBtn = document.getElementById('applyBtn');
-        if (applyBtn) {
-            applyBtn.disabled = false;
-            applyBtn.textContent = '应用此公式';
-        }
-        
-        this.showSuccess(`已选择公式: ${formula.title}`);
-    }
-    
-    /**
-     * 应用选中的公式
-     */
-    applySelectedFormula() {
-        if (!this.selectedFormula) {
-            this.showError('请先选择一个公式');
-            return;
-        }
-        
+    AIHelperMain.prototype.showFormulaResults = function(result) {
         try {
-            // 获取当前选中的单元格或范围
-            let targetRange = null;
-            try {
-                if (window.Application && window.Application.ActiveSheet) {
-                    targetRange = window.Application.ActiveSheet.Selection;
+            // 显示AI结果区域
+            var aiResults = document.getElementById('aiResults');
+            if (aiResults) {
+                aiResults.style.display = 'block';
+            }
+            
+            // 显示公式建议
+            var formulaSuggestions = document.getElementById('formulaSuggestions');
+            if (formulaSuggestions) {
+                formulaSuggestions.innerHTML = '';
+                
+                result.formulas.forEach(function(formula, index) {
+                    var formulaItem = document.createElement('div');
+                    formulaItem.className = 'formula-item';
+                    formulaItem.innerHTML = `
+                        <div class="formula-header">
+                            <h4>${formula.title || '推荐公式'}</h4>
+                            <span class="confidence">置信度: ${formula.confidence || 0}%</span>
+                        </div>
+                        <div class="formula-content">
+                            <div class="formula-code">${formula.formula || '无公式'}</div>
+                            <div class="formula-explanation">${formula.explanation || '无说明'}</div>
+                            ${formula.applicable_ranges ? `<div class="formula-ranges">适用范围: ${formula.applicable_ranges.join(', ')}</div>` : ''}
+                            ${formula.required_functions ? `<div class="formula-functions">所需函数: ${formula.required_functions.join(', ')}</div>` : ''}
+                            ${formula.example ? `<div class="formula-example">示例: ${formula.example}</div>` : ''}
+                        </div>
+                    `;
+                    formulaSuggestions.appendChild(formulaItem);
+                });
+                
+                // 显示数据分析信息
+                if (result.data_analysis) {
+                    var analysisDiv = document.createElement('div');
+                    analysisDiv.className = 'data-analysis';
+                    analysisDiv.innerHTML = `
+                        <h4>📊 数据分析</h4>
+                        ${result.data_analysis.smart_analysis ? `<div class="smart-analysis">${result.data_analysis.smart_analysis}</div>` : ''}
+                        ${result.data_analysis.recommendations ? `
+                            <div class="recommendations">
+                                <h5>建议:</h5>
+                                <ul>
+                                    ${result.data_analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        ${result.data_analysis.headers_found ? `
+                            <details class="headers-details">
+                                <summary>发现的表头 (${result.data_analysis.headers_found.length} 个)</summary>
+                                <div class="headers-list">
+                                    ${result.data_analysis.headers_found.map(header => `<span class="header-item">${header}</span>`).join('')}
+                                </div>
+                            </details>
+                        ` : ''}
+                    `;
+                    formulaSuggestions.appendChild(analysisDiv);
                 }
-            } catch (error) {
-                console.error('无法获取目标范围:', error);
             }
             
-            if (!targetRange) {
-                // 如果没有选中范围，获取当前活动单元格
-                try {
-                    if (window.Application && window.Application.ActiveSheet) {
-                        targetRange = window.Application.ActiveSheet.ActiveCell;
-                    }
-                } catch (error) {
-                    console.error('无法获取活动单元格:', error);
-                }
+            // 显示替代公式
+            if (result.alternative_formulas && result.alternative_formulas.length > 0) {
+                var alternativesDiv = document.createElement('div');
+                alternativesDiv.className = 'alternative-formulas';
+                alternativesDiv.innerHTML = `
+                    <h4>🔄 替代方案</h4>
+                    ${result.alternative_formulas.map((alt, index) => `
+                        <div class="alternative-item">
+                            <div class="alternative-header">
+                                <h5>${alt.description}</h5>
+                            </div>
+                            <div class="alternative-content">
+                                <div class="alternative-formula">${alt.formula}</div>
+                                ${alt.pros ? `
+                                    <div class="alternative-pros">
+                                        <strong>优点:</strong>
+                                        <ul>
+                                            ${alt.pros.map(pro => `<li>${pro}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                                ${alt.cons ? `
+                                    <div class="alternative-cons">
+                                        <strong>缺点:</strong>
+                                        <ul>
+                                            ${alt.cons.map(con => `<li>${con}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+                formulaSuggestions.appendChild(alternativesDiv);
             }
             
-            if (!targetRange) {
-                throw new Error('无法确定目标单元格位置');
+            // 显示应用公式区域
+            this.showApplyFormulaOptions(result.formulas);
+            
+        } catch (error) {
+            console.error('显示公式结果失败:', error);
+        }
+    };
+
+    /**
+     * 显示应用公式选项
+     */
+    AIHelperMain.prototype.showApplyFormulaOptions = function(formulas) {
+        try {
+            var applyFormulaSection = document.getElementById('applyFormulaSection');
+            var formulaApplyOptions = document.getElementById('formulaApplyOptions');
+            
+            if (applyFormulaSection && formulaApplyOptions) {
+                // 显示区域
+                applyFormulaSection.style.display = 'block';
+                formulaApplyOptions.innerHTML = '';
+                
+                // 按置信度排序（从高到低）
+                var sortedFormulas = formulas.slice().sort(function(a, b) {
+                    return (b.confidence || 0) - (a.confidence || 0);
+                });
+                
+                // 创建应用选项
+                sortedFormulas.forEach(function(formula, index) {
+                    var optionButton = document.createElement('button');
+                    optionButton.className = 'btn-formula-option';
+                    optionButton.innerHTML = `
+                        <div class="option-header">
+                            <span class="option-title">${formula.title || '推荐公式'}</span>
+                            <span class="option-confidence">${formula.confidence || 0}%</span>
+                        </div>
+                        <div class="option-formula">${formula.formula || '无公式'}</div>
+                    `;
+                    optionButton.onclick = function() {
+                        this.applyFormula(formula.formula);
+                    }.bind(this);
+                    
+                    formulaApplyOptions.appendChild(optionButton);
+                }.bind(this));
             }
-            
-            // 应用公式
-            this.applyFormulaToRange(this.selectedFormula.formula, targetRange);
-            
-            // 如果需要填充，处理填充逻辑
-            this.handleFillOperations(targetRange);
-            
-            this.showSuccess('公式应用成功！');
+        } catch (error) {
+            console.error('显示应用公式选项失败:', error);
+        }
+    };
+
+    /**
+     * 应用公式到当前单元格
+     */
+    AIHelperMain.prototype.applyFormula = function(formula) {
+        try {
+            if (window.Application && window.Application.Selection) {
+                window.Application.Selection.Formula = formula;
+                this.showNotification('公式已应用到当前单元格', 'success');
+            } else {
+                this.showNotification('无法访问Excel对象模型', 'warning');
+            }
             
         } catch (error) {
             console.error('应用公式失败:', error);
-            this.showError('应用公式失败: ' + error.message);
+            this.showNotification('应用公式失败：' + error.message, 'error');
         }
-    }
+    };
+
+    /**
+     * 处理应用按钮点击
+     */
+    AIHelperMain.prototype.handleApplyClick = function() {
+        try {
+            this.showNotification('应用功能开发中...', 'info');
+        } catch (error) {
+            console.error('应用处理失败:', error);
+        }
+    };
     
     /**
-     * 将公式应用到指定范围
+     * 显示通知消息
      */
-    applyFormulaToRange(formula, range) {
+    AIHelperMain.prototype.showNotification = function(message, type) {
         try {
-            // 设置公式
-            range.Formula = formula;
+            // 创建简单的通知元素
+            var notification = document.createElement('div');
+            notification.className = 'notification notification-' + (type || 'info');
+            notification.style.cssText = 
+                'position: fixed; ' +
+                'top: 20px; ' +
+                'right: 20px; ' +
+                'padding: 10px 20px; ' +
+                'background: ' + (type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1') + '; ' +
+                'color: ' + (type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460') + '; ' +
+                'border: 1px solid ' + (type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb') + '; ' +
+                'border-radius: 5px; ' +
+                'z-index: 10000; ' +
+                'font-size: 14px; ' +
+                'max-width: 300px; ' +
+                'word-wrap: break-word;';
+            notification.textContent = message;
             
-            // 如果有多个单元格，应用后进行格式设置
-            if (range.Cells.Count > 1) {
-                // 可以在这里添加格式设置逻辑
-            }
+            document.body.appendChild(notification);
+            
+            // 3秒后自动隐藏
+            setTimeout(function() {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
             
         } catch (error) {
-            console.error('设置公式失败:', error);
-            throw new Error('无法设置公式到选中范围');
+            console.error('显示通知失败:', error);
         }
-    }
-    
-    /**
-     * 处理填充操作
-     */
-    handleFillOperations(targetRange) {
-        try {
-            const fillRight = document.getElementById('fillRight').checked;
-            const fillDown = document.getElementById('fillDown').checked;
-            
-            if (fillRight || fillDown) {
-                // 计算填充范围
-                let fillRange = targetRange;
-                
-                if (fillRight) {
-                    // 向右填充
-                    // 这里需要根据公式的具体内容来调整填充逻辑
-                }
-                
-                if (fillDown) {
-                    // 向下填充
-                    // 这里需要根据公式的具体内容来调整填充逻辑
-                }
-            }
-        } catch (error) {
-            console.warn('填充操作失败:', error);
-            // 填充失败不影响主功能，继续执行
-        }
-    }
-    
-    /**
-     * 快速公式生成（Ctrl+Enter快捷键）
-     */
-    handleQuickFormula() {
-        if (!this.isInitialized) {
-            this.showError('系统尚未初始化完成，请稍候');
-            return;
-        }
-        
-        this.generateFormulas();
-    }
-    
-    /**
-     * 刷新状态
-     */
-    refreshStatus() {
-        // 更新当前工作表信息
-        try {
-            if (window.Application && window.Application.ActiveSheet) {
-                const activeSheet = window.Application.ActiveSheet;
-                const infoElement = document.getElementById('currentWorksheetInfo');
-                
-                if (infoElement) {
-                    infoElement.innerHTML = `
-                        <div class="current-info">
-                            <p><strong>当前工作表:</strong> ${activeSheet.Name}</p>
-                            <p><strong>使用范围:</strong> ${activeSheet.UsedRange.Rows.Count} 行 x ${activeSheet.UsedRange.Columns.Count} 列</p>
-                        </div>
-                    `;
-                }
-            }
-        } catch (error) {
-            console.warn('刷新工作表信息失败:', error);
-        }
-    }
-    
-    /**
-     * 显示设置面板
-     */
-    showSettings() {
-        // TODO: 实现设置面板
-        this.showInfo('设置功能正在开发中...');
-    }
-    
-    /**
-     * 选择工作簿
-     */
-    selectWorkbooks() {
-        if (this.modules.workbookSelector) {
-            this.modules.workbookSelector.openSelector();
-        }
-    }
-    
-    /**
-     * 显示加载状态
-     */
-    showLoading() {
-        const loadingElement = document.getElementById('loadingIndicator');
-        if (loadingElement) {
-            loadingElement.style.display = 'block';
-        }
-    }
-    
-    /**
-     * 隐藏加载状态
-     */
-    hideLoading() {
-        const loadingElement = document.getElementById('loadingIndicator');
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
-    }
-    
-    /**
-     * 显示生成中状态
-     */
-    showGenerating() {
-        const generatingElement = document.getElementById('generatingIndicator');
-        if (generatingElement) {
-            generatingElement.style.display = 'block';
-        }
-        
-        const generateBtn = document.getElementById('generateBtn');
-        if (generateBtn) {
-            generateBtn.disabled = true;
-            generateBtn.textContent = '生成中...';
-        }
-    }
-    
-    /**
-     * 隐藏生成中状态
-     */
-    hideGenerating() {
-        const generatingElement = document.getElementById('generatingIndicator');
-        if (generatingElement) {
-            generatingElement.style.display = 'none';
-        }
-        
-        const generateBtn = document.getElementById('generateBtn');
-        if (generateBtn) {
-            generateBtn.disabled = false;
-            generateBtn.textContent = '生成公式建议';
-        }
-    }
-    
-    /**
-     * 显示成功消息
-     */
-    showSuccess(message) {
-        this.showNotification(message, 'success');
-    }
-    
-    /**
-     * 显示错误消息
-     */
-    showError(message) {
-        this.showNotification(message, 'error');
-    }
-    
-    /**
-     * 显示信息消息
-     */
-    showInfo(message) {
-        this.showNotification(message, 'info');
-    }
-    
-    /**
-     * 显示通知
-     */
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-icon">${this.getNotificationIcon(type)}</span>
-                <span class="notification-message">${message}</span>
-                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // 自动隐藏
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
-    }
-    
-    /**
-     * 获取通知图标
-     */
-    getNotificationIcon(type) {
-        const icons = {
-            success: '✓',
-            error: '✗',
-            info: 'ℹ',
-            warning: '⚠'
-        };
-        return icons[type] || icons.info;
-    }
-    
-    /**
-     * 防抖函数
-     */
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    };
     
     /**
      * 获取系统状态
      */
-    getSystemStatus() {
+    AIHelperMain.prototype.getSystemStatus = function() {
         return {
             initialized: this.isInitialized,
             modules: Object.keys(this.modules),
-            config: this.config,
             timestamp: new Date().toISOString()
         };
-    }
-}
+    };
+    
+    return AIHelperMain;
+})();
 
 // 创建全局实例
 window.AIHelperMain = AIHelperMain;
 
 // 页面加载完成后自动初始化
-let aiHelperInstance = null;
+var aiHelperInstance = null;
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         aiHelperInstance = new AIHelperMain();
+        // 设置全局实例引用，供按钮点击事件使用
+        window.aiHelperMainInstance = aiHelperInstance;
     });
 } else {
     aiHelperInstance = new AIHelperMain();
+    // 设置全局实例引用，供按钮点击事件使用
+    window.aiHelperMainInstance = aiHelperInstance;
 }
 
 // 导出到全局作用域
