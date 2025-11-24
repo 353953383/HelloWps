@@ -29,7 +29,9 @@
                 <group id="openSystem" label="系统入口">
                     <button id="btnOpenHKExcel" label="打开航科EXCEL1.0" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
                     <!-- <button id="btnOpenPlanOld" label="打开计划系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
-                    <button id="btnOpenPlan" label="打开辅助系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <!-- <button id="btnOpenPlan" label="打开辅助系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
+                    <button id="btnOpenWPSJSA" label="打开WPSJSA规范" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>
+                    <!-- <button id="btnOpenWPSJSA2" label="打开WPSJSA规范2" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
                     <!-- <button id="btnOpenERPceshi" label="打开ERP测试系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
                     <!-- <button id="btnOpenERP" label="打开ERP系统" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/> -->
                     <button id="btnServer" label="接口服务器" onAction="OnAction" enabled="true"  getImage="GetImage" visible="true" size="small"/>

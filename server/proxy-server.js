@@ -313,7 +313,7 @@ app.use((error, req, res, next) => {
 /**
  * 404处理
  */
-app.use('*', (req, res) => {
+app.use((req, res) => {
     res.status(404).json({
         error: {
             message: '接口不存在',
@@ -323,7 +323,7 @@ app.use('*', (req, res) => {
 });
 
 // 启动服务器
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('🚀 AI接口代理服务器启动成功!');
     console.log(`📡 端口: ${PORT}`);
     console.log(`🔗 端点: ${API_ENDPOINT}`);
@@ -338,5 +338,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('按 Ctrl+C 停止服务器');
 });
+
+// 添加静态文件服务
+app.use(express.static(path.join(__dirname, '..', 'standard_WPSJSA_EXCEL')));
 
 module.exports = app;

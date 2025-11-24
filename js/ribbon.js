@@ -260,12 +260,28 @@ function OnAction(control) {
                         window.Application.ShowDialog("http://192.168.70.26:8080/V6R343", "计划辅助系统", 1280 * window.devicePixelRatio, 720 * window.devicePixelRatio, false)
                     }
                     break
-                // case "btnOpenERP":
-                //     {
-                //         window.Application.ShowDialog("http://20.19.4.13:8080/user/login", "ERP系统", 1280 * window.devicePixelRatio, 720 * window.devicePixelRatio, false)
-                //     }
-                //     break
-                case "btnServer":
+                case "btnOpenWPSJSA":
+                    {
+                        // 打开我们创建的WPS JSA文档浏览器
+                        const jsaDocPath = GetUrlPath() + "/standard_WPSJSA_EXCEL/standalone-viewer.html";
+                        // 使用合适的页面大小：1200x800
+                        window.Application.ShowDialog(jsaDocPath, "WPS JSA API 文档浏览器", 1600 * window.devicePixelRatio, 900 * window.devicePixelRatio, false);
+                    }
+                    break;
+                    // case "btnOpenWPSJSA2":
+                    //     {
+                    //         // 打开我们创建的WPS JSA文档浏览器
+                    //         const jsaDocPath = GetUrlPath() + "/standard_WPSJSA_EXCEL/viewer/index.html";
+                    //         // 使用合适的页面大小：1200x800
+                    //         window.Application.ShowDialog(jsaDocPath, "WPS JSA API 文档浏览器", 1600 * window.devicePixelRatio, 900 * window.devicePixelRatio, false);
+                    //     }
+                    //     break
+                    // case "btnOpenERP":
+                    //     {
+                    //         window.Application.ShowDialog("http://20.19.4.13:8080/user/login", "ERP系统", 1280 * window.devicePixelRatio, 720 * window.devicePixelRatio, false)
+                    //     }
+                    //     break
+                    case "btnServer":
                     {
                         // 显示当前服务器信息
                         let currentConfig = loadServerConfig();
@@ -399,6 +415,10 @@ function GetImage(control) {
             return "images/tool/color/nofill.svg"
         case "btnERPMBOM":
             return "images/pp/mbom/mbomERP.svg"
+        case "btnOpenWPSJSA":
+            return "images/jsa.svg"
+        // case "btnOpenWPSJSA2":
+        //     return "images/jsa.svg"           
         default:
             return "images/newFromTemp.svg";
     }
