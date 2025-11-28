@@ -32,9 +32,16 @@ var FormulaGenerator = (function() {
         this.aiInterface = this.getPreferredAIInterface();
         this.standardApi = this.getStandardApi();
         
-        console.log('✅ [FormulaGenerator] AI接口初始化完成:');
-        console.log('  - 标准API:', this.standardApi ? this.standardApi.constructor.name : '未加载');
-        console.log('  - 增强API:', this.aiInterface ? this.aiInterface.constructor.name : 'null');
+        // 简化日志输出
+        /*
+        const standardApiName = this.standardApi ? this.standardApi.constructor.name : '未加载';
+        const enhancedApiName = this.aiInterface ? this.aiInterface.constructor.name : 'null';
+        if (standardApiName !== '未加载' || enhancedApiName !== 'null') {
+            console.log('✅ AI接口初始化成功');
+        } else {
+            console.log('❌ AI接口初始化失败');
+        }
+        */
         
         this.init();
     }
@@ -49,10 +56,8 @@ var FormulaGenerator = (function() {
             typeof window.Application.Workbooks.Count === 'number';
             
         if (hasExcelObjects) {
-            console.log('📊 [FormulaGenerator] 检测到Excel环境');
             return true;
         } else {
-            console.log('🌐 [FormulaGenerator] 检测到Web环境');
             return false;
         }
     };
@@ -61,21 +66,16 @@ var FormulaGenerator = (function() {
      * 获取首选的AI接口（优先使用增强版）
      */
     FormulaGenerator.prototype.getPreferredAIInterface = function() {
-        console.log('🔍 [getPreferredAIInterface] 检查可用的AI接口...');
-        
         // 1. 优先使用增强AI接口
         if (window.enhancedAIInterface) {
-            console.log('✅ [getPreferredAIInterface] 使用增强AI接口');
             return window.enhancedAIInterface;
         }
         
         // 2. 回退到标准AI接口
         if (window.aiInterface) {
-            console.log('⚠️ [getPreferredAIInterface] 使用标准AI接口（未找到增强版本）');
             return window.aiInterface;
         }
         
-        console.error('❌ [getPreferredAIInterface] 未找到任何AI接口');
         return null;
     };
     
@@ -83,27 +83,22 @@ var FormulaGenerator = (function() {
      * 获取标准AI接口（遵循AIapi.txt规范）
      */
     FormulaGenerator.prototype.getStandardApi = function() {
-        console.log('🔍 [getStandardApi] 检查标准AI接口...');
-        
         // 1. 优先使用aiapiStandard（严格按AIapi.txt规范）
         if (window.aiapiStandard && window.CURRENT_AI_CONFIG) {
             // 使用当前配置创建新的AI API实例
             try {
                 var api = new window.aiapiStandard(window.CURRENT_AI_CONFIG);
-                console.log('✅ [getStandardApi] 使用标准AI接口 (aiapiStandard)');
                 return api;
             } catch (error) {
-                console.warn('⚠️ [getStandardApi] 标准AI接口初始化失败:', error.message);
+                console.warn('标准AI接口初始化失败:', error.message);
             }
         }
         
         // 2. 回退到传统AI接口
         if (window.aiInterface) {
-            console.log('⚠️ [getStandardApi] 使用传统AI接口（未找到标准版本）');
             return window.aiInterface;
         }
         
-        console.warn('⚠️ [getStandardApi] 未找到标准AI接口');
         return null;
     };
     
@@ -181,6 +176,42 @@ var FormulaGenerator = (function() {
             referenceTypeRadios[i].addEventListener('change', function(e) {
                 self.referenceType = e.target.value;
                 self.toggleReferenceSelection();
+                // 当引用类型改变时，触发相应操作
+                if (e.target.value === 'worksheet') {
+                    // 跨工作表选择 - 显示工作表选择区域
+                    self.showWorksheetSelection();
+                } else if (e.target.value === 'workbook') {
+                    // 跨工作簿选择 - 显示工作簿选择对话框
+                    self.showWorkbookSelection();
+                } else {
+                    // 隐藏工作表选择区域
+                    var worksheetSelection = document.getElementById('worksheetSelection');
+                    if (worksheetSelection) {
+                        worksheetSelection.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // 添加对跨工作簿选项的点击事件监听，支持重新选择
+        var workbookRadio = document.querySelector('input[name="referenceType"][value="workbook"]');
+        if (workbookRadio) {
+            workbookRadio.addEventListener('click', function(e) {
+                // 如果已经是选中状态，再次点击则重新打开选择对话框
+                if (this.checked) {
+                    self.showWorkbookSelection();
+                }
+            });
+        }
+        
+        // 添加对跨工作表选项的点击事件监听，支持重新选择
+        var worksheetRadio = document.querySelector('input[name="referenceType"][value="worksheet"]');
+        if (worksheetRadio) {
+            worksheetRadio.addEventListener('click', function(e) {
+                // 如果已经是选中状态，再次点击则重新打开选择对话框
+                if (this.checked) {
+                    self.showWorksheetSelection();
+                }
             });
         }
         
@@ -249,6 +280,106 @@ var FormulaGenerator = (function() {
             searchInputElement.addEventListener('input', function(e) {
                 self.filterWorkbooks(e.target.value);
             });
+        }
+    };
+    
+    /**
+     * 显示工作表选择区域（跨工作表模式）
+     */
+    FormulaGenerator.prototype.showWorksheetSelection = function() {
+        try {
+            // 显示工作表选择区域
+            var worksheetSelection = document.getElementById('worksheetSelection');
+            if (worksheetSelection) {
+                worksheetSelection.style.display = 'block';
+            }
+            
+            // 加载当前工作簿的工作表列表
+            this.loadCurrentWorkbookWorksheets();
+        } catch (error) {
+            console.error('显示工作表选择区域失败:', error);
+        }
+    };
+    
+    /**
+     * 显示工作簿选择对话框（跨工作簿模式）
+     */
+    FormulaGenerator.prototype.showWorkbookSelection = function() {
+        try {
+            // 触发全局事件来显示工作簿选择对话框
+            if (window.aiHelperMainInstance && typeof window.aiHelperMainInstance.showWorkbookSelector === 'function') {
+                window.aiHelperMainInstance.showWorkbookSelector();
+            } else {
+                // 备用方案：直接显示工作簿模态框
+                var workbookModal = document.getElementById('workbookModal');
+                if (workbookModal) {
+                    workbookModal.style.display = 'flex';
+                }
+            }
+        } catch (error) {
+            console.error('显示工作簿选择对话框失败:', error);
+        }
+    };
+    
+    /**
+     * 加载当前工作簿的工作表列表（跨工作表模式）
+     */
+    FormulaGenerator.prototype.loadCurrentWorkbookWorksheets = function() {
+        try {
+            if (!this.isExcelEnvironment || !window.Application) {
+                return;
+            }
+            
+            var workbookList = document.getElementById('workbookList');
+            if (!workbookList) return;
+            
+            // 清空之前的内容
+            workbookList.innerHTML = '';
+            
+            // 获取当前工作簿
+            var activeWorkbook = window.Application.ActiveWorkbook;
+            if (!activeWorkbook) return;
+            
+            var html = '';
+            var workbookName = activeWorkbook.Name;
+            
+            html += '<div class="workbook-item" data-workbook="' + workbookName + '">' +
+                    '<div class="workbook-header">' +
+                    '<h4>' + workbookName + '</h4>' +
+                    '</div>' +
+                    '<div class="worksheet-list">';
+            
+            // 获取当前工作簿的所有工作表
+            if (activeWorkbook.Worksheets) {
+                for (var i = 1; i <= activeWorkbook.Worksheets.Count; i++) {
+                    var worksheet = activeWorkbook.Worksheets.Item(i);
+                    var worksheetName = worksheet.Name;
+                    
+                    html += '<div class="worksheet-item">' +
+                            '<input type="checkbox" id="ws_' + workbookName + '_' + worksheetName + '" ' +
+                            'name="worksheets" value="' + worksheetName + '" data-workbook="' + workbookName + '">' +
+                            '<label for="ws_' + workbookName + '_' + worksheetName + '">' +
+                            worksheetName +
+                            '</label>' +
+                            '</div>';
+                }
+            }
+            
+            html += '</div></div>';
+            
+            workbookList.innerHTML = html;
+            
+            // 绑定工作表选择事件
+            var worksheetCheckboxes = document.querySelectorAll('input[name="worksheets"]');
+            var self = this;
+            for (var j = 0; j < worksheetCheckboxes.length; j++) {
+                worksheetCheckboxes[j].addEventListener('change', function(e) {
+                    self.handleWorksheetSelection(e.target);
+                });
+            }
+            
+        } catch (error) {
+            console.error('加载当前工作簿工作表列表失败:', error);
         }
     };
     
@@ -328,13 +459,11 @@ var FormulaGenerator = (function() {
     
     FormulaGenerator.prototype.loadWorkbookData = function() {
         if (!this.isExcelEnvironment) {
-            console.warn('⚠️ [loadWorkbookData] 非Excel环境，使用模拟数据');
             this.loadMockData();
             return;
         }
         
         try {
-            console.log('📊 [loadWorkbookData] 开始加载Excel工作簿数据');
             this.updateStatus('正在加载工作簿...');
             
             // 检查Excel对象
@@ -371,7 +500,6 @@ var FormulaGenerator = (function() {
             
             this.updateWorkbookList(workbookData);
             this.updateStatus('工作簿加载完成');
-            console.log('📊 [loadWorkbookData] Excel数据收集完成:', workbookData);
             
         } catch (error) {
             console.error('加载Excel工作簿数据失败:', error);
@@ -409,7 +537,6 @@ var FormulaGenerator = (function() {
     FormulaGenerator.prototype.extractWorksheetHeaders = function(worksheet) {
         try {
             if (!this.isExcelEnvironment) {
-                console.warn('⚠️ [extractWorksheetHeaders] 非Excel环境，返回空数组');
                 return [];
             }
             
@@ -438,15 +565,12 @@ var FormulaGenerator = (function() {
                     }
                     headers.push(value || '列' + this.getColumnLetter(col));
                 } catch (cellError) {
-                    console.warn('获取单元格 (' + firstRow + ', ' + col + ') 失败:', cellError.message);
                     headers.push('列' + this.getColumnLetter(col));
                 }
             }
             
-            console.log('✅ [extractWorksheetHeaders] 成功提取表头:', headers);
             return headers;
         } catch (error) {
-            console.warn('提取表头信息失败:', error);
             return [];
         }
     };
@@ -457,7 +581,6 @@ var FormulaGenerator = (function() {
     FormulaGenerator.prototype.extractSampleData = function(worksheet) {
         try {
             if (!this.isExcelEnvironment) {
-                console.warn('⚠️ [extractSampleData] 非Excel环境，返回空数组');
                 return [];
             }
             
@@ -487,17 +610,14 @@ var FormulaGenerator = (function() {
                         }
                         rowData.push(value);
                     } catch (cellError) {
-                        console.warn('获取示例数据单元格 (' + row + ', ' + col + ') 失败:', cellError.message);
                         rowData.push('');
                     }
                 }
                 samples.push(rowData);
             }
             
-            console.log('✅ [extractSampleData] 成功提取示例数据:', samples);
             return samples;
         } catch (error) {
-            console.warn('提取示例数据失败:', error);
             return [];
         }
     };
@@ -612,7 +732,7 @@ var FormulaGenerator = (function() {
                     var ws = workbook.worksheets[j];
                     html += '<div class="worksheet-item">' +
                             '<input type="checkbox" id="ws_' + workbook.name + '_' + ws.name + '" ' +
-                            'name="worksheets" value="' + ws.name + '">' +
+                            'name="worksheets" value="' + ws.name + '" data-workbook="' + workbook.name + '">' +
                             '<label for="ws_' + workbook.name + '_' + ws.name + '">' +
                             ws.name + ' ' +
                             '<small>(' + ws.usedRange.rows + '行 x ' + ws.usedRange.columns + '列)</small>' +
@@ -642,7 +762,7 @@ var FormulaGenerator = (function() {
      * 处理工作表选择
      */
     FormulaGenerator.prototype.handleWorksheetSelection = function(checkbox) {
-        var workbookName = checkbox.closest('.workbook-item').dataset.workbook;
+        var workbookName = checkbox.dataset.workbook; // 使用dataset获取工作簿名称
         var worksheetName = checkbox.value;
         
         if (checkbox.checked) {
@@ -681,6 +801,12 @@ var FormulaGenerator = (function() {
         if (referenceSection) {
             referenceSection.style.display = this.referenceType === 'other' ? 'block' : 'none';
         }
+        
+        // 根据引用类型显示相应选择区域
+        var worksheetSelection = document.getElementById('worksheetSelection');
+        if (worksheetSelection) {
+            worksheetSelection.style.display = (this.referenceType === 'worksheet' || this.referenceType === 'workbook') ? 'block' : 'none';
+        }
     };
     
     /**
@@ -710,7 +836,7 @@ var FormulaGenerator = (function() {
      */
     FormulaGenerator.prototype.showNotification = function(message, type) {
         type = type || 'info';
-        console.log('📢 [通知] ' + type + ': ' + message);
+        // console.log('📢 [通知] ' + type + ': ' + message);
         
         // 简单的通知实现
         var notification = document.createElement('div');
@@ -754,10 +880,9 @@ var FormulaGenerator = (function() {
         setTimeout(function() {  // 使用setTimeout模拟异步操作
             try {
                 // 验证输入
+                // 允许空描述，系统会进行智能分析
                 if (!self.formulaDescription.trim()) {
-                    self.showNotification('请输入公式描述', 'warning');
-                    self.isGenerating = false;
-                    return;
+                    console.log('ℹ️ [generateFormula] 空描述，将进行智能分析');
                 }
                 
                 // 准备上下文信息
@@ -833,7 +958,7 @@ var FormulaGenerator = (function() {
                     });
                 } else {
                     // 模拟公式生成（演示模式）
-                    console.log('🎭 [generateFormula] 使用模拟公式生成');
+                    // console.log('🎭 [generateFormula] 使用模拟公式生成');
                     
                     var mockFormulas = [
                         '=IF(' + self.currentCell.cellAddress + '<>"",' + self.currentCell.cellAddress + ',"无数据")',
@@ -846,7 +971,7 @@ var FormulaGenerator = (function() {
                     var randomFormula = mockFormulas[Math.floor(Math.random() * mockFormulas.length)];
                     self.displayGeneratedFormula(randomFormula);
                     self.updateStatus('模拟公式生成完成');
-                    self.showNotification('演示模式：生成模拟公式', 'info');
+                    // self.showNotification('演示模式：生成模拟公式', 'info');
                 }
                 
             } catch (error) {
@@ -979,22 +1104,85 @@ var FormulaGenerator = (function() {
         
         this.updateStatus('已清空所有内容');
         console.log('🧹 [clearAll] 所有内容已清空');
+        
+        // 更新已选择数据源显示
+        if (window.aiHelperMainInstance && typeof window.aiHelperMainInstance.updateSelectedSourcesDisplay === 'function') {
+            window.aiHelperMainInstance.updateSelectedSourcesDisplay();
+        }
     };
     
     /**
      * 获取选中的工作簿数据
      */
     FormulaGenerator.prototype.getSelectedWorkbookData = function() {
-        // 在实际实现中，这里会返回选中工作簿的详细信息
-        // 目前返回简化的信息
-        var result = [];
-        for (var i = 0; i < this.selectedWorksheets.length; i++) {
-            result.push({
-                workbook: this.selectedWorksheets[i].workbook,
-                worksheet: this.selectedWorksheets[i].worksheet
-            });
+        try {
+            // 如果有明确选择的工作表，则返回这些工作表的信息
+            if (this.selectedWorksheets.length > 0) {
+                return this.selectedWorksheets.map(item => ({
+                    workbook: item.workbook,
+                    worksheet: item.worksheet
+                }));
+            }
+            
+            // 根据引用类型返回相应的默认数据
+            switch (this.referenceType) {
+                case 'current':
+                    // 当前工作表模式，返回当前工作表
+                    return [{
+                        workbook: this.currentCell.workbook,
+                        worksheet: this.currentCell.worksheet
+                    }];
+                    
+                case 'worksheet':
+                    // 跨工作表模式，如果没有明确选择，则返回当前工作簿的所有工作表
+                    if (this.isExcelEnvironment && window.Application && window.Application.ActiveWorkbook) {
+                        var activeWorkbook = window.Application.ActiveWorkbook;
+                        var worksheets = [];
+                        if (activeWorkbook.Worksheets) {
+                            for (var i = 1; i <= activeWorkbook.Worksheets.Count; i++) {
+                                var ws = activeWorkbook.Worksheets.Item(i);
+                                worksheets.push({
+                                    workbook: activeWorkbook.Name,
+                                    worksheet: ws.Name
+                                });
+                            }
+                        }
+                        return worksheets;
+                    }
+                    break;
+                    
+                case 'workbook':
+                    // 跨工作簿模式，返回选中的工作簿中的工作表
+                    if (this.selectedWorkbooks && this.selectedWorkbooks.length > 0) {
+                        var allWorksheets = [];
+                        this.selectedWorkbooks.forEach(workbook => {
+                            if (workbook.worksheets) {
+                                workbook.worksheets.forEach(worksheet => {
+                                    allWorksheets.push({
+                                        workbook: workbook.name || workbook.workBookName,
+                                        worksheet: worksheet.name || worksheet.workSheetName
+                                    });
+                                });
+                            }
+                        });
+                        return allWorksheets;
+                    }
+                    break;
+            }
+            
+            // 默认返回当前工作表
+            return [{
+                workbook: this.currentCell.workbook,
+                worksheet: this.currentCell.worksheet
+            }];
+        } catch (error) {
+            console.error('获取选中的工作簿数据失败:', error);
+            // 出错时返回当前工作表
+            return [{
+                workbook: this.currentCell.workbook,
+                worksheet: this.currentCell.worksheet
+            }];
         }
-        return result;
     };
     
     return FormulaGenerator;

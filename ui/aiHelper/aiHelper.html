@@ -5,6 +5,7 @@
     <title>智能办公助手</title>
     
     <!-- 引用公共服务器配置文件 -->
+    <script type="text/javascript" src="../../js/server-config.js"></script>
     <script type="text/javascript" src="../../js/util.js"></script>
     <!-- 标准AI API接口 - 严格遵循AIapi.txt规范 -->
     <script type="text/javascript" src="../../js/aiHelper/aiapi-standard.js"></script>
@@ -153,9 +154,25 @@
                     <div class="loading-text">AI正在分析您的需求...</div>
                 </div>
 
+                <!-- AI状态栏 -->
+                <div class="ai-status-bar" id="aiStatusBar" style="display: none;">
+                    <div class="status-header">
+                        <span class="status-icon">🧠</span>
+                        <span class="status-title">AI思考中...</span>
+                    </div>
+                    <div class="status-content">
+                        <div class="thinking-process" id="thinkingProcess"></div>
+                    </div>
+                </div>
+
                 <!-- AI结果展示 -->
                 <div class="ai-results" id="aiResults" style="display: none;">
                     <h3>💡 AI建议的公式</h3>
+                    <div class="formula-navigation" id="formulaNavigation" style="display: none;">
+                        <button class="nav-button prev-button" id="prevFormula">◀ 上一个</button>
+                        <span class="formula-counter" id="formulaCounter">1 / 1</span>
+                        <button class="nav-button next-button" id="nextFormula">下一个 ▶</button>
+                    </div>
                     <div class="formula-suggestions" id="formulaSuggestions">
                         <!-- 动态生成的公式建议 -->
                     </div>
@@ -181,7 +198,7 @@
             </div>
             <div class="footer-info">
                 <span class="info-item">当前单元格: <span id="currentCell">-</span></span>
-                <span class="info-item">已选择数据源: <span id="selectedSources">0</span></span>
+                <span class="info-item">已选择<span id="selectedSources">0</span>个工作簿</span>
             </div>
         </div>
     </div>
@@ -217,5 +234,21 @@
             <span class="notification-message"></span>
         </div>
     </div>
+    
+    <script>
+        // 定义全局函数供HTML调用
+        function closeWorkbookModal() {
+            var workbookModal = document.getElementById('workbookModal');
+            if (workbookModal) {
+                workbookModal.style.display = 'none';
+            }
+        }
+        
+        function confirmWorkbookSelection() {
+            if (window.aiHelperMainInstance && window.aiHelperMainInstance.modules.workbookSelector) {
+                window.aiHelperMainInstance.modules.workbookSelector.confirmSelection();
+            }
+        }
+    </script>
 </body>
 </html>

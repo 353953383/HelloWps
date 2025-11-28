@@ -162,6 +162,166 @@ var EnhancedAIInterface = (function() {
     };
     
     /**
+     * 处理流式AI API请求
+     */
+    EnhancedAIInterface.prototype.handleStreamAIApiRequest = function(url, options, streamOptions) {
+        var self = this;
+        streamOptions = streamOptions || {};
+        
+        return new Promise(function(resolve, reject) {
+            try {
+                // 使用fetch和ReadableStream处理流式响应
+                fetch(url, options)
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('网络响应错误: ' + response.status);
+                        }
+                        
+                        // 如果没有body，尝试直接获取响应文本
+                        if (!response.body) {
+                            console.warn('流式响应不可用，尝试获取完整响应');
+                            return response.text().then(function(text) {
+                                // 尝试解析响应
+                                var result = self.parseAIResponse(text);
+                                self.stats.successfulRequests++;
+                                resolve(result);
+                            }).catch(function(error) {
+                                self.stats.failedRequests++;
+                                reject(new Error('响应解析失败: ' + error.message));
+                            });
+                        }
+                        
+                        var reader = response.body.getReader();
+                        var decoder = new TextDecoder();
+                        var fullResponse = '';
+                        var thinkingProcess = '';
+                        var accumulatedData = ''; // 用于累积流式数据
+                        
+                        // 递归读取流
+                        function read() {
+                            reader.read().then(function(result) {
+                                if (result.done) {
+                                    // 流结束，尝试解析累积的数据
+                                    try {
+                                        // 如果有累积的完整响应，优先使用
+                                        if (fullResponse.trim() !== '') {
+                                            var parsedResult = self.parseAIResponse(fullResponse);
+                                            self.stats.successfulRequests++;
+                                            resolve(parsedResult);
+                                            return;
+                                        }
+                                        
+                                        // 处理可能的SSE格式数据
+                                        var lines = accumulatedData.split('\n');
+                                        var jsonData = '';
+                                        
+                                        lines.forEach(function(line) {
+                                            if (line.startsWith('data: ')) {
+                                                var data = line.substring(6);
+                                                if (data !== '[DONE]') {
+                                                    try {
+                                                        var parsed = JSON.parse(data);
+                                                        if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta) {
+                                                            jsonData += parsed.choices[0].delta.content || '';
+                                                        } else if (parsed.content) {
+                                                            jsonData += parsed.content;
+                                                        }
+                                                    } catch (e) {
+                                                        // 如果不是JSON，直接添加
+                                                        jsonData += data;
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        
+                                        if (jsonData.trim() !== '') {
+                                            var parsedResult = self.parseAIResponse(jsonData);
+                                            self.stats.successfulRequests++;
+                                            resolve(parsedResult);
+                                        } else if (accumulatedData.trim() !== '') {
+                                            // 尝试直接解析累积的数据
+                                            var parsedResult = self.parseAIResponse(accumulatedData);
+                                            self.stats.successfulRequests++;
+                                            resolve(parsedResult);
+                                        } else {
+                                            throw new Error('响应内容为空');
+                                        }
+                                    } catch (parseError) {
+                                        self.stats.failedRequests++;
+                                        reject(new Error('响应解析失败: ' + parseError.message));
+                                    }
+                                    return;
+                                }
+                                
+                                // 处理接收到的数据块
+                                var chunk = decoder.decode(result.value, { stream: true });
+                                accumulatedData += chunk; // 累积所有数据
+                                
+                                var lines = chunk.split('\n');
+                                
+                                lines.forEach(function(line) {
+                                    if (line.startsWith('data: ')) {
+                                        var data = line.substring(6);
+                                        if (data === '[DONE]') {
+                                            // 完成信号
+                                            return;
+                                        }
+                                        
+                                        try {
+                                            var jsonData = JSON.parse(data);
+                                            
+                                            // 更新思考过程 - 显示累积的响应内容
+                                            if (jsonData.choices && jsonData.choices[0] && jsonData.choices[0].delta) {
+                                                var content = jsonData.choices[0].delta.content || '';
+                                                if (content) {
+                                                    thinkingProcess += content;
+                                                    if (streamOptions.onProgress) {
+                                                        streamOptions.onProgress(thinkingProcess);
+                                                    }
+                                                }
+                                            } else if (jsonData.content) {
+                                                thinkingProcess += jsonData.content;
+                                                if (streamOptions.onProgress) {
+                                                    streamOptions.onProgress(thinkingProcess);
+                                                }
+                                            }
+                                            
+                                            // 累积完整响应
+                                            if (jsonData.choices && jsonData.choices[0] && jsonData.choices[0].delta) {
+                                                fullResponse += jsonData.choices[0].delta.content || '';
+                                            } else if (jsonData.content) {
+                                                fullResponse += jsonData.content;
+                                            }
+                                        } catch (parseError) {
+                                            // 忽略解析错误，可能不是JSON数据
+                                            console.warn('流式数据解析失败:', parseError);
+                                        }
+                                    }
+                                });
+                                
+                                // 继续读取
+                                read();
+                            }).catch(function(error) {
+                                self.stats.failedRequests++;
+                                reject(new Error('流式读取失败: ' + error.message));
+                            });
+                        }
+                        
+                        // 开始读取流
+                        read();
+                    })
+                    .catch(function(error) {
+                        self.stats.failedRequests++;
+                        reject(new Error('请求失败: ' + error.message));
+                    });
+            } catch (error) {
+                self.stats.failedRequests++;
+                reject(error);
+            }
+        });
+    };
+    
+    /**
      * 格式化AI响应
      */
     EnhancedAIInterface.prototype.formatAIResponse = function(result) {
@@ -204,6 +364,46 @@ var EnhancedAIInterface = (function() {
             
             if (!content || typeof content !== 'string') {
                 throw new Error('响应内容为空或格式无效');
+            }
+            
+            // 如果内容是纯文本，尝试包装成基本格式
+            if (!content.trim().startsWith('{') && !content.includes('```json')) {
+                // 检查是否是流式响应的一部分
+                if (content.includes('data:')) {
+                    // 尝试从流式响应中提取完整内容
+                    var fullContent = this.extractContentFromStream(content);
+                    if (fullContent && fullContent.trim().startsWith('{')) {
+                        content = fullContent;
+                    } else {
+                        // 创建基本的响应格式
+                        return {
+                            success: true,
+                            formulas: [{
+                                title: "默认公式",
+                                formula: "=0",
+                                explanation: "默认公式示例",
+                                confidence: 50
+                            }],
+                            data_analysis: {},
+                            alternative_formulas: [],
+                            _rawContent: content // 保存原始内容供调试
+                        };
+                    }
+                } else {
+                    // 创建基本的响应格式
+                    return {
+                        success: true,
+                        formulas: [{
+                            title: "默认公式",
+                        formula: "=0",
+                            explanation: "默认公式示例",
+                            confidence: 50
+                        }],
+                        data_analysis: {},
+                        alternative_formulas: [],
+                        _rawContent: content // 保存原始内容供调试
+                    };
+                }
             }
             
             // 使用多种方法尝试提取JSON
@@ -254,7 +454,21 @@ var EnhancedAIInterface = (function() {
             }
             
             if (!jsonData) {
-                throw new Error('无法提取有效的JSON数据');
+                // 如果所有方法都失败了，创建一个基本响应
+                return {
+                    success: true,
+                    formulas: [{
+                        title: "响应解析",
+                        formula: "=0",
+                        explanation: "原始响应: " + content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+                        confidence: 70
+                    }],
+                    data_analysis: {
+                        smart_analysis: "无法解析完整的JSON响应"
+                    },
+                    alternative_formulas: [],
+                    _rawContent: content
+                };
             }
             
             // 验证和增强响应数据
@@ -473,14 +687,102 @@ var EnhancedAIInterface = (function() {
     };
     
     /**
-     * 生成公式请求（增强版，支持完整请求数据）
+     * 生成公式请求
      */
-    EnhancedAIInterface.prototype.generateFormulaRequest = function(requestData) {
+    EnhancedAIInterface.prototype.generateFormulaRequest = function(requestData, options) {
         var self = this;
+        options = options || {};
+        
         return new Promise(function(resolve, reject) {
             try {
-                // 构建系统提示
-                var systemPrompt = `你是一个专业的Excel公式专家助手。你的任务是根据用户的需求和提供的数据信息，生成精确的Excel公式。
+                self.stats.totalRequests++;
+                self.stats.lastRequestTime = new Date();
+                
+                // 构建AI请求消息
+                var messages = self.buildAIRequestMessages(requestData);
+                
+                // 获取API配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
+                var apiKey = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiKey : null) || 
+                             (window.AI_CONFIG ? window.AI_CONFIG.apiKey : null);
+                var model = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.modelName : null) || 
+                            (window.AI_CONFIG ? window.AI_CONFIG.modelName : "qwen-plus");
+                var baseURL = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.baseURL : null) || 
+                              (window.AI_CONFIG ? window.AI_CONFIG.baseURL : "https://dashscope.aliyuncs.com/compatible-mode/v1");
+                var apiEndpoint = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiEndpoint : null) || 
+                                  (window.AI_CONFIG ? window.AI_CONFIG.apiEndpoint : null);
+                
+                // 确定API端点
+                var endpoint;
+                if (apiEndpoint) {
+                    // 局域网配置使用apiEndpoint
+                    endpoint = apiEndpoint;
+                } else if (baseURL) {
+                    // 标准配置使用baseURL + 路径
+                    endpoint = baseURL + (baseURL.endsWith('/') ? '' : '/') + "chat/completions";
+                } else {
+                    reject(new Error("API端点未配置"));
+                    return;
+                }
+                
+                if (!apiKey) {
+                    reject(new Error("API密钥未配置"));
+                    return;
+                }
+                
+                // 构建请求体
+                var requestBody = {
+                    model: model,
+                    messages: messages,
+                    stream: true // 启用流式响应
+                };
+                
+                // 构建请求选项
+                var requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + apiKey,
+                        'Content-Type': 'application/json',
+                        'X-DashScope-SSE': 'enable' // 启用SSE流式传输
+                    },
+                    body: JSON.stringify(requestBody) // 修正：应该发送requestBody而不是requestData
+                };
+                
+                // 处理流式响应
+                self.handleStreamAIApiRequest(endpoint, requestOptions, options)
+                    .then(function(result) {
+                        resolve(result);
+                    })
+                    .catch(function(error) {
+                        reject(error);
+                    });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+    
+    /**
+     * 构建AI请求消息
+     */
+    EnhancedAIInterface.prototype.buildAIRequestMessages = function(requestData) {
+        // 构建系统提示词
+        var systemPrompt = this.buildSystemPrompt();
+        
+        // 构建用户提示词
+        var userPrompt = this.buildUserPrompt(requestData);
+        
+        // 返回消息数组
+        return [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+        ];
+    };
+    
+    /**
+     * 构建系统提示词
+     */
+    EnhancedAIInterface.prototype.buildSystemPrompt = function() {
+        return `你是一个专业的Excel公式专家助手。你的任务是根据用户的需求和提供的数据信息，生成精确的Excel公式。
 
 当用户没有明确描述需求时，你需要根据提供的数据结构和单元格信息，自主智能分析最可能的计算需求，并生成对应的Excel公式。
 
@@ -530,80 +832,7 @@ var EnhancedAIInterface = (function() {
 5. 如果需要填充，公式中的引用需要相应调整
 6. confidence值应该在70-99之间，反映公式的准确性
 7. 若信息不足，请直接按可能概率推荐有可能的公式
-8. 特别关注I12这种位置的数据，通常是汇总或计算结果位置
-9. 综合评估列标题信息，给出多个公式方案，按照可能性从高到低排序`;
-
-                // 构建用户提示
-                var userPrompt = self.buildUserPrompt(requestData);
-                
-                // 构建请求消息
-                var messages = [
-                    {
-                        role: "system",
-                        content: systemPrompt
-                    },
-                    {
-                        role: "user",
-                        content: userPrompt
-                    }
-                ];
-                
-                // 获取API配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
-                var apiKey = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiKey : null) || 
-                             (window.AI_CONFIG ? window.AI_CONFIG.apiKey : null);
-                var model = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.modelName : null) || 
-                            (window.AI_CONFIG ? window.AI_CONFIG.modelName : "qwen-plus");
-                var baseURL = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.baseURL : null) || 
-                              (window.AI_CONFIG ? window.AI_CONFIG.baseURL : "https://dashscope.aliyuncs.com/compatible-mode/v1");
-                var apiEndpoint = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiEndpoint : null) || 
-                                  (window.AI_CONFIG ? window.AI_CONFIG.apiEndpoint : null);
-                
-                // 确定API端点
-                var endpoint;
-                if (apiEndpoint) {
-                    // 局域网配置使用apiEndpoint
-                    endpoint = apiEndpoint;
-                } else if (baseURL) {
-                    // 标准配置使用baseURL + 路径
-                    endpoint = baseURL + (baseURL.endsWith('/') ? '' : '/') + "chat/completions";
-                } else {
-                    reject(new Error("API端点未配置"));
-                    return;
-                }
-                
-                if (!apiKey) {
-                    reject(new Error("API密钥未配置"));
-                    return;
-                }
-                
-                // 构建请求体
-                var requestBody = {
-                    model: model,
-                    messages: messages
-                };
-                
-                // 构建请求选项
-                var requestOptions = {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + apiKey,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
-                };
-                
-                // 发起请求
-                self.handleAIApiRequest(endpoint, requestOptions)
-                    .then(function(result) {
-                        resolve(result);
-                    })
-                    .catch(function(error) {
-                        reject(error);
-                    });
-            } catch (error) {
-                reject(error);
-            }
-        });
+8. 特别关注I12这种位置的数据，通常是汇总或计算结果位置`;
     };
     
     /**

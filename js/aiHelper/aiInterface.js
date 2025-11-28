@@ -42,7 +42,7 @@ class AIInterface {
         const globalAIConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG;
         
         if (!globalAIConfig) {
-            throw new Error('❌ 全局AI配置不存在，请确保util.js已正确加载AI_CONFIG配置');
+            throw new Error('❌ 全局AI配置不存在，请确保server-config.js已正确加载AI_CONFIG配置');
         }
         
         // 验证必要配置项（OpenAI格式）
@@ -91,13 +91,10 @@ class AIInterface {
         }
         
         // 显示当前配置信息
-        console.log('🤖 AI配置已加载:');
-        console.log(`   API端点: ${this.apiEndpoint}`);
-        console.log(`   模型: ${this.modelName}`);
-        console.log(`   最大Token: ${this.maxTokens}`);
-        console.log(`   温度: ${this.temperature}`);
-        if (globalAIConfig.description) {
-            console.log(`   说明: ${globalAIConfig.description}`);
+        if (this.apiEndpoint && this.modelName) {
+            console.log('✅ AI配置加载成功');
+        } else {
+            console.log('❌ AI配置加载失败');
         }
     }
     
