@@ -1,0 +1,17 @@
+{
+  "name": "wps-api-docs-scraper",
+  "version": "1.0.0",
+  "description": "Scraper for WPS API documentation",
+  "main": "index.js",
+  "scripts": {
+    "scrape": "node bin/scrape-wps-docs.js",
+    "view": "node bin/view-docs.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "cheerio": "^1.0.0-rc.12",
+    "express": "^5.1.0",
+    "jsdom": "^27.0.1",
+    "puppeteer": "^23.8.0"
+  }
+}

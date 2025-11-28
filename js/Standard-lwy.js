@@ -140,11 +140,11 @@ async function $WebService(url, targetNamespace, method, params, dataGridColMode
         if (error.response) {
             const textResponse = await error.response.text();
             // console.error('响应体:', textResponse);
-            alert('响应体:'+textResponse);
+            // alert('响应体:'+textResponse);
         }
-        alert("错误:" + error);
-        alert("请求体:" + requestBody);
-        alert("响应体:" + textResponse);
+        console.error("错误:" + error);
+        // alert("请求体:" + requestBody);
+        // alert("响应体:" + textResponse);
 		
         return [];
     }

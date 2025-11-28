@@ -83,9 +83,9 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                     return;
                 }
                 let haveModelType = false;
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if (Application.Worksheets.Item(i).Name == '型号属性') {
-                        Application.Worksheets.Item(i).Activate();
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if (doc.Worksheets.Item(i).Name == '型号属性') {
+                        doc.Worksheets.Item(i).Activate();
                         haveModelType = true;
                         break;
                     }
@@ -94,7 +94,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 if (!haveModelType) {
                     if (1 == $MsgBox("没有型号属性表，是否新建？")) {
                         $SheetsLastAdd('型号属性');
-                        Application.Worksheets.Item('型号属性').Activate();
+                        doc.Worksheets.Item('型号属性').Activate();
                         let titles = [['型号', '批产/科研属性',''], ['填写型号名', '填写 批产/科研','缺件在型号需求表维护']];
                         $RangeInValue2("A1", 2, 3, titles,"@",'型号属性');
                     } else {
@@ -117,9 +117,9 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                     return;
                 }
                 let haveModelType = false;
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if (Application.Worksheets.Item(i).Name == '型号需求') {
-                        Application.Worksheets.Item(i).Activate();
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if (doc.Worksheets.Item(i).Name == '型号需求') {
+                        doc.Worksheets.Item(i).Activate();
                         haveModelType = true;
                         break;
                     }
@@ -128,7 +128,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 if (!haveModelType) {
                     if (1 == $MsgBox("没有型号需求表，是否新建？")) {
                         $SheetsLastAdd('型号需求');
-                        Application.Worksheets.Item('型号需求').Activate();
+                        doc.Worksheets.Item('型号需求').Activate();
                         let titles = [['型号', '备注', '月份1', '月份2', '月份3', ''], ['填写型号名', '备注','月份1需求', '月份2需求', '月份3需求', '目前暂时支持计算三个月缺件']];
                         $RangeInValue2("A1", 2, 6, titles,"@",'型号需求');
                     } else {
@@ -169,9 +169,9 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // var sheetName = planner + "@" + selectYear + "@" + selectMonth;
                 var sheetName = planner;
                 let haveSheet = false;
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if (Application.Worksheets.Item(i).Name == sheetName) {
-                        Application.Worksheets.Item(i).Activate();
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if (doc.Worksheets.Item(i).Name == sheetName) {
+                        doc.Worksheets.Item(i).Activate();
                         haveSheet = true;
                         break;
                     }
@@ -179,7 +179,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 if (!haveSheet) {
                     if (1 == $MsgBox("没有该月缺件表："+sheetName+",是否新建？")) {
                         $SheetsLastAdd(sheetName);
-                        Application.Worksheets.Item(sheetName).Activate();
+                        doc.Worksheets.Item(sheetName).Activate();
 
                         // var months = [];
                         // var tempDate = Number(selectMonth);
@@ -200,13 +200,14 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                             '1月','2月','3月','节点','库房','备注'], 
                         ['批产/科研','所有数据从第四列开始维护，不要删除表头和插入空行','','','一车间、二车间、三车间、六车间、八车间、十车间、十一车间、采购','','','','','','']];
                         $RangeInValue2("A1", 3, 12, titles,"@",sheetName);
-                        Application.Worksheets.Item(sheetName).Range("A1:L1").Merge();
+                        doc.Worksheets.Item(sheetName).Range("A1:L1").Merge();
                     } else {
                         alert('已取消');
                     }
                 }
                 break;
             }
+
             case "addPTType":{
                 let doc = window.Application.ActiveWorkbook;
                 let textValue = "";
@@ -221,7 +222,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
                 let thisSheet = window.Application.ActiveWorkbook.ActiveSheet
                 // const regex = /^[\u4e00-\u9fa5]+@\d{4}@[1-9]|1[0-2]$/;
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 // if (!regex.test(thisSheet.Name)) {
                 if (planners.indexOf(thisSheet.Name)==-1) {
                     alert("工作表名称格式不符");
@@ -238,8 +239,8 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
 
                 let haveModelType = false;
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if (Application.Worksheets.Item(i).Name == '型号属性') {
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if (doc.Worksheets.Item(i).Name == '型号属性') {
                         haveModelType = true;
                         break;
                     }
@@ -248,7 +249,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                     alert("型号属性表不存在，需维护");
                     return;
                 }else{
-                    var modelTypeSheet = window.Application.ActiveWorkbook.Worksheets.Item("型号属性");
+                    var modelTypeSheet = doc.Worksheets.Item("型号属性");
                     const lastRow = modelTypeSheet.Cells.Item(thisSheet.Rows.Count, 2).End(-4162).Row;
                     if(lastRow<3){
                         alert("型号属性表无内容，需维护");
@@ -266,7 +267,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                         modelArray = thisSheet.Range("B4:B"+lastRow).Value2;
                     }
                     // $print($ArrayToString(modelArray));
-                    var modelTypeSheet = window.Application.ActiveWorkbook.Worksheets.Item("型号属性");
+                    var modelTypeSheet = doc.Worksheets.Item("型号属性");
                     const lastRow0 = modelTypeSheet.Cells.Item(thisSheet.Rows.Count, 2).End(-4162).Row;
                     var modelTypeArray = modelTypeSheet.Range("A3:B"+lastRow0).Value2;
                     const modelTypeMap = new Map();
@@ -288,10 +289,11 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                     }
                     $print("typeArray",$ArrayToString(typeArray));
                     $RangeInValue2("A4", modelArray.length, 1, $ArrayTranspose(typeArray),"@",thisSheet.Name);
-                }0
+                }
                 alert("刷新完成,"+(typeIsOK?"不":"注意！")+"存在型号类型不对应情况");
                 break;
             }
+            
             case "checkPlan":{
                 let doc = window.Application.ActiveWorkbook;
                 let textValue = "";
@@ -306,7 +308,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
                 let thisSheet = window.Application.ActiveWorkbook.ActiveSheet
                 // const regex = /^[\u4e00-\u9fa5]+@\d{4}@[1-9]|1[0-2]$/;
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 // if (!regex.test(thisSheet.Name)) 
                 if (planners.indexOf(thisSheet.Name)==-1) {
                     alert("工作表名称格式不符");
@@ -360,7 +362,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
                 // var selectYear = document.getElementById('yearSelect').value;
                 // var selectMonth = document.getElementById('monthSelect').value;
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 var planNames = [];
                 planners.forEach( planner=> {
                     // planNames.push(planner + "@" + selectYear + "@" + selectMonth);
@@ -370,9 +372,9 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 planNames.forEach( planName=> {
                     plans.set(planName,false);
                 });
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if(Array.from(plans.keys()).includes(Application.Worksheets.Item(i).Name)){
-                        plans.set(Application.Worksheets.Item(i).Name,true);
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if(Array.from(plans.keys()).includes(doc.Worksheets.Item(i).Name)){
+                        plans.set(doc.Worksheets.Item(i).Name,true);
                     }
                 }
                 var errorMsg = '';
@@ -399,7 +401,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // var selectYear = document.getElementById('yearSelect').value;
                 // var selectMonth = document.getElementById('monthSelect').value;
                 // var workbookName = selectYear + "年" + selectMonth +"批产缺件汇总"+new Date().valueOf(); 
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 var planNames = [];
                 planners.forEach( planner=> {
                     // planNames.push(planner + "@" + selectYear + "@" + selectMonth);
@@ -407,10 +409,10 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 });
                 var pcValue = [];
                 // var sumValue = [];
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if(planNames.includes(Application.Worksheets.Item(i).Name)){
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if(planNames.includes(doc.Worksheets.Item(i).Name)){
                        //提取合并相关表格数据
-                        var theSheet = Application.Worksheets.Item(i);
+                        var theSheet = doc.Worksheets.Item(i);
                         var lastRow = theSheet.Cells.Item(theSheet.Rows.Count, 2).End(-4162).Row;
                         if(lastRow<4){
                             continue;
@@ -418,7 +420,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                         var planArray = theSheet.Range("A4:L"+lastRow).Value2;
                         planArray.forEach( item=> {
                             if(item[0]=='批产'){
-                                item.push(Application.Worksheets.Item(i).Name);
+                                item.push(doc.Worksheets.Item(i).Name);
                                 pcValue.push(item);
                             }
                             // sumValue.push(item);
@@ -436,7 +438,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // window.Application.ActiveWorkbook.SaveAs(workbookName, null, null, null, null, null, null, 2, null, null, null, null);
                 var sheetName = "批产缺件汇总"+$StringReplaceAll(new Date().toLocaleDateString(),"/",".")+"."+new Date().valueOf();
                 $SheetsLastAdd(sheetName);
-                Application.Worksheets.Item(sheetName).Activate();
+                doc.Worksheets.Item(sheetName).Activate();
 
                 // var months = [];
                 // var tempDate = Number(selectMonth);
@@ -512,7 +514,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // var selectYear = document.getElementById('yearSelect').value;
                 // var selectMonth = document.getElementById('monthSelect').value;
                 // var workbookName = selectYear + "年" + selectMonth +"月科研缺件汇总"+new Date().valueOf(); 
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 var planNames = [];
                 planners.forEach( planner=> {
                     // planNames.push(planner + "@" + selectYear + "@" + selectMonth);
@@ -520,10 +522,10 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 });
                 var pcValue = [];
                 // var sumValue = [];
-                for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                    if(planNames.includes(Application.Worksheets.Item(i).Name)){
+                for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                    if(planNames.includes(doc.Worksheets.Item(i).Name)){
                        //提取合并相关表格数据
-                        var theSheet = Application.Worksheets.Item(i);
+                        var theSheet = doc.Worksheets.Item(i);
                         var lastRow = theSheet.Cells.Item(theSheet.Rows.Count, 2).End(-4162).Row;
                         if(lastRow<4){
                             continue;
@@ -531,7 +533,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                         var planArray = theSheet.Range("A4:L"+lastRow).Value2;
                         planArray.forEach( item=> {
                             if(item[0]=='科研'){
-                                item.push(Application.Worksheets.Item(i).Name);
+                                item.push(doc.Worksheets.Item(i).Name);
                                 pcValue.push(item);
                             }
                             // sumValue.push(item);
@@ -550,7 +552,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // window.Application.ActiveWorkbook.SaveAs(workbookName, null, null, null, null, null, null, 2, null, null, null, null);
                 var sheetName = "科研缺件汇总"+$StringReplaceAll(new Date().toLocaleDateString(),"/",".")+"."+new Date().valueOf();
                 $SheetsLastAdd(sheetName);
-                Application.Worksheets.Item(sheetName).Activate();
+                doc.Worksheets.Item(sheetName).Activate();
                 
 
                 // var months = [];
@@ -569,49 +571,11 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // $RangeInValue2("A1", 1, 12, ['类型','型号', '图号','名称','主制','总计',months[0],months[1],months[2],'节点','库房','备注']);
                 $RangeInValue2("A1", 1, 13, ['类型','型号', '图号','名称','主制','总计','月份1','月份2','月份3','节点','库房','备注','分工'],"@",sheetName);
                 $RangeInValue2("A2",pcValue.length,13,pcValue,"@",sheetName);
-                // var zz = ['一车间','二车间','三车间','六车间','八车间','十车间','十一车间','采购']; //主制
-                // zz.forEach(eachZZ=>{
-                    
-                //     $SheetsLastAdd(eachZZ);
-                //     Application.Worksheets.Item(eachZZ).Activate();
-                //     $RangeInValue2("A1", 1, 1, [eachZZ+selectYear + "年" + selectMonth+"月份科研缺件"]);
-                //     Application.Worksheets.Item(eachZZ).Range("A1:L1").Merge();
-                //     Application.Worksheets.Item(eachZZ).Range("A1:L1").HorizontalAlignment = -4108;
-                //     Application.Worksheets.Item(eachZZ).Range("A1:L1").Font.Name = "宋体";      // 设置字体名称为宋体
-                //     Application.Worksheets.Item(eachZZ).Range("A1:L1").Font.Bold = true;        // 设置字体加粗
-                //     Application.Worksheets.Item(eachZZ).Range("A1:L1").Font.Size = 18;          // 设置字体大小为18号
-                //     $RangeInValue2("A2", 1, 12, ['序号','型号', '图号','名称','主制','总计','1月','2月','3月','节点','库房','备注']);
-                //     Application.Worksheets.Item(eachZZ).Range("A2:L2").HorizontalAlignment = -4108;
-                //     Application.Worksheets.Item(eachZZ).Range("A2:L2").Font.Name = "宋体";      // 设置字体名称为宋体
-                //     Application.Worksheets.Item(eachZZ).Range("A2:L2").Font.Bold = true;        // 设置字体加粗
-                //     Application.Worksheets.Item(eachZZ).Range("A2:L2").Font.Size = 12;          // 设置字体大小为12号
-
-                //     eachZZArray = [];
-                //     pcValue.forEach(eachValue=>{
-                //         if(eachValue[4]==eachZZ){
-                //             eachZZArray.push(eachValue);
-                //         }
-                //     });
-                //     var indexNum = 1;
-                //     eachZZArray.forEach(eachValue=>{
-                //         if(eachValue[6]!=""&&eachValue[6]!=null){
-                //             eachValue[0]=indexNum;
-                //             indexNum++;
-                //         }else{
-                //             eachValue[0]='';
-                //         }
-                //     });
-                //     if(eachZZArray.length!=0){
-                //         $RangeInValue2("A3", eachZZArray.length, 12,eachZZArray,"@");
-                //     }
-                //     Application.Worksheets.Item(eachZZ).Range("A1").Resize(eachZZArray.length+2,12).HorizontalAlignment = -4108;
-                //     Application.Worksheets.Item(eachZZ).Range("A1").Resize(eachZZArray.length+2,12).Borders.LineStyle = 1;
-                //     Application.Worksheets.Item(eachZZ).Range("A1").Resize(eachZZArray.length+2,12).Borders.Weight = 2 ;
-                // });
 
                 break;
             }
-            case "compute1":{
+            
+            case "compute1": {
                 var isDo = $MsgBox("是否开始计算缺件1？可能需要一些时间");
 
                 if(isDo){
@@ -628,8 +592,8 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                     }
                     
                     let haveModelType = false;
-                    for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                        if (Application.Worksheets.Item(i).Name == '型号需求') {
+                    for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                        if (doc.Worksheets.Item(i).Name == '型号需求') {
                             haveModelType = true;
                             break;
                         }
@@ -758,7 +722,25 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                                 $RangeInValue2ToSheetA1(workbookName,"计算进度",msgItem);
 
                                 const errorFloor = 15; //最深计算层数
-                                var modelTypeSheet = window.Application.Workbooks.Item("缺件管理.xlsx").Worksheets.Item("型号需求");
+                                // 修复null错误：添加检查确保工作簿和工作表存在
+                                var workbooks = window.Application.Workbooks;
+                                if (!workbooks) {
+                                    alert("无法访问工作簿集合");
+                                    return;
+                                }
+                                
+                                var缺件管理Workbook = workbooks.Item("缺件管理.xlsx");
+                                if (!缺件管理Workbook) {
+                                    alert("无法找到'缺件管理.xlsx'工作簿");
+                                    return;
+                                }
+                                
+                                var modelTypeSheet = 缺件管理Workbook.Worksheets.Item("型号需求");
+                                if (!modelTypeSheet) {
+                                    alert("无法找到'型号需求'工作表");
+                                    return;
+                                }
+                                
                                 const lastRow0 = modelTypeSheet.Cells.Item(thisSheet.Rows.Count, 1).End(-4162).Row;
                                 var modelTypeArray = modelTypeSheet.Range("A3:E"+lastRow0).Value2;
                                 var modelTypeArray1 = [];
@@ -1456,9 +1438,10 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 } 
                 break;
             }
-            case "compute2":{
+            case "compute2": {
                 // var isDo = $MsgBox("是否开始计算缺件2？可能需要一些时间");
                 var isDo = $MsgBox("是否开始计算缺件？可能需要一些时间");
+
 
                 if(isDo){
                     let doc = window.Application.ActiveWorkbook;
@@ -1474,11 +1457,15 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                     }
                     
                     let haveModelType = false;
-                    for (let i = 1; i <= Application.Worksheets.Count; i++) {
-                        if (Application.Worksheets.Item(i).Name == '型号需求') {
+                    for (let i = 1; i <= doc.Worksheets.Count; i++) {
+                        if (doc.Worksheets.Item(i).Name == '型号需求') {
                             haveModelType = true;
                             break;
                         }
+                    }
+                    if (!haveModelType) {
+                        alert("当前表不可用，请打开“缺件管理.xlsx”重试");
+                        return;
                     }
                     let thisSheet = window.Application.ActiveWorkbook.ActiveSheet;
                     if (!haveModelType) {
@@ -1604,13 +1591,32 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                                 const params1 = {};
                                 return $WebService(url1, targetNamespace1, method1, params1, dataGridColModel1);
                             }).then(tableDataStock => {
-								const errorFloor = 15; //最深计算层数
+								// 删除重复声明的 errorFloor 常量
 								
                                 msgPercent = 5;
                                 msgItem.splice(1, 0, [msgNum++,msgPercent.toFixed(2)+"%","读取物料与库存信息完成，开始整理型号需求",$DateFormatDateTime(new Date())]);
                                 $RangeInValue2ToSheetA1(workbookName,"计算进度",msgItem);
 
-                                var modelTypeSheet = window.Application.Workbooks.Item("缺件管理.xlsx").Worksheets.Item("型号需求");
+                                const errorFloor = 15; //最深计算层数
+                                // 修复null错误：添加检查确保工作簿和工作表存在
+                                var workbooks = window.Application.Workbooks;
+                                if (!workbooks) {
+                                    alert("无法访问工作簿集合");
+                                    return;
+                                }
+                                
+                                var 缺件管理Workbook = workbooks.Item("缺件管理.xlsx");
+                                if (!缺件管理Workbook) {
+                                    alert("无法找到'缺件管理.xlsx'工作簿");
+                                    return;
+                                }
+                                
+                                var modelTypeSheet = 缺件管理Workbook.Worksheets.Item("型号需求");
+                                if (!modelTypeSheet) {
+                                    alert("无法找到'型号需求'工作表");
+                                    return;
+                                }
+                                
                                 const lastRow0 = modelTypeSheet.Cells.Item(thisSheet.Rows.Count, 1).End(-4162).Row;
                                 var modelTypeArray = modelTypeSheet.Range("A3:E"+lastRow0).Value2;
                                 var modelTypeArray1 = [];
@@ -2057,8 +2063,6 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
     }
 }
 
-
 window.onload = () => {
     $print('start_btnCreateSOMSheet_js_onload');
 };
-

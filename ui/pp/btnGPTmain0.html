@@ -2837,14 +2837,67 @@ const activeDocument = window.Application.ActiveDocument;
 
         // 通用API调用函数，支持多个端点
         function callApi(endpoint, method, data, onSuccess, onError) {
-            const baseUrl = 'http://192.168.70.26:1234';
-            const url = `${baseUrl}${endpoint}`;
+            // 等待配置加载完成
+            if (typeof window.SERVER_CONFIG === 'undefined') {
+                // 监听配置加载完成事件
+                window.addEventListener('serverConfigReady', function() {
+                    callApi(endpoint, method, data, onSuccess, onError);
+                }, {once: true});
+                return;
+            }
+            
+            // 获取API配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
+            var apiKey = null;
+            var baseURL = null;
+            var apiEndpoint = null;
+            
+            // 检查 CURRENT_AI_CONFIG 是否已定义且有值
+            if (window.CURRENT_AI_CONFIG) {
+                apiKey = window.CURRENT_AI_CONFIG.apiKey || null;
+                baseURL = window.CURRENT_AI_CONFIG.baseURL || null;
+                apiEndpoint = window.CURRENT_AI_CONFIG.apiEndpoint || null;
+            } else if (window.AI_CONFIG) {
+                // 回退到 AI_CONFIG
+                apiKey = window.AI_CONFIG.apiKey || null;
+                baseURL = window.AI_CONFIG.baseURL || null;
+                apiEndpoint = window.AI_CONFIG.apiEndpoint || null;
+            }
+            
+            // 确定API端点
+            var url;
+            if (apiEndpoint) {
+                // 局域网配置使用apiEndpoint
+                url = apiEndpoint;
+            } else if (baseURL) {
+                // 标准配置使用baseURL + 路径
+                // 修复URL构建逻辑，确保不会产生双斜杠
+                if (endpoint.startsWith('/')) {
+                    endpoint = endpoint.substring(1);
+                }
+                url = baseURL + (baseURL.endsWith('/') ? '' : '/') + endpoint;
+            } else {
+                // 如果没有配置任何API信息，则显示错误
+                if (onError) onError(new Error('未配置API端点，请检查server-config.js中的配置'));
+                return;
+            }
+            
+            // 确保URL格式正确，处理多余的斜杠
+            url = url.replace(/([^:]\/)(\/+)/g, '$1'); // 替换多个连续斜杠为单个斜杠，但保留协议部分的双斜杠
+            
+            // 验证URL是否完整（包含协议）
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                console.error('❌ URL不完整，缺少协议:', url);
+                if (onError) onError(new Error('API端点URL不完整，请检查配置'));
+                return;
+            }
             
             const xhr = new XMLHttpRequest();
             xhr.open(method, url);
             xhr.setRequestHeader('Content-Type', 'application/json');
-            // 如果需要API密钥，可以在这里添加
-            // xhr.setRequestHeader('Authorization', 'Bearer YOUR_API_KEY');
+            // 添加API密钥（如果存在）
+            if (apiKey) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + apiKey);
+            }
             
             xhr.onload = function() {
                 if (xhr.status >= 200 && xhr.status < 300) {
@@ -2855,7 +2908,7 @@ const activeDocument = window.Application.ActiveDocument;
                         if (onError) onError(new Error('解析响应失败: ' + error.message));
                     }
                 } else {
-                    if (onError) onError(new Error(`API请求失败 (${xhr.status}): ${xhr.statusText}`));
+                    if (onError) onError(new Error('API请求失败 (' + xhr.status + '): ' + xhr.statusText));
                 }
             };
             
@@ -2868,6 +2921,243 @@ const activeDocument = window.Application.ActiveDocument;
             } else {
                 xhr.send();
             }
+        }
+        
+        // 流式API调用函数
+        function callApiStream(endpoint, method, data, onSuccess, onError, onProgress, additionalHeaders) {
+            // 等待配置加载完成
+            if (typeof window.SERVER_CONFIG === 'undefined') {
+                // 监听配置加载完成事件
+                window.addEventListener('serverConfigReady', function() {
+                    callApiStream(endpoint, method, data, onSuccess, onError, onProgress, additionalHeaders);
+                }, {once: true});
+                return;
+            }
+            
+            // 获取API配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
+            var apiKey = null;
+            var baseURL = null;
+            var apiEndpoint = null;
+            
+            // 检查 CURRENT_AI_CONFIG 是否已定义且有值
+            if (window.CURRENT_AI_CONFIG) {
+                apiKey = window.CURRENT_AI_CONFIG.apiKey || null;
+                baseURL = window.CURRENT_AI_CONFIG.baseURL || null;
+                apiEndpoint = window.CURRENT_AI_CONFIG.apiEndpoint || null;
+            } else if (window.AI_CONFIG) {
+                // 回退到 AI_CONFIG
+                apiKey = window.AI_CONFIG.apiKey || null;
+                baseURL = window.AI_CONFIG.baseURL || null;
+                apiEndpoint = window.AI_CONFIG.apiEndpoint || null;
+            }
+            
+            // 确定API端点
+            var url;
+            if (apiEndpoint) {
+                // 局域网配置使用apiEndpoint
+                url = apiEndpoint;
+            } else if (baseURL) {
+                // 标准配置使用baseURL + 路径
+                // 修复URL构建逻辑，确保不会产生双斜杠
+                if (endpoint.startsWith('/')) {
+                    endpoint = endpoint.substring(1);
+                }
+                url = baseURL + (baseURL.endsWith('/') ? '' : '/') + endpoint;
+            } else {
+                // 如果没有配置任何API信息，则显示错误
+                if (onError) onError(new Error('未配置API端点，请检查server-config.js中的配置'));
+                return;
+            }
+            
+            // 确保URL格式正确，处理多余的斜杠
+            url = url.replace(/([^:]\/)(\/+)/g, '$1'); // 替换多个连续斜杠为单个斜杠，但保留协议部分的双斜杠
+            
+            // 验证URL是否完整（包含协议）
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                console.error('❌ URL不完整，缺少协议:', url);
+                if (onError) onError(new Error('API端点URL不完整，请检查配置'));
+                return;
+            }
+            
+            // 在控制台记录请求详细信息
+            console.log('📡 流式API请求详情:', {
+                url: url,
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ********', // 隐藏敏感信息
+                    ...additionalHeaders
+                },
+                body: data
+            });
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiKey,
+                    ...additionalHeaders
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应错误: ' + response.status);
+                }
+                
+                // 检查是否有body流
+                if (!response.body) {
+                    return response.text().then(text => {
+                        try {
+                            const jsonData = JSON.parse(text);
+                            console.log('📥 非流式响应数据:', jsonData);
+                            if (onSuccess) onSuccess(jsonData);
+                        } catch (e) {
+                            console.error('❌ 非流式响应解析失败:', e);
+                            if (onError) onError(new Error('解析响应失败: ' + e.message));
+                        }
+                    });
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+                let accumulatedData = '';
+                
+                // 读取流
+                function read() {
+                    reader.read().then(({done, value}) => {
+                        if (done) {
+                            // 流结束，尝试解析完整响应
+                            try {
+                                // 处理SSE格式数据
+                                const lines = accumulatedData.split('\n');
+                                let jsonData = '';
+                                
+                                lines.forEach(line => {
+                                    if (line.startsWith('data: ')) {
+                                        const data = line.substring(6);
+                                        if (data !== '[DONE]') {
+                                            try {
+                                                const parsed = JSON.parse(data);
+                                                if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta) {
+                                                    jsonData += parsed.choices[0].delta.content || '';
+                                                } else if (parsed.content) {
+                                                    jsonData += parsed.content;
+                                                }
+                                            } catch (e) {
+                                                // 如果不是JSON，直接添加
+                                                jsonData += data;
+                                            }
+                                        }
+                                    }
+                                });
+                                
+                                // 尝试解析完整响应
+                                if (jsonData.trim() !== '') {
+                                    try {
+                                        const parsedResult = JSON.parse(jsonData);
+                                        console.log('📥 流式响应完整数据:', parsedResult);
+                                        if (onSuccess) onSuccess(parsedResult);
+                                    } catch (e) {
+                                        // 如果不能解析为JSON，将其作为纯文本返回
+                                        console.log('📥 流式响应完整数据(纯文本):', jsonData);
+                                        if (onSuccess) onSuccess({
+                                            choices: [{
+                                                message: {
+                                                    content: jsonData
+                                                }
+                                            }]
+                                        });
+                                    }
+                                } else if (accumulatedData.trim() !== '') {
+                                    // 尝试直接解析累积的数据
+                                    try {
+                                        const parsedResult = JSON.parse(accumulatedData);
+                                        console.log('📥 流式响应累积数据:', parsedResult);
+                                        if (onSuccess) onSuccess(parsedResult);
+                                    } catch (e) {
+                                        // 如果不能解析为JSON，将其作为纯文本返回
+                                        console.log('📥 流式响应累积数据(纯文本):', accumulatedData);
+                                        if (onSuccess) onSuccess({
+                                            choices: [{
+                                                message: {
+                                                    content: accumulatedData
+                                                }
+                                            }]
+                                        });
+                                    }
+                                } else {
+                                    console.warn('⚠️ 响应内容为空');
+                                    throw new Error('响应内容为空');
+                                }
+                            } catch (parseError) {
+                                console.error('❌ 响应解析失败:', parseError);
+                                if (onError) onError(new Error('响应解析失败: ' + parseError.message));
+                            }
+                            return;
+                        }
+                        
+                        // 处理接收到的数据块
+                        const chunk = decoder.decode(value, {stream: true});
+                        accumulatedData += chunk;
+                        
+                        const lines = chunk.split('\n');
+                        
+                        lines.forEach(line => {
+                            if (line.startsWith('data: ')) {
+                                const data = line.substring(6);
+                                if (data === '[DONE]') {
+                                    // 完成信号
+                                    return;
+                                }
+                                
+                                try {
+                                    const jsonData = JSON.parse(data);
+                                    
+                                    // 更新进度 - 显示累积的响应内容
+                                    if (jsonData.choices && jsonData.choices[0] && jsonData.choices[0].delta) {
+                                        const content = jsonData.choices[0].delta.content || '';
+                                        if (content && onProgress) {
+                                            onProgress(content);
+                                        }
+                                    } else if (jsonData.content && onProgress) {
+                                        onProgress(jsonData.content);
+                                    }
+                                    
+                                    // 累积完整响应
+                                    if (jsonData.choices && jsonData.choices[0] && jsonData.choices[0].delta) {
+                                        fullResponse += jsonData.choices[0].delta.content || '';
+                                    } else if (jsonData.content) {
+                                        fullResponse += jsonData.content;
+                                    }
+                                } catch (parseError) {
+                                    // 忽略解析错误，可能不是JSON数据
+                                    console.warn('流式数据解析失败:', parseError);
+                                    
+                                    // 尝试直接显示原始数据
+                                    if (data && data !== '[DONE]' && onProgress) {
+                                        onProgress(data);
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // 继续读取
+                        read();
+                    }).catch(error => {
+                        console.error('❌ 流式读取失败:', error);
+                        if (onError) onError(new Error('流式读取失败: ' + error.message));
+                    });
+                }
+                
+                // 开始读取流
+                read();
+            })
+            .catch(error => {
+                console.error('❌ 请求失败:', error);
+                if (onError) onError(new Error('请求失败: ' + error.message));
+            });
         }
         
         // 获取可用模型列表
@@ -2888,7 +3178,7 @@ const activeDocument = window.Application.ActiveDocument;
                     if (response.data && Array.isArray(response.data)) {
                         let modelsList = '可用模型列表：\n';
                         response.data.forEach(model => {
-                            modelsList += `- ${model.id}\n`;
+                            modelsList += '- ' + model.id + '\n';
                         });
                         addMessage('ai', modelsList);
                     } else {
@@ -2919,7 +3209,7 @@ const activeDocument = window.Application.ActiveDocument;
                 // 模拟文件上传过程
                 // 实际实现中，这里应该调用WPS API获取工作簿内容并上传到服务器
                 setTimeout(() => {
-                    addMessage('ai', `工作簿 "${referencedWorkbook}" 已成功上传到AI大模型！`);
+                    addMessage('ai', '工作簿 "' + referencedWorkbook + '" 已成功上传到AI大模型！');
                     // 清空引用
                     referencedWorkbook = null;
                     resolve();
@@ -2927,7 +3217,7 @@ const activeDocument = window.Application.ActiveDocument;
             });
         }
 
-        function sendMessage() {
+        async function sendMessage() {
             const userInput = document.getElementById('userInput');
             var userMessage = userInput.value.trim();
             if (!userMessage) {
@@ -2967,7 +3257,19 @@ const activeDocument = window.Application.ActiveDocument;
             
             // 如果有上传的文件，在消息中添加相关信息
             if (uploadedFileName && currentEmbeddings) {
-                const fileInfoMessage = `[基于文件 "${uploadedFileName}" 的嵌入向量进行问答]`;
+                const fileInfoMessage = '[基于文件 "' + uploadedFileName + '" 的嵌入向量进行问答]';
+                const response = await openai.createChatCompletion({
+                    model: "gpt-4",
+                    messages: [
+                        { role: "system", content: "```\n" + fileInfoMessage }
+                    ],
+                    max_tokens: 1024,
+                    temperature: 0.7,
+                    top_p: 1,
+                    frequency_penalty: 0,
+                    presence_penalty: 0,
+                    stop: ["\n\n"],
+                });
                 const fileInfoElement = document.createElement('div');
                 fileInfoElement.className = 'message user-message';
                 fileInfoElement.style.fontSize = '12px';
@@ -3001,17 +3303,19 @@ const activeDocument = window.Application.ActiveDocument;
             // 先上传引用的工作簿（如果有），然后发送消息
             uploadReferencedWorkbook().then(() => {
                 // 添加AI思考状态
-                addMessage('ai', '思考中...', true);
+                var thinkingMessage = addMessage('ai', '思考中...', true);
+                var thinkingContent = '';
                 
                 // 准备请求体（根据是否有embeddings决定调用哪个端点）
                 let endpoint = '/v1/chat/completions';
                 let requestBody = {
-                    model: "gpt-3.5-turbo",
+                    model: "qwen-max", // 使用阿里云百炼配置的模型
                     messages: chatHistory,
                     max_tokens: 1000,
                     temperature: 0.7,
-                    stream: false
+                    stream: true
                 };
+
                 
                 // 如果用户输入以特定前缀开始，使用completions端点
                 if (userMessage.startsWith('!completion') || userMessage.startsWith('!补全')) {
@@ -3021,19 +3325,53 @@ const activeDocument = window.Application.ActiveDocument;
                         : userMessage.substring('!补全'.length).trim();
                     
                     requestBody = {
-                        model: "text-davinci-003", // 使用适合completions的模型
+                        model: "qwen-max", // 使用阿里云百炼配置的模型
                         prompt: prompt,
                         max_tokens: 1000,
                         temperature: 0.7
                     };
                 }
                 
+                // 修改请求体以启用流式响应
+                requestBody.stream = true;
+                
+                // 添加流式响应处理的头部
+                var additionalHeaders = {};
+                if (window.CURRENT_AI_CONFIG && window.CURRENT_AI_CONFIG.baseURL && 
+                    window.CURRENT_AI_CONFIG.baseURL.includes('dashscope')) {
+                    additionalHeaders['X-DashScope-SSE'] = 'enable';
+                }
+                
+                // 在控制台显示发送的请求信息
+                console.log('📤 发送到AI的请求:', {
+                    url: endpoint,
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ********', // 隐藏敏感信息
+                        ...additionalHeaders
+                    },
+                    body: requestBody
+                });
+                
+                // 记录请求发送时间
+                const requestStartTime = Date.now();
+                
                 // 发送请求到AI模型
-                callApi(
+                callApiStream(
                     endpoint,
                     'POST',
                     requestBody,
                     function(response) {
+                        // 记录响应接收时间
+                        const responseTime = Date.now() - requestStartTime;
+                        
+                        // 在控制台显示完整的响应信息
+                        console.log('📥 收到AI的响应:', {
+                            response: response,
+                            responseTime: responseTime + 'ms'
+                        });
+                        
                         // 移除思考消息
                         const messages = chatBody.getElementsByClassName('thinking');
                         if (messages.length > 0) {
@@ -3069,13 +3407,30 @@ const activeDocument = window.Application.ActiveDocument;
                         }
                     },
                     function(error) {
+                        // 记录错误响应时间
+                        const responseTime = Date.now() - requestStartTime;
+                        
+                        // 在控制台显示错误信息
+                        console.error('❌ AI请求出错:', {
+                            error: error.message,
+                            responseTime: responseTime + 'ms'
+                        });
+                        
                         // 移除思考消息
                         const messages = chatBody.getElementsByClassName('thinking');
                         if (messages.length > 0) {
                             chatBody.removeChild(messages[messages.length - 1]);
                         }
                         addMessage('ai', error.message);
-                    }
+                    },
+                    function(progress) {
+                        // 实时更新思考消息
+                        if (thinkingMessage) {
+                            thinkingContent += progress;
+                            thinkingMessage.textContent = '思考中... ' + progress;
+                        }
+                    },
+                    additionalHeaders
                 );
             });
         }

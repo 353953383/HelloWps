@@ -92,6 +92,14 @@ function loadServerConfig() {
  */
 function selectServer() {
     return new Promise((resolve, reject) => {
+        // 优先使用server-config.js设置的全局变量
+        if (typeof window.PRODUCTION !== 'undefined' && window.PRODUCTION) {
+            var selectedServer = window.PRODUCTION;
+            resolve(selectedServer);
+            return;
+        }
+        
+        // 回退到原来的配置方式
         var selectedServer = window.CONFIG.PRODUCTION;
         resolve(selectedServer);
     });

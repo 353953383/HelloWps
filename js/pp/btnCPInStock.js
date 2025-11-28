@@ -225,7 +225,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                     $SheetTheActive().Hyperlinks.Add($SheetTheActive().Range("E"+i), "", "'"+modelNameFormat+"'!A1", "", "链接");
                 }
                 const sheets = window.Application.Worksheets;
-                const excludeSheets = ["同步记录勿删", "型号汇总", "陆会罗", "白旭", "朱志超", "王海岩", "张岩"];
+                const excludeSheets = ["同步记录勿删", "型号汇总", "陆会罗", "白旭", "朱志超", "王海岩", "崔玉玺"];
                 for (let i = 1; i <= sheets.Count; i++) {
                     const sheet = sheets.Item(i);
                     if (!excludeSheets.includes(sheet.Name)) {
