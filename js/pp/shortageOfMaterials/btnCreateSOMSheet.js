@@ -221,7 +221,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
                 let thisSheet = window.Application.ActiveWorkbook.ActiveSheet
                 // const regex = /^[\u4e00-\u9fa5]+@\d{4}@[1-9]|1[0-2]$/;
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 // if (!regex.test(thisSheet.Name)) {
                 if (planners.indexOf(thisSheet.Name)==-1) {
                     alert("工作表名称格式不符");
@@ -306,7 +306,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
                 let thisSheet = window.Application.ActiveWorkbook.ActiveSheet
                 // const regex = /^[\u4e00-\u9fa5]+@\d{4}@[1-9]|1[0-2]$/;
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 // if (!regex.test(thisSheet.Name)) 
                 if (planners.indexOf(thisSheet.Name)==-1) {
                     alert("工作表名称格式不符");
@@ -360,7 +360,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 }
                 // var selectYear = document.getElementById('yearSelect').value;
                 // var selectMonth = document.getElementById('monthSelect').value;
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 var planNames = [];
                 planners.forEach( planner=> {
                     // planNames.push(planner + "@" + selectYear + "@" + selectMonth);
@@ -399,7 +399,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // var selectYear = document.getElementById('yearSelect').value;
                 // var selectMonth = document.getElementById('monthSelect').value;
                 // var workbookName = selectYear + "年" + selectMonth +"批产缺件汇总"+new Date().valueOf(); 
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 var planNames = [];
                 planners.forEach( planner=> {
                     // planNames.push(planner + "@" + selectYear + "@" + selectMonth);
@@ -512,7 +512,7 @@ function onbuttonclick_btnCreateSOMSheet(idStr) {
                 // var selectYear = document.getElementById('yearSelect').value;
                 // var selectMonth = document.getElementById('monthSelect').value;
                 // var workbookName = selectYear + "年" + selectMonth +"月科研缺件汇总"+new Date().valueOf(); 
-                var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+                var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
                 var planNames = [];
                 planners.forEach( planner=> {
                     // planNames.push(planner + "@" + selectYear + "@" + selectMonth);

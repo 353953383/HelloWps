@@ -373,7 +373,7 @@ function createPT(planType,selectMonth){
         alert("当前表不可用，请打开“配套计划协同.xlsx”重试");
         return;
     }
-    var planners = ['陆会罗','白旭','王海岩','朱志超','张岩'];
+    var planners = ['陆会罗','白旭','王海岩','朱志超','崔玉玺'];
     var ptValue = [];
     planners.forEach(planner=>{
         var haveSheetPlanners = "";

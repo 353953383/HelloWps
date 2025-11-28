@@ -42,7 +42,7 @@ class AIInterface {
         const globalAIConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG;
         
         if (!globalAIConfig) {
-            throw new Error('❌ 全局AI配置不存在，请确保server-config.js已正确加载AI_CONFIG配置');
+            throw new Error('❌ 全局AI配置不存在，请确保util.js已正确加载AI_CONFIG配置');
         }
         
         // 验证必要配置项（OpenAI格式）
