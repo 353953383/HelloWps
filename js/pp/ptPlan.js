@@ -336,6 +336,8 @@ function onbuttonclick_ptPlan(idStr) {
                     }
                     $RangeInValue2("A2", 2, 34, ptSheet.Range("A2:AH3").Value2,"@",planner);
                     $RangeInValue2("A4", $Array2DRowColCount(ptArray).rows, 34, ptArray,"@",planner);
+                   //AI2 为 备注2
+                   $RangeInValue2("AI2", 1, 1, ["备注2"],"@",planner);
                 }
                 alert("个人配套计划重置完成");
                 break;
@@ -385,7 +387,7 @@ function createPT(planType,selectMonth){
                 var lastRow = thisSheet.Cells.Item(thisSheet.Rows.Count, 6).End(-4162).Row; // -4162 表示向上查找最后一个非空单元格
                 var ptArray= [];
                 if(lastRow>3){
-                    ptArray = thisSheet.Range("A4:AH"+lastRow).Value2;
+                    ptArray = thisSheet.Range("A4:AI"+lastRow).Value2;
                 }
                 ptArray.forEach(ptArrayRow=>{
                     ptValue.push(ptArrayRow);
@@ -408,7 +410,7 @@ function createPT(planType,selectMonth){
     ptValue = $Array2DSort($Array2DDeleteCol($ArrayByRegex(ptValue,2,planType),delColumn),5,"asc");
     ptValue = $Array2DSort(ptValue,1,"asc");
     var row1Array = [['计划员','型号顺序','型号类型','车间','型号', '零件图号','零件名称','1月','2月','3月','4月','5月','6月','7月','8月','9月',
-        '10月','11月','12月','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月','总计','库房','备注']];
+        '10月','11月','12月','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月','总计','库房','备注','备注2']];
 
     row1Array0=$Array2DDeleteCol(row1Array,delColumn);
     row1Array=$Array2DDeleteCol($Array2DDeleteCol(row1Array,delColumn),[0,1,2]);
@@ -430,16 +432,16 @@ function createPT(planType,selectMonth){
         $SheetsLastAdd(eachZZ);
         Application.Worksheets.Item(eachZZ).Activate();
         $RangeInValue2("A1", 1, 1, [eachZZ+(Number(selectMonth)>12?Number(selectMonth)-12:selectMonth)+"月"+planType+"配套计划"],"@",eachZZ);
-        Application.Worksheets.Item(eachZZ).Range("A1:AH1").Merge();
-        Application.Worksheets.Item(eachZZ).Range("A1:AH1").HorizontalAlignment = -4108;
-        Application.Worksheets.Item(eachZZ).Range("A1:AH1").Font.Name = "宋体";      // 设置字体名称为宋体
-        Application.Worksheets.Item(eachZZ).Range("A1:AH1").Font.Bold = true;        // 设置字体加粗
-        Application.Worksheets.Item(eachZZ).Range("A1:AH1").Font.Size = 18;          // 设置字体大小为18号
+        Application.Worksheets.Item(eachZZ).Range("A1:AI1").Merge();
+        Application.Worksheets.Item(eachZZ).Range("A1:AI1").HorizontalAlignment = -4108;
+        Application.Worksheets.Item(eachZZ).Range("A1:AI1").Font.Name = "宋体";      // 设置字体名称为宋体
+        Application.Worksheets.Item(eachZZ).Range("A1:AI1").Font.Bold = true;        // 设置字体加粗
+        Application.Worksheets.Item(eachZZ).Range("A1:AI1").Font.Size = 18;          // 设置字体大小为18号
         $RangeInValue2("A2", 1, $Array2DRowColCount(row1Array).cols, row1Array,"@",eachZZ);
-        Application.Worksheets.Item(eachZZ).Range("A2:AH2").HorizontalAlignment = -4108;
-        Application.Worksheets.Item(eachZZ).Range("A2:AH2").Font.Name = "宋体";      // 设置字体名称为宋体
-        Application.Worksheets.Item(eachZZ).Range("A2:AH2").Font.Bold = true;        // 设置字体加粗
-        Application.Worksheets.Item(eachZZ).Range("A2:AH2").Font.Size = 12;          // 设置字体大小为12号
+        Application.Worksheets.Item(eachZZ).Range("A2:AI2").HorizontalAlignment = -4108;
+        Application.Worksheets.Item(eachZZ).Range("A2:AI2").Font.Name = "宋体";      // 设置字体名称为宋体
+        Application.Worksheets.Item(eachZZ).Range("A2:AI2").Font.Bold = true;        // 设置字体加粗
+        Application.Worksheets.Item(eachZZ).Range("A2:AI2").Font.Size = 12;          // 设置字体大小为12号
         Application.Worksheets.Item(eachZZ).Range("C:D").ColumnWidth = 20;
         eachZZArray = [];
         ptValue.forEach(eachValue=>{
