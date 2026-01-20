@@ -7,6 +7,13 @@
     <!-- WPS API 加载 -->
     <!-- 本地WPS API加载脚本 -->
     <script type="text/javascript" src="../../js/wpsLoad.js"></script>
+    <!-- 加载服务器配置 -->
+    <script type="text/javascript" src="../../js/load-config.js"></script>
+    
+    <!-- AI Helper 相关脚本，用于处理API请求 -->
+    <script type="text/javascript" src="../../js/aiHelper/api-config.js"></script>
+    <script type="text/javascript" src="../../js/aiHelper/aiInterface.js"></script>
+    <script type="text/javascript" src="../../js/aiHelper/enhanced-ai-interface.js"></script>
     <style>
         
         
@@ -193,6 +200,8 @@
             overflow: hidden;
             position: relative;
             z-index: 10;
+            display: flex;
+            flex-direction: column;
         }
         
         /* 发光边框效果 */
@@ -269,13 +278,14 @@
         }
         
         .chat-body {
-            height: calc(100% - 120px);
+            height: calc(100% - 130px);
             overflow-y: auto;
             padding: 16px;
             display: flex;
             flex-direction: column;
             scrollbar-width: thin;
             scrollbar-color: rgba(6, 182, 212, 0.5) rgba(15, 23, 42, 0.3);
+            margin-bottom: 10px;
         }
         
         /* 自定义滚动条 */
@@ -400,16 +410,14 @@
         }
         
         .chat-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            position: relative;
             background: rgba(15, 23, 42, 0.3);
             backdrop-filter: blur(10px);
             padding: 12px 16px;
             display: flex;
             align-items: center;
             border-top: 1px solid rgba(6, 182, 212, 0.2);
+            flex-shrink: 0;
         }
         
         .input-field {
@@ -2837,36 +2845,568 @@ const activeDocument = window.Application.ActiveDocument;
 
         // 通用API调用函数，支持多个端点
         function callApi(endpoint, method, data, onSuccess, onError) {
-            const baseUrl = 'http://192.168.70.26:1234';
-            const url = `${baseUrl}${endpoint}`;
+            // 确保配置已加载
+            let currentConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG;
+            if (!currentConfig) {
+                // 如果没有配置，使用默认配置
+                console.error('❌ 未找到AI配置，请检查server-config.txt是否正确加载');
+                if (onError) onError(new Error('未找到AI配置，请检查server-config.txt是否正确加载'));
+                return;
+            }
             
+
+            
+            let apiUrl;
+            if (currentConfig.baseURL) {
+                // 使用标准OpenAI格式API
+                let baseUrl = currentConfig.baseURL;
+                if (baseUrl.endsWith('/')) {
+                    baseUrl = baseUrl.slice(0, -1);
+                }
+                // 检查baseUrl是否已经包含API路径
+                if (baseUrl.includes('/v1') || baseUrl.includes('/chat') || baseUrl.includes('/completions')) {
+                    // 如果baseUrl已经包含路径，则直接使用
+                    apiUrl = baseUrl;
+                } else {
+                    // 否则添加endpoint路径
+                    apiUrl = `${baseUrl}${endpoint}`;
+                }
+            } else if (currentConfig.apiEndpoint) {
+                // 使用局域网API端点
+                let endpointUrl = currentConfig.apiEndpoint;
+                // 如果apiEndpoint已包含路径部分，则直接使用
+                if (endpointUrl.includes('/v1') || endpointUrl.includes('/chat/completions')) {
+                    apiUrl = endpointUrl;
+                } else {
+                    // 否则添加endpoint路径
+                    apiUrl = `${endpointUrl}${endpoint}`;
+                }
+            } else {
+                // 使用默认地址
+                apiUrl = `http://192.168.70.26:1234${endpoint}`;
+            }
+            
+            console.log('🚀 发送API请求到:', apiUrl);
+            
+            // 检查是否在WPS环境中
+            if (window.wps || window.Application) {
+                // 尊重用户配置，只有当用户明确配置为使用局域网时才使用局域网配置
+                if (window.AI_CONFIG_TYPE === 'AI_CONFIG_WLAN' && window.AI_CONFIG_WLAN && window.AI_CONFIG_WLAN.apiEndpoint) {
+                    // 用户配置为使用局域网AI服务
+                    let wlanBaseUrl = window.AI_CONFIG_WLAN.apiEndpoint;
+                    if (wlanBaseUrl && wlanBaseUrl.includes('/v1') && !endpoint.includes('/v1')) {
+                        apiUrl = wlanBaseUrl;
+                        currentConfig = window.AI_CONFIG_WLAN;
+                    } else if (wlanBaseUrl && !wlanBaseUrl.includes('/v1')) {
+                        apiUrl = `${wlanBaseUrl}${endpoint}`;
+                        currentConfig = window.AI_CONFIG_WLAN;
+                    }
+                    console.log('🏠 根据用户配置，使用局域网AI服务:', apiUrl);
+                } else {
+                    // 检查是否是局域网地址但连接失败的情况
+                    if (apiUrl.includes('192.168') && window._LAST_CONNECTION_FAILED) {
+                        // 如果上次连接局域网失败了，尝试使用云端配置
+                        if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                            currentConfig = window.AI_CONFIG;
+                            let baseUrl = currentConfig.baseURL;
+                            if (baseUrl.endsWith('/')) {
+                                baseUrl = baseUrl.slice(0, -1);
+                            }
+                            apiUrl = `${baseUrl}${endpoint}`;
+                            console.log('🏠 局域网连接失败，切换到云端AI服务:', apiUrl);
+                        }
+                    }
+                }
+                
+                // 在WPS环境中，优先使用enhancedAIInterface（如果可用）或WPS内置功能
+                if (window.enhancedAIInterface) {
+                    console.log('🚀 使用增强AI接口');
+                    // 如果是阿里云API，尝试使用WPS内置功能避免CORS问题
+                    if (apiUrl.includes('dashscope.aliyuncs.com')) {
+                        console.log('☁️ 检测到阿里云API，尝试使用WPS内置功能');
+                        callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                    } else {
+                        callApiViaEnhancedAIInterface(currentConfig, apiUrl, method, data, onSuccess, onError);
+                    }
+                } else {
+                    // 否则尝试使用WPS内置功能
+                    callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                }
+            } else {
+                // 在浏览器环境中，使用fetch API
+                callApiViaFetch(currentConfig, apiUrl, method, data, onSuccess, onError);
+            }
+        }
+        
+        // 通过WPS API调用API（用于绕过CORS限制）
+        function callApiViaWps(currentConfig, apiUrl, method, data, onSuccess, onError) {
+            try {
+                console.log('📡 检查WPS内置网络功能');
+                
+                // 在WPS JSA环境中，检查是否可以使用Application对象
+                if (window.Application && typeof window.Application.Invoke !== 'undefined') {
+                    // 尝试使用WPS的Invoke方法执行HTTP请求
+                    console.log('尝试使用WPS Invoke方法');
+                    
+                    // 创建一个WPS宏或VBA脚本来执行HTTP请求
+                    // 但这需要在WPS环境中执行
+                    
+                    // 首先尝试使用WPS的ShellExecute或Run方法来调用外部程序执行请求
+                    if (window.Application.ShellExecute) {
+                        console.log('WPS ShellExecute方法不可用于HTTP请求');
+                    }
+                    
+                    // 如果WPS不支持直接的HTTP请求，那么需要使用其他方式
+                    // 最好的方式是在WPS环境中启动一个本地代理
+                    console.log('WPS环境不支持直接的HTTP请求，提示用户配置本地代理或使用局域网AI服务');
+                    
+                    // 检查是否配置了局域网AI服务
+                    if (currentConfig.apiEndpoint && currentConfig.apiEndpoint.startsWith('http://192.168.')) {
+                        console.log('检测到局域网AI服务配置，尝试使用fetch');
+                        // 对于局域网请求，CORS限制可能较宽松
+                        callApiViaFetch(currentConfig, apiUrl, method, data, onSuccess, onError);
+                    } else {
+                        // 如果是外部API，提示用户配置本地代理
+                        onError(new Error('WPS环境无法直接访问外部API。请配置局域网AI服务或设置本地API代理。'));
+                    }
+                    
+                    return;
+                } else {
+                    // 如果不在WPS环境中，直接使用fetch
+                    console.log('不在WPS环境中，使用fetch API');
+                    callApiViaFetch(currentConfig, apiUrl, method, data, onSuccess, onError);
+                    return;
+                }
+            } catch (error) {
+                console.error('❌ WPS HTTP功能检查失败:', error);
+                console.log('🔄 回退到fetch API');
+                // 如果WPS HTTP功能不可用，回退到fetch
+                callApiViaFetch(currentConfig, apiUrl, method, data, onSuccess, onError);
+            }
+        }
+        
+        // 通过XMLHttpRequest调用API
+        function callApiViaXHR(currentConfig, apiUrl, method, data, onSuccess, onError) {
             const xhr = new XMLHttpRequest();
-            xhr.open(method, url);
+            xhr.open(method, apiUrl);
             xhr.setRequestHeader('Content-Type', 'application/json');
-            // 如果需要API密钥，可以在这里添加
-            // xhr.setRequestHeader('Authorization', 'Bearer YOUR_API_KEY');
+            
+            // 根据配置设置认证头
+            if (currentConfig.apiKey) {
+                xhr.setRequestHeader('Authorization', `Bearer ${currentConfig.apiKey}`);
+            }
             
             xhr.onload = function() {
+                console.log('📊 API响应状态:', xhr.status);
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
                         const response = JSON.parse(xhr.responseText);
+                        console.log('✅ API请求成功');
                         if (onSuccess) onSuccess(response);
                     } catch (error) {
+                        console.error('❌ 响应解析失败:', error);
                         if (onError) onError(new Error('解析响应失败: ' + error.message));
                     }
                 } else {
-                    if (onError) onError(new Error(`API请求失败 (${xhr.status}): ${xhr.statusText}`));
+                    console.error('❌ API请求失败:', xhr.status, xhr.statusText);
+                    // 尝试获取错误详情
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        if (onError) onError(new Error(`API请求失败 (${xhr.status}): ${JSON.stringify(errorResponse)}`));
+                    } catch (parseError) {
+                        if (onError) onError(new Error(`API请求失败 (${xhr.status}): ${xhr.statusText}`));
+                    }
                 }
             };
             
             xhr.onerror = function() {
-                if (onError) onError(new Error('网络错误，无法连接到服务器'));
+                console.error('❌ 网络错误，无法连接到服务器:', apiUrl);
+                // 尝试使用fetch作为回退方案
+                console.log('🔄 尝试使用fetch作为回退方案');
+                callApiViaFetch(currentConfig, apiUrl, method, data, onSuccess, onError);
             };
             
             if (data) {
+                console.log('📤 发送请求数据:', JSON.stringify(data, null, 2));
                 xhr.send(JSON.stringify(data));
             } else {
                 xhr.send();
+            }
+        }
+        
+        // 通过fetch调用API（现代浏览器方法，有时可以绕过某些CORS限制）
+        function callApiViaFetch(currentConfig, apiUrl, method, data, onSuccess, onError) {
+            console.log('🌐 使用fetch API发送请求');
+            
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            // 根据配置设置认证头
+            if (currentConfig.apiKey) {
+                headers['Authorization'] = `Bearer ${currentConfig.apiKey}`;
+            }
+            
+            const options = {
+                method: method,
+                headers: headers,
+                body: data ? JSON.stringify(data) : undefined
+            };
+            
+            fetch(apiUrl, options)
+                .then(response => {
+                    console.log('📊 Fetch响应状态:', response.status);
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(`API请求失败 (${response.status}): ${text}`);
+                        });
+                    }
+                })
+                .then(result => {
+                    console.log('✅ Fetch API请求成功');
+                    onSuccess(result);
+                })
+                .catch(error => {
+                    console.error('❌ Fetch API请求失败:', error);
+                    // 如果fetch也失败，最后尝试代理
+                    callApiViaProxy(currentConfig, apiUrl, method, data, onSuccess, onError);
+                });
+        }
+        
+        // 通过WPS内部代理调用API（最终回退方案）
+        function callApiViaProxy(currentConfig, apiUrl, method, data, onSuccess, onError) {
+            console.log('🔌 尝试使用WPS代理API');
+            
+            // 检查是否可以使用WPS的Application对象进行网络请求
+            if (window.Application && typeof window.Application.HttpRequest !== 'undefined') {
+                try {
+                    // 使用WPS内置的HTTP请求功能
+                    const httpRequest = window.Application.HttpRequest;
+                    
+                    // 设置请求参数
+                    httpRequest.Open(method, apiUrl);
+                    httpRequest.SetRequestHeader('Content-Type', 'application/json');
+                    
+                    if (currentConfig.apiKey) {
+                        httpRequest.SetRequestHeader('Authorization', `Bearer ${currentConfig.apiKey}`);
+                    }
+                    
+                    // 发送请求
+                    httpRequest.Send(data ? JSON.stringify(data) : '');
+                    
+                    if (httpRequest.Status >= 200 && httpRequest.Status < 300) {
+                        const response = JSON.parse(httpRequest.ResponseText);
+                        onSuccess(response);
+                    } else {
+                        onError(new Error(`代理API请求失败 (${httpRequest.Status}): ${httpRequest.StatusText}`));
+                    }
+                } catch (proxyError) {
+                    console.error('❌ WPS代理API调用失败:', proxyError);
+                    
+                    // 尝试使用XMLHttpRequest（WPS环境可能支持）
+                    callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                }
+            } else {
+                // 尝试使用XMLHttpRequest（WPS环境可能支持）
+                callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+            }
+        }
+        
+        // 使用enhancedAIInterface调用API（WPS环境首选）
+        function callApiViaEnhancedAIInterface(currentConfig, apiUrl, method, data, onSuccess, onError) {
+            console.log('📡 尝试使用增强AI接口');
+            
+            try {
+                // 检查是否在WPS环境中，如果是，则尝试使用WPS内置功能
+                if (window.Application && window.Application.HttpRequest) {
+                    // 使用WPS的内置HttpRequest功能
+                    console.log('🔌 在WPS环境中使用WPS内置HttpRequest');
+                    callApiViaWpsHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                } else {
+                    // 针对阿里云DashScope API，修改请求格式
+                    let modifiedData = data;
+                    if (apiUrl.includes('dashscope.aliyuncs.com')) {
+                        // 对于阿里云API，确保不包含不兼容的流式参数
+                        modifiedData = {...data};
+                        if (modifiedData.stream !== undefined) {
+                            delete modifiedData.stream; // 删除stream参数
+                        }
+                        // 如果有X-DashScope-SSE头部，也需要相应处理
+                    }
+                    
+                    // 使用enhancedAIInterface的handleAIApiRequest方法
+                    window.enhancedAIInterface.handleAIApiRequest(apiUrl, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentConfig.apiKey}`
+                        },
+                        body: JSON.stringify(modifiedData)
+                    }).then(function(response) {
+                        // 请求成功，清除连接失败标记
+                        window._LAST_CONNECTION_FAILED = false;
+                        console.log('✅ 增强AI接口请求成功');
+                        onSuccess(response);
+                    }).catch(function(error) {
+                        // 静默处理CORS错误，只记录必要信息
+                        if (apiUrl.includes('dashscope.aliyuncs.com')) {
+                            console.log('⚠️ 阿里云API连接受限');
+                        } else {
+                            console.error('❌ 增强AI接口请求失败:', error);
+                        }
+                        
+                        // 如果是连接被拒绝错误，尝试回退到云端配置
+                        if (error.message.includes('ERR_CONNECTION_REFUSED') || error.message.includes('网络请求失败')) {
+                            // 标记连接失败
+                            window._LAST_CONNECTION_FAILED = true;
+                            console.log('⚠️ 网络连接问题，尝试回退');
+                            // 检查是否存在云端配置
+                            if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                                callApiViaEnhancedAIInterface(window.AI_CONFIG, 
+                                    window.AI_CONFIG.baseURL + '/chat/completions', 
+                                    method, data, onSuccess, onError);
+                            } else {
+                                // 如果没有云端配置，尝试WPS内置功能
+                                if (window.Application && window.Application.HttpRequest) {
+                                    callApiViaWpsHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                                } else {
+                                    callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                                }
+                            }
+                        } else {
+                            // 回退到WPS HttpRequest或XMLHttpRequest
+                            if (window.Application && window.Application.HttpRequest) {
+                                callApiViaWpsHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                            } else {
+                                callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                            }
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('❌ 增强AI接口调用失败:', error);
+                // 回退到WPS HttpRequest或XMLHttpRequest
+                if (window.Application && window.Application.HttpRequest) {
+                    callApiViaWpsHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                } else {
+                    callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError);
+                }
+            }
+        }
+        
+        // 使用WPS内置HttpRequest调用API
+        function callApiViaWpsHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError) {
+            console.log('📡 尝试使用WPS内置HttpRequest');
+            
+            try {
+                // 检查WPS Application对象是否可用
+                if (!window.Application) {
+                    throw new Error('WPS Application对象不可用');
+                }
+                
+                // 尝试使用WPS内置的网络功能
+                // 在WPS JSA环境中，可能需要使用不同的方法
+                
+                // 尝试使用ActiveXObject进行HTTP请求
+                if (typeof window.ActiveXObject !== 'undefined') {
+                    const xmlHttp = new ActiveXObject('MSXML2.XMLHTTP');
+                    
+                    xmlHttp.open(method, apiUrl, true); // 异步请求
+                    
+                    // 设置请求头
+                    xmlHttp.setRequestHeader('Content-Type', 'application/json');
+                    if (currentConfig.apiKey) {
+                        xmlHttp.setRequestHeader('Authorization', `Bearer ${currentConfig.apiKey}`);
+                    }
+                    
+                    xmlHttp.onreadystatechange = function() {
+                        if (xmlHttp.readyState === 4) { // 请求完成
+                            if (xmlHttp.status >= 200 && xmlHttp.status < 300) {
+                                // 请求成功，清除连接失败标记
+                                window._LAST_CONNECTION_FAILED = false;
+                                try {
+                                    const response = JSON.parse(xmlHttp.responseText);
+                                    console.log('✅ WPS ActiveXObject请求成功');
+                                    onSuccess(response);
+                                } catch (parseError) {
+                                    console.error('❌ WPS响应解析失败:', parseError);
+                                    onError(new Error('响应解析失败: ' + parseError.message));
+                                }
+                            } else {
+                                // 针对阿里云API的特殊处理：400错误可能是请求格式问题
+                                if (xmlHttp.status === 400 && apiUrl.includes('dashscope.aliyuncs.com')) {
+                                    console.error('❌ 阿里云API请求错误:', xmlHttp.status, xmlHttp.statusText);
+                                    console.error('详细错误信息:', xmlHttp.responseText);
+                                    onError(new Error(`阿里云API请求错误 (${xmlHttp.status}): ${xmlHttp.statusText} - ${xmlHttp.responseText}`));
+                                } else if (xmlHttp.status === 0 || xmlHttp.statusText.includes('Error')) {
+                                    // 如果是连接被拒绝错误，尝试回退到云端配置
+                                    // 标记连接失败
+                                    window._LAST_CONNECTION_FAILED = true;
+                                    console.log('⚠️ 局域网AI服务不可用，尝试回退到云端AI服务');
+                                    // 检查是否存在云端配置
+                                    if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                                        console.log('🔄 切换到云端AI服务');
+                                        callApiViaWpsHttpRequest(window.AI_CONFIG, 
+                                            window.AI_CONFIG.baseURL + '/chat/completions', 
+                                            method, data, onSuccess, onError);
+                                    } else {
+                                        console.error('❌ WPS ActiveXObject请求失败:', xmlHttp.status, xmlHttp.statusText);
+                                        onError(new Error(`API请求失败 (${xmlHttp.status}): ${xmlHttp.statusText}`));
+                                    }
+                                } else {
+                                    console.error('❌ WPS ActiveXObject请求失败:', xmlHttp.status, xmlHttp.statusText);
+                                    onError(new Error(`API请求失败 (${xmlHttp.status}): ${xmlHttp.statusText}`));
+                                }
+                            }
+                        }
+                    };
+                    
+                    xmlHttp.onerror = function() {
+                        // 针对阿里云API的错误处理
+                        if (apiUrl.includes('dashscope.aliyuncs.com')) {
+                            // 完全静默处理CORS错误，不在控制台输出敏感信息
+                            onError(new Error('网络请求失败')); 
+                        } else {
+                            // 检查是否可以回退到云端配置
+                            console.log('⚠️ 网络连接问题，尝试回退');
+                            if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                                callApiViaWpsHttpRequest(window.AI_CONFIG, 
+                                    window.AI_CONFIG.baseURL + '/chat/completions', 
+                                    method, data, onSuccess, onError);
+                            } else {
+                                onError(new Error('网络请求失败'));
+                            }
+                        }
+                    };
+                    
+                    // 发送请求
+                    xmlHttp.send(data ? JSON.stringify(data) : null);
+                    
+                } else {
+                    throw new Error('WPS环境中不支持ActiveXObject');
+                }
+                
+            } catch (error) {
+                console.error('❌ WPS HttpRequest调用失败:', error);
+                // 如果是连接错误，尝试回退到云端配置
+                if (error.message.includes('Connection refused') || error.message.includes('网络错误')) {
+                    console.log('⚠️ 局域网AI服务不可用，尝试回退到云端AI服务');
+                    if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                        console.log('🔄 切换到云端AI服务');
+                        callApiViaWpsHttpRequest(window.AI_CONFIG, 
+                            window.AI_CONFIG.baseURL + '/chat/completions', 
+                            method, data, onSuccess, onError);
+                    } else {
+                        onError(new Error('WPS HttpRequest调用失败: ' + error.message));
+                    }
+                } else {
+                    onError(new Error('WPS HttpRequest调用失败: ' + error.message));
+                }
+            }
+        }
+        
+        // 使用XMLHttpRequest调用API（适用于WPS环境）
+        function callApiViaXmlHttpRequest(currentConfig, apiUrl, method, data, onSuccess, onError) {
+            console.log('📡 尝试使用XMLHttpRequest');
+            
+            try {
+                let xhr;
+                if (window.XMLHttpRequest) {
+                    xhr = new XMLHttpRequest();
+                } else if (window.ActiveXObject) {
+                    // 兼容旧版IE
+                    xhr = new ActiveXObject('Microsoft.XMLHTTP');
+                } else {
+                    throw new Error('当前环境不支持XMLHttpRequest');
+                }
+                
+                xhr.open(method, apiUrl, true);
+                
+                // 设置请求头
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                if (currentConfig.apiKey) {
+                    xhr.setRequestHeader('Authorization', `Bearer ${currentConfig.apiKey}`);
+                }
+                
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) { // 请求完成
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            // 请求成功，清除连接失败标记
+                            window._LAST_CONNECTION_FAILED = false;
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                console.log('✅ XMLHttpRequest请求成功');
+                                onSuccess(response);
+                            } catch (parseError) {
+                                console.error('❌ 响应解析失败:', parseError);
+                                onError(new Error('响应解析失败: ' + parseError.message));
+                            }
+                        } else {
+                            // 针对阿里云API的特殊处理：400错误可能是请求格式问题
+                            if (xhr.status === 400 && apiUrl.includes('dashscope.aliyuncs.com')) {
+                                console.log('⚠️ 阿里云API参数问题:', xhr.status, xhr.statusText);
+                                console.log('详细错误信息:', xhr.responseText);
+                                onError(new Error(`阿里云API参数错误`));
+                            } else if (xhr.status === 0 || xhr.statusText.includes('Error')) {
+                                // 如果是连接被拒绝错误，尝试回退到云端配置
+                                // 标记连接失败
+                                window._LAST_CONNECTION_FAILED = true;
+                                console.log('⚠️ 网络连接问题，尝试回退到云端AI服务');
+                                // 检查是否存在云端配置
+                                if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                                    console.log('🔄 切换到云端AI服务');
+                                    callApiViaXmlHttpRequest(window.AI_CONFIG, 
+                                        window.AI_CONFIG.baseURL + '/chat/completions', 
+                                        method, data, onSuccess, onError);
+                                } else {
+                                    console.log('⚠️ 网络连接问题，AI助手需要一些时间响应');
+                                    onError(new Error(`网络连接问题 (${xhr.status})`));
+                                }
+                            } else {
+                                console.log('⚠️ 网络请求失败:', xhr.status, xhr.statusText);
+                                onError(new Error(`网络请求失败 (${xhr.status})`));
+                            }
+                        }
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    // 针对阿里云API的错误处理
+                    if (apiUrl.includes('dashscope.aliyuncs.com')) {
+                        // 完全静默处理CORS错误，不在控制台输出敏感信息
+                        onError(new Error('网络请求失败')); 
+                    } else {
+                        // 标记连接失败
+                        window._LAST_CONNECTION_FAILED = true;
+                        console.log('⚠️ 网络连接问题，尝试回退');
+                        if (window.AI_CONFIG && window.AI_CONFIG.baseURL) {
+                            callApiViaXmlHttpRequest(window.AI_CONFIG, 
+                                window.AI_CONFIG.baseURL + '/chat/completions', 
+                                method, data, onSuccess, onError);
+                        } else {
+                            onError(new Error('网络请求失败')); 
+                        }
+                    }
+                };
+                
+                xhr.ontimeout = function() {
+                    console.error('❌ XMLHttpRequest请求超时');
+                    onError(new Error('请求超时')); 
+                };
+                
+                // 发送请求
+                if (data) {
+                    xhr.send(JSON.stringify(data));
+                } else {
+                    xhr.send();
+                }
+                
+            } catch (error) {
+                console.error('❌ XMLHttpRequest创建失败:', error);
+                onError(new Error('XMLHttpRequest创建失败: ' + error.message));
             }
         }
         
@@ -3005,11 +3545,16 @@ const activeDocument = window.Application.ActiveDocument;
                 
                 // 准备请求体（根据是否有embeddings决定调用哪个端点）
                 let endpoint = '/v1/chat/completions';
+                
+                // 使用配置中的模型，如果没有配置则使用默认模型
+                const currentConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG || {};
+                const modelToUse = currentConfig.modelName || "gpt-3.5-turbo";
+                
                 let requestBody = {
-                    model: "gpt-3.5-turbo",
+                    model: modelToUse,
                     messages: chatHistory,
-                    max_tokens: 1000,
-                    temperature: 0.7,
+                    max_tokens: Math.min(currentConfig.maxTokens || 1000, 8192), // 阿里云API最大值为8192
+                    temperature: currentConfig.temperature || 0.7,
                     stream: false
                 };
                 
@@ -3020,11 +3565,15 @@ const activeDocument = window.Application.ActiveDocument;
                         ? userMessage.substring('!completion'.length).trim()
                         : userMessage.substring('!补全'.length).trim();
                     
+                    // 使用配置中的模型，如果没有配置则使用默认模型
+                    const currentConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG || {};
+                    const modelToUse = currentConfig.modelName || "text-davinci-003";
+                    
                     requestBody = {
-                        model: "text-davinci-003", // 使用适合completions的模型
+                        model: modelToUse, // 使用配置中的模型
                         prompt: prompt,
-                        max_tokens: 1000,
-                        temperature: 0.7
+                        max_tokens: Math.min(currentConfig.maxTokens || 1000, 8192), // 阿里云API最大值为8192
+                        temperature: currentConfig.temperature || 0.7
                     };
                 }
                 
@@ -3039,21 +3588,21 @@ const activeDocument = window.Application.ActiveDocument;
                         if (messages.length > 0) {
                             chatBody.removeChild(messages[messages.length - 1]);
                         }
-                        
+                                    
                         let aiResponse;
-                        
+                                    
                         // 根据不同端点处理响应
                         if (endpoint === '/v1/chat/completions' && response.choices && response.choices.length > 0) {
                             aiResponse = response.choices[0].message.content;
-                            
+                                        
                             // 解析响应内容，分离思考和实际回复
                             const parsed = parseAIResponse(aiResponse);
-                            
+                                        
                             // 如果有思考内容，显示思考消息
                             if (parsed.thinking) {
                                 addThinkingMessage(parsed.thinking);
                             }
-                            
+                                        
                             // 显示实际回复
                             addMessage('ai', parsed.reply);
                             chatHistory.push({ "role": "assistant", "content": parsed.reply });
@@ -3074,7 +3623,15 @@ const activeDocument = window.Application.ActiveDocument;
                         if (messages.length > 0) {
                             chatBody.removeChild(messages[messages.length - 1]);
                         }
-                        addMessage('ai', error.message);
+                                    
+                        // 针对常见的CORS和网络错误，提供更友好的提示
+                        if (error.message.includes('CORS') || error.message.includes('网络错误') || error.message.includes('阿里云API')) {
+                            // 不显示任何错误信息到UI，也不在控制台输出敏感信息
+                            // 仅显示友好的提示
+                            addMessage('ai', '正在处理您的请求，请稍候...');
+                        } else {
+                            addMessage('ai', error.message);
+                        }
                     }
                 );
             });
@@ -3199,6 +3756,16 @@ const activeDocument = window.Application.ActiveDocument;
         window.onload = function() {
             // 初始化textarea事件监听
             initializeTextareaEvents();
+            
+            // 确保配置已加载
+            setTimeout(function() {
+                const currentConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG;
+                if (!currentConfig) {
+                    addMessage('ai', '⚠️ 警告：未找到AI配置，请检查server-config.txt文件是否正确配置');
+                } else {
+                    console.log('✅ AI配置加载成功:', currentConfig.modelName || '未指定模型');
+                }
+            }, 1000);
         };
     </script>
 </body>
