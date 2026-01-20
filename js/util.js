@@ -177,7 +177,10 @@ function loadServerConfig() {
         console.error('配置初始化失败:', e);
         applyFallbackConfig();
     }
-    
+    function selectServer() {
+        
+    }
+
     function applyFallbackConfig() {
         // 添加应急配置以防系统无法启动
         window.PRODUCTION = 'http://192.168.70.26:8080/V6R343/';
@@ -212,6 +215,23 @@ function loadServerConfig() {
         console.warn('⚠️ 配置初始化失败，使用应急配置');
     }
 })();
+function selectServer() {
+    return new Promise((resolve, reject) => {
+        // 确保配置已加载
+        if (window.PRODUCTION) {
+            resolve(window.PRODUCTION);
+        } else {
+            // 如果配置尚未加载，等待一段时间后重试
+            setTimeout(() => {
+                if (window.PRODUCTION) {
+                    resolve(window.PRODUCTION);
+                } else {
+                    reject(new Error('无法获取服务器配置，请检查配置文件'));
+                }
+            }, 1000);
+        }
+    });
+}
 
 /**
  * 获取当前页面的基础路径

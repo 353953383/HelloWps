@@ -164,18 +164,22 @@ function initApiEventListeners() {
 
         // 工作表级别事件
         // Application.ApiEvent.AddApiEventListener("SheetActivate", (sh)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     $print("工作表事件", "激活工作表: " + sh.Name);
         // });
         
         // Application.ApiEvent.AddApiEventListener("SheetDeactivate", (sh)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     $print("工作表事件", "工作表失活: " + sh.Name);
         // });
         
         Application.ApiEvent.AddApiEventListener("SheetBeforeDelete", (sh)=>{
+            if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
             $print("工作表事件", "工作表即将删除: " + sh.Name + " 索引: " + sh.Index);
         });
         
         Application.ApiEvent.AddApiEventListener("SheetChange", (sh, target)=>{
+            if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
             let rangeInfo = formatRangeInfo({
                 address: target.Address(),
                 rowCount: target.Rows.Count,
@@ -185,6 +189,7 @@ function initApiEventListeners() {
         });
         
         // Application.ApiEvent.AddApiEventListener("SheetSelectionChange", (sh, target)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     let rangeInfo = formatRangeInfo({
         //         address: target.Address(),
         //         rowCount: target.Rows.Count,
@@ -202,8 +207,9 @@ function initApiEventListeners() {
         // });
         
         // Application.ApiEvent.AddApiEventListener("SheetFollowHyperlink", (sh, target)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     let cellInfo = formatCellInfo({
-        //         address: target.Address,
+        //         address: target.Address(),
         //         row: target.Row,
         //         column: target.Column,
         //         value: target.Value
@@ -212,8 +218,9 @@ function initApiEventListeners() {
         // });
         
         // Application.ApiEvent.AddApiEventListener("SheetBeforeDoubleClick", (sh, target, cancel)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     let cellInfo = formatCellInfo({
-        //         address: target.Address,
+        //         address: target.Address(),
         //         row: target.Row,
         //         column: target.Column,
         //         value: target.Value
@@ -222,8 +229,9 @@ function initApiEventListeners() {
         // });
         
         // Application.ApiEvent.AddApiEventListener("SheetBeforeRightClick", (sh, target, cancel)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     let cellInfo = formatCellInfo({
-        //         address: target.Address,
+        //         address: target.Address(),
         //         row: target.Row,
         //         column: target.Column,
         //         value: target.Value
@@ -232,6 +240,7 @@ function initApiEventListeners() {
         // });
         
         // Application.ApiEvent.AddApiEventListener("SheetCalculate", (sh)=>{
+        //     if (sh.Name === "logging") return; // 如果表名为logging，则直接结束
         //     $print("工作表事件", "工作表计算: " + sh.Name);
         // });
 

@@ -117,7 +117,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                 
 
                 // 筛选B列对应计划员的数据（假设B列是第2列，从第2行开始）
-                const usedRange = modelSheet.Range("A1:N"+$SheetsLastRowNum(modelSheet.Name,3));
+                const usedRange = modelSheet.Range("A1:N"+$SheetsLastRowNum(modelSheet.Name,4));
                 const data = usedRange.Value2;
                 const filteredData = [];
                 filteredData.push(data[0]);
@@ -406,18 +406,18 @@ function onbuttonclick_btnCPInStock(idStr) {
                     alert("没有型号汇总表");
                     return;
                 }
-                // var planner = "";
-                // const radios = document.querySelectorAll('input[name="planner"]');
-                // for (let radio of radios) {
-                //     if (radio.checked) {
-                //         planner = radio.value;
-                //         break;
-                //     }
-                // }
-                // if(""==planner){
-                //     alert("请选择计划员姓名");
-                //     return;
-                // }
+                var planner = "";
+                const radios = document.querySelectorAll('input[name="planner"]');
+                for (let radio of radios) {
+                    if (radio.checked) {
+                        planner = radio.value;
+                        break;
+                    }
+                }
+                if(""==planner){
+                    alert("请选择计划员姓名");
+                    return;
+                }
                 var modelName = $InputBox("输入要新建的型号名，例如RXB-10:",'输入型号',"");
                 // $print("输入型号",modelName);
                 if(null==modelName||""==modelName){
@@ -441,7 +441,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                 //     return;
                 // }
                 // var newModelPlanner = $SheetTheActive().Range("D3:E"+lastRow).Value2;
-                var newModelPlanner = ["","","",modelName,"链接"];
+                var newModelPlanner = ["",planner,"",modelName,"链接"];
                 // newModelPlanner.forEach((item)=>{
                 //     item[1] = "链接"; 
                 // });

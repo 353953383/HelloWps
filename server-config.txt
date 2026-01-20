@@ -1,5 +1,6 @@
 PRODUCTION=http://192.168.70.26:8080/V6R343/
 PRODUCTION_BCK=http://192.168.70.17:8888/V6/
+SERVER_CONFIG = PRODUCTION
 AI_CONFIG_TYPE=AI_CONFIG
 AI_CONFIG.apiKey=sk-9bacbdffb7dd4b91b240c472d9c5e0c2
 AI_CONFIG.baseURL=https://dashscope.aliyuncs.com/compatible-mode/v1

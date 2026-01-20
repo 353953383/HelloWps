@@ -219,19 +219,20 @@ function $print(str1,str2){
 		Application.FileSystem.AppendFile(tempPath+'/wpslog/'+$DateFormat(new Date(),"yyyyMMdd")+'.txt',logContent+"\r\n");
 		// if(userName!='win'){
 		// 	let serverPath = '\\\\192.168.70.17/mes0/wpslogs';
-		// 	if(!Application.FileSystem.Exists(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd")+'.txt')){
-		// 		Application.FileSystem.WriteFile(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd")+'.txt','');
+		// 	if(!Application.FileSystem.Exists(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd24HH")+'.txt')){
+		// 		Application.FileSystem.WriteFile(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd24HH")+'.txt','');
 		// 	}
-		// 	Application.FileSystem.AppendFile(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd")+'.txt',logContent+"\r\n");
+		// 	Application.FileSystem.AppendFile(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd24HH")+'.txt',logContent+"\r\n");
 		// }
 		
 		//判断当前文档是否有sheet名为logging
-		if(!$SheetsIsHave("logging")){
-			$SheetsLastAdd("logging"); 
-			//将logging sheet设为隐藏
-			$SheetsVisible("logging",false);
-		}
-		$RangeInValue2ToSheetNewRow("logging",[[logContent]]);
+		// if(!$SheetsIsHave("logging")){
+		// 	$SheetsLastAdd("logging"); 
+		// 	//将logging sheet设为隐藏
+		// 	$SheetsVisible("logging",false);
+		// }
+		// $RangeInValue2ToSheetNewRow("logging",[[logContent]]);
+		// $SheetsVisible("logging",false);
 	}catch(ex){
 		alert(ex.message);
 	}
@@ -1338,14 +1339,14 @@ function $RangeInValue(range,str){
 		}else{
 			alert("工作表不存在");
 		}
-		/**
+		
+	}
+/**
 		 * 
 		 * 
 		 */
-
-		function $SheetsVisible(sheetName,visible){
-			var workbook = Application.ActiveWorkbook;
-			var sheet = workbook.Worksheets.Item(sheetName);
-			sheet.Visible = visible;
-		}
+	function $SheetsVisible(sheetName,visible){
+		var workbook = Application.ActiveWorkbook;
+		var sheet = workbook.Worksheets.Item(sheetName);
+		sheet.Visible = visible;
 	}
