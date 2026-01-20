@@ -14,8 +14,7 @@ function loadServerConfig() {
                 './server-config.txt',
                 '../server-config.txt',
                 '/server-config.txt',
-                'server-config.txt',
-                '../../server-config.txt'
+                'server-config.txt'
             ];
             
             let currentPathIndex = 0;
@@ -212,22 +211,3 @@ function loadServerConfig() {
         console.warn('⚠️ 配置初始化失败，使用应急配置');
     }
 })();
-
-/**
- * 获取当前页面的基础路径
- * @returns {string} 当前页面的基础路径
- */
-function GetUrlPath() {
-    let e = document.location.toString()
-    return -1!=(e=decodeURI(e)).indexOf("/")&&(e=e.substring(0,e.lastIndexOf("/"))),e
-}
-
-/**
- * 通过wps提供的接口执行一段脚本
- * @param {*} param 需要执行的脚本
- */
-function shellExecuteByOAAssist(param) {
-    if (wps != null) {
-        wps.OAAssist.ShellExecute(param)
-    }
-}

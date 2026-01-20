@@ -10,6 +10,28 @@ class AIInterface {
         this.modelName = '';
         this.timeout = 30000; // 30秒超时
         
+        // 延迟初始化，等待配置加载完成
+        this.delayedInit();
+    }
+    
+    async delayedInit() {
+        // 等待配置加载完成
+        let attempts = 0;
+        const maxAttempts = 50; // 最多等待5秒 (50次 * 100ms)
+        
+        while (attempts < maxAttempts) {
+            if (window.CURRENT_AI_CONFIG || window.AI_CONFIG) {
+                console.log(`✅ 配置已加载，开始初始化 (尝试: ${attempts + 1})`);
+                this.init();
+                return;
+            }
+            
+            attempts++;
+            console.log(`⏳ 等待配置加载... (${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100)); // 等待100ms
+        }
+        
+        console.warn(`⚠️ 配置加载超时，使用应急配置初始化`);
         this.init();
     }
     
@@ -38,11 +60,19 @@ class AIInterface {
      * 从全局配置文件加载AI设置（OpenAI格式）
      */
     loadAIConfig() {
+        console.log('🔍 正在加载AI配置...');
+        
         // 从全局变量读取AI配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
+        console.log('📋 检查全局配置变量:');
+        console.log('  - window.CURRENT_AI_CONFIG:', window.CURRENT_AI_CONFIG ? '存在' : '不存在');
+        console.log('  - window.AI_CONFIG:', window.AI_CONFIG ? '存在' : '不存在');
+        console.log('  - window.AI_CONFIG_WLAN:', window.AI_CONFIG_WLAN ? '存在' : '不存在');
+        console.log('  - window.AI_CONFIG_TYPE:', window.AI_CONFIG_TYPE || '未定义');
+        
         const globalAIConfig = window.CURRENT_AI_CONFIG || window.AI_CONFIG;
         
         if (!globalAIConfig) {
-            throw new Error('❌ 全局AI配置不存在，请确保server-config.js已正确加载AI_CONFIG配置');
+            throw new Error('❌ 全局AI配置不存在，请确保server-config.txt已正确加载AI_CONFIG配置');
         }
         
         // 验证必要配置项（OpenAI格式）
@@ -64,9 +94,11 @@ class AIInterface {
             // 标准OpenAI格式
             this.baseURL = globalAIConfig.baseURL;
             this.apiEndpoint = `${this.baseURL}/chat/completions`;
+            console.log('🌐 使用云端配置 (baseURL)');
         } else if (globalAIConfig.apiEndpoint) {
             // 局域网格式
             this.apiEndpoint = globalAIConfig.apiEndpoint;
+            console.log('🏠 使用局域网配置 (apiEndpoint)');
         }
         
         this.apiKey = globalAIConfig.apiKey;
@@ -83,16 +115,21 @@ class AIInterface {
             // 如果当前使用的是局域网配置，则将云端配置作为备用
             if (window.CURRENT_AI_CONFIG === window.AI_CONFIG_WLAN && window.AI_CONFIG) {
                 this.localConfig = window.AI_CONFIG;
+                console.log('🔄 局域网配置为主，云端配置作为备用');
             }
             // 如果当前使用的是云端配置，则将局域网配置作为备用
             else if (window.CURRENT_AI_CONFIG !== window.AI_CONFIG_WLAN && window.AI_CONFIG_WLAN) {
                 this.localConfig = window.AI_CONFIG_WLAN;
+                console.log('🔄 云端配置为主，局域网配置作为备用');
             }
         }
         
         // 显示当前配置信息
         if (this.apiEndpoint && this.modelName) {
             console.log('✅ AI配置加载成功');
+            console.log('   - API端点:', this.apiEndpoint);
+            console.log('   - 模型名称:', this.modelName);
+            console.log('   - API密钥:', this.apiKey.substring(0, 4) + '...');
         } else {
             console.log('❌ AI配置加载失败');
         }

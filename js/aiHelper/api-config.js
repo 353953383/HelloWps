@@ -16,8 +16,24 @@ var ApiConfigManager = (function() {
             supportsImages: false
         };
         
-        this.init();
+        // 延迟初始化，等待配置加载完成
+        this.initAsync();
     }
+    
+    ApiConfigManager.prototype.initAsync = function() {
+        var self = this;
+        // 检查配置是否已加载，如果没有则等待
+        function attemptInit() {
+            if (window.CURRENT_AI_CONFIG || window.AI_CONFIG) {
+                // 配置已加载，进行初始化
+                self.init();
+            } else {
+                // 继续等待，100ms后再次检查
+                setTimeout(attemptInit, 100);
+            }
+        }
+        attemptInit();
+    };
     
     ApiConfigManager.prototype.init = function() {
         try {
@@ -283,11 +299,22 @@ var ApiConfigManager = (function() {
 })();
 
 // 初始化配置管理器
-window.apiConfigManager = new ApiConfigManager();
+// 延迟初始化，等待配置加载完成
+setTimeout(function() {
+    if (window.CURRENT_AI_CONFIG || window.AI_CONFIG) {
+        // 配置已加载，直接初始化
+        window.apiConfigManager = new ApiConfigManager();
+    } else {
+        // 配置未加载，创建实例但延迟初始化
+        window.apiConfigManager = new ApiConfigManager();
+    }
+}, 100);
 
 // 导出配置管理器的状态
-if (window.apiConfigManager.isValid) {
-    console.log('✅ API配置初始化成功');
-} else {
-    console.log('❌ API配置初始化失败');
-}
+setTimeout(function() {
+    if (window.apiConfigManager && window.apiConfigManager.isValid) {
+        console.log('✅ API配置初始化成功');
+    } else {
+        console.log('❌ API配置初始化失败或仍在等待配置加载');
+    }
+}, 500);

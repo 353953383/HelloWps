@@ -225,7 +225,13 @@ function $print(str1,str2){
 		// 	Application.FileSystem.AppendFile(serverPath+'/wpslog'+$DateFormat(new Date(),"yyyyMMdd")+'.txt',logContent+"\r\n");
 		// }
 		
-
+		//判断当前文档是否有sheet名为logging
+		if(!$SheetsIsHave("logging")){
+			$SheetsLastAdd("logging"); 
+			//将logging sheet设为隐藏
+			$SheetsVisible("logging",false);
+		}
+		$RangeInValue2ToSheetNewRow("logging",[[logContent]]);
 	}catch(ex){
 		alert(ex.message);
 	}
@@ -1301,8 +1307,6 @@ function $RangeInValue(range,str){
 		尝试删除指定名字工作表，若因共享未删除则对表进行标记待删除
 
 	*/
-
-	
 	function $SheetDelOrSign(sheetName) {
 		const activeWorkbook = window.Application.ActiveWorkbook;
 		const theSheet = activeWorkbook.Worksheets.Item(sheetName);
@@ -1333,5 +1337,15 @@ function $RangeInValue(range,str){
 			}
 		}else{
 			alert("工作表不存在");
+		}
+		/**
+		 * 
+		 * 
+		 */
+
+		function $SheetsVisible(sheetName,visible){
+			var workbook = Application.ActiveWorkbook;
+			var sheet = workbook.Worksheets.Item(sheetName);
+			sheet.Visible = visible;
 		}
 	}

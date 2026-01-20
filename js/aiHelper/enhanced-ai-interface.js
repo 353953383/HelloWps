@@ -702,14 +702,18 @@ var EnhancedAIInterface = (function() {
                 var messages = self.buildAIRequestMessages(requestData);
                 
                 // 获取API配置，优先使用 CURRENT_AI_CONFIG（如果已设置）
-                var apiKey = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiKey : null) || 
-                             (window.AI_CONFIG ? window.AI_CONFIG.apiKey : null);
-                var model = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.modelName : null) || 
-                            (window.AI_CONFIG ? window.AI_CONFIG.modelName : "qwen-plus");
-                var baseURL = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.baseURL : null) || 
-                              (window.AI_CONFIG ? window.AI_CONFIG.baseURL : "https://dashscope.aliyuncs.com/compatible-mode/v1");
-                var apiEndpoint = (window.CURRENT_AI_CONFIG ? window.CURRENT_AI_CONFIG.apiEndpoint : null) || 
-                                  (window.AI_CONFIG ? window.AI_CONFIG.apiEndpoint : null);
+                // 优先使用 CURRENT_AI_CONFIG，确保正确处理配置类型
+                var currentConfig = window.CURRENT_AI_CONFIG;
+                var fallbackConfig = window.AI_CONFIG;
+                
+                var apiKey = currentConfig ? currentConfig.apiKey : 
+                           (fallbackConfig ? fallbackConfig.apiKey : null);
+                var model = currentConfig ? currentConfig.modelName : 
+                           (fallbackConfig ? fallbackConfig.modelName : "qwen-plus");
+                var baseURL = currentConfig ? currentConfig.baseURL : 
+                             (fallbackConfig ? fallbackConfig.baseURL : null);
+                var apiEndpoint = currentConfig ? currentConfig.apiEndpoint : 
+                                 (fallbackConfig ? fallbackConfig.apiEndpoint : null);
                 
                 // 确定API端点
                 var endpoint;
