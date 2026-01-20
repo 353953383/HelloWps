@@ -74,6 +74,46 @@ function onbuttonclick_btnCPInStock(idStr) {
                 }
                 break;
             }
+            case "plannerIndex":{
+                $print('plannerIndex start');
+                let doc = window.Application.ActiveWorkbook;
+                let textValue = "";
+                if (!doc) {
+                    textValue = "当前没有打开任何文档";
+                } else {
+                    textValue = doc.Name;
+                }
+                if (!/^(?:\d{4}年)?产品入库记录\.xlsx$/.test(textValue)) {
+                    alert("当前表不可用，请打开 “YYYY产品入库记录.xlsx”，其中YYYY为年份");
+                    return;
+                }
+                 // 获取选择的计划员
+                var planner = "";
+                const radios = document.querySelectorAll('input[name="planner"]');
+                for (let radio of radios) {
+                    if (radio.checked) {
+                        planner = radio.value;
+                        break;
+                    }
+                }
+                if(""==planner){
+                    alert("请选择计划员姓名");
+                    return;
+                }
+                let haveModelType = false;
+                for (let i = 1; i <= Application.Worksheets.Count; i++) {
+                    if (Application.Worksheets.Item(i).Name == planner) {
+                        Application.Worksheets.Item(i).Activate();
+                        haveModelType = true;
+                        break;
+                    }
+                }
+                $print("是否有planner表",haveModelType);
+                if (!haveModelType) {
+                    alert('没有计划员：'+planner+'的表，请新建');
+                }
+                break;
+            }
             case "creatOwnModel":{
                 let doc = window.Application.ActiveWorkbook;
                 let textValue = "";
@@ -721,12 +761,14 @@ function onbuttonclick_btnCPInStock(idStr) {
                     return;
                 }
 
+                var headSdr_found = $SheetTheActive().Range("A1:K1").Value2;
+                //序号	型号	泵号	军种	主制车间	出库日期	待军日期	入库日期	备注	需求日期	其他
+                var headSdr = [['序号', '型号', '泵号', '军种', '主制车间', '出库日期', '待军日期', '入库日期', '备注', '需求日期', '其他']];
 
-                if(!JSON.stringify($SheetTheActive().Range("A1:K1").Value2) === 
-                    JSON.stringify([['型号','计划来源','军种','主制部门','任务年度','泵号','出库日期','交检日期','入库日期','备注','记录人']])){
-                        alert("型号表表头格式检查错误，请对比：'型号','计划来源','军种','主制部门','任务年度','泵号','出库日期','交检日期','入库日期','备注','记录人'");
-                        return;
-                    }
+                if(JSON.stringify(headSdr_found) !== JSON.stringify(headSdr)){
+                    alert("型号表表头格式检查错误，请对比：序号\t型号\t泵号\t军种\t主制车间\t出库日期\t待军日期\t入库日期\t备注\t需求日期\t其他");
+                    return;
+                }
                 var rowCount = $RangeSelection().Rows.Count;
                 var rowStart = $RangeSelection().Rows.Item(0).Row+1;
                 var rowEnd = $RangeSelection().Rows.Item(rowCount-1).Row+1;
@@ -734,11 +776,12 @@ function onbuttonclick_btnCPInStock(idStr) {
                     alert("不可选择前两行");
                     return;
                 }
+                var checkYes = true;
                 var toPlanoldArray = $SheetTheActive().Range("A"+rowStart+":K"+rowEnd).Value2;
                 toPlanoldArray.forEach((eachRow,i,arraySelf)=>{
                     if(eachRow[1]==null||eachRow[1]==""){
                         alert("第"+(i+rowStart)+"行型号不可为空");
-                        return;
+                        checkYes = false;
                     }
                     // if(eachRow[4]==null||eachRow[4]==""){
                     //     alert("第"+(i+rowStart)+"行任务年度不可为空");
@@ -746,16 +789,19 @@ function onbuttonclick_btnCPInStock(idStr) {
                     // }
                     if(eachRow[2]==null||eachRow[2]==""){
                         alert("第"+(i+rowStart)+"行泵号不可为空");
-                        return;
+                        checkYes = false;
                     }
                     if(eachRow[7]==null||eachRow[7]==""){
                         alert("第"+(i+rowStart)+"行入库日期不可为空");
-                        return;
+                        checkYes = false;
                     }else if(!$DateExcelValueIsDate(eachRow[7])){
                         alert("第"+(i+rowStart)+"行入库日期格式错误");
-                        return;
+                        checkYes = false;
                     }
                 });
+                if(!checkYes){
+                    return;
+                }
 
                 var dataGridColModel =  [
                     { label : 'id', name : 'id', key : true, width : 75, hidden : true},
@@ -769,16 +815,22 @@ function onbuttonclick_btnCPInStock(idStr) {
                     { label : '创建时间', name : 'createTime',  width: 150, align: 'center'},
                     { label : '搜索编号', name : 'searchSn', width: 150, align: 'left'}
                 ];
-                const params = {};
-                const method = "getModel";
+                var params = {};
+                var method = "getModel";
                 // const url = "http://192.168.70.26:8080/V6R343/ws/dynPMResModelWS0";
                 selectServer().then(baseServerUrl => {
-                    const url = baseServerUrl + "ws/dynPMResModelWS0";
-                    // 原有的$WebService调用逻辑
+                    var url = baseServerUrl + "ws/dynPMResModelWS0";
+                    var targetNamespace0 = "http://ws.dynpmresmodel.planold.avicit/";
+                    // 原有的$WebService调用逻辑const url = baseServerUrl + "ws/dynPMRepInBatchWS0";
+                    return $WebService(url, targetNamespace0, method, params,dataGridColModel);
                 }).then(tableData => {
                     // console.log('返回的 JSON 字符串:', tableData);
                     // var arr = $Array2DFromJsonStr(jsonStr);
                     // $print($ArrayToString(tableData));
+                    if (!tableData || !Array.isArray(tableData)) {
+                        alert("获取型号数据失败，返回数据格式不正确");
+                        return Promise.reject("获取型号数据失败");
+                    }
                     var haveModel=[];
                     var models = [];
                     for(var i=0;i<toPlanoldArray.length;i++){
@@ -837,23 +889,23 @@ function onbuttonclick_btnCPInStock(idStr) {
                              +":N"+($SheetsLastRowNum("同步记录勿删",1)+toPlanoldArray.length)).Value2=toPlanoldArray;
                         $SheetsActivate("同步记录勿删");
 
-                        var dataGridColModel =  [
+                        var dataGridColModel2 =  [
                             { label : 'id', name : 'id', key : true, width : 75, hidden : true},
                             { label : '型号', name : 'modelSn',width: 150, align: 'left'},
-                            { label : '军种', name : 'armyServices', width: 150, align: 'left'},
-                            { label : '入库数量', name : 'count', width: 150, align: 'left'},
                             { label : '产品编号', name : 'productNos', width: 150, align: 'left'},
-                            { label : '入库时间', name : 'createTime', width: 150, align: 'center'},
+                            { label : '军种', name : 'armyServices', width: 150, align: 'left'},
                             { label : '任务年度', name : 'year', width: 150, align: 'left'},
-                            { label : '分类', name : 'category', width: 150, align: 'center'}
+                            { label : '分类', name : 'category', width: 150, align: 'center'},
+                            { label : '入库数量', name : 'count', width: 150, align: 'left'},
+                            { label : '入库时间', name : 'createTime', width: 150, align: 'center'}  
                         ];    
-                        const today = new Date();
-                        const params = {jsonData:jsonArrayString};
-                        const method = "addProductInStocks";
+                        var today = new Date();
+                        var params2 = {jsonData:jsonArrayString};
+                        var method2 = "addProductInStocks";
                         selectServer().then(baseServerUrl => {
-                            const url = baseServerUrl + "ws/dynMRepProductRecordWS0";
-                            // 调用函数
-                            return $WebService(url, targetNamespace, method, params, dataGridColModel);
+                            var url2 = baseServerUrl + "ws/dynMRepProductRecordWS0";
+                            var targetNamespace2 = "http://ws.dynmrepproductrecord.planold.avicit/";
+                            return $WebService(url2, targetNamespace2, method2, params2, dataGridColModel2);
                         }).then(tableData => {
                             console.log('返回的 JSON 字符串:', tableData);
                             // var arr = $Array2DFromJsonStr(jsonStr);
@@ -892,7 +944,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                     const params = {};
                     const method = "getProductInStocks";
                     const targetNamespace="http://ws.dynmrepproductrecord.planold.avicit/"
-                    
+                    var sheetName = "计划系统产品入库记录"+$StringReplaceAll(today.toLocaleDateString(),"/",".");
                     selectServer().then(baseServerUrl => {
                         const url = baseServerUrl + "ws/dynMRepProductRecordWS0";
                         
@@ -901,7 +953,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                             var workbookName = "计划系统产品入库记录"+new Date().valueOf(); 
                             Application.Workbooks.Add();
                             window.Application.ActiveWorkbook.SaveAs(workbookName, null, null, null, null, null, null, 2, null, null, null, null);
-                            var sheetName = "计划系统产品入库记录"+$StringReplaceAll(today.toLocaleDateString(),"/",".");
+                            
                             $SheetsLastAdd(sheetName);
                             Application.Worksheets.Item(sheetName).Activate();
                             
