@@ -528,6 +528,9 @@ function onbuttonclick_btnCPInStock(idStr) {
                         originalText
                     );
                 }
+                //冻结前2行
+                $RangeSelect("A3");
+                Application.Windows.Item(1).FreezePanes = true;
                 $SheetsActivate('型号汇总');
                 alert("创建完成");
                 break;
