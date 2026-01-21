@@ -464,7 +464,13 @@ function onbuttonclick_btnCPInStock(idStr) {
                     alert("未录入任何信息");
                     return;
                 }
-                
+                var modelType = $MsgBox("是否为批产型号？是为批产，否为科研")
+                if(modelType){
+                    modelType = "批产";
+                }else{
+                    modelType = "科研";
+                }
+
                 for (let i = 1; i <= Application.Worksheets.Count; i++) {
                     if (Application.Worksheets.Item(i).Name == modelNameFormat) {
                         Application.Worksheets.Item(i).Activate();
@@ -473,6 +479,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                     }
                 }
                 $SheetsActivate('型号汇总');
+
                 // $print($SheetsLastRowNum('型号目录',1));
                 var lastRow = $SheetsLastRowNum('型号汇总',3);
                 // $print("lastRow",lastRow);
@@ -481,7 +488,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                 //     return;
                 // }
                 // var newModelPlanner = $SheetTheActive().Range("D3:E"+lastRow).Value2;
-                var newModelPlanner = ["",planner,"",modelName,"链接"];
+                var newModelPlanner = ["",planner,modelType,modelName,"链接"];
                 // newModelPlanner.forEach((item)=>{
                 //     item[1] = "链接"; 
                 // });
@@ -501,6 +508,7 @@ function onbuttonclick_btnCPInStock(idStr) {
                 $SheetTheActive().Columns.Item(6).NumberFormatLocal = "yyyy/mm/dd";
                 $SheetTheActive().Columns.Item(7).NumberFormatLocal = "yyyy/mm/dd";
                 const a1Cell = $SheetTheActive().Range("A1");
+                const b1Cell = $SheetTheActive().Range("B1");
                 const originalText = a1Cell.Value;
                 if (originalText !== undefined){
                     $SheetTheActive().Hyperlinks.Add(
@@ -511,7 +519,16 @@ function onbuttonclick_btnCPInStock(idStr) {
                         originalText
                     );
                 }
-                
+                if (originalText !== undefined){
+                    $SheetTheActive().Hyperlinks.Add(
+                        b1Cell,
+                        "",
+                        "'"+planner+"'!A1",
+                        "",
+                        originalText
+                    );
+                }
+                $SheetsActivate('型号汇总');
                 alert("创建完成");
                 break;
             }
